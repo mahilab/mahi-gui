@@ -1,4 +1,7 @@
+#define MAHUI_NO_CONSOLE
+
 #include <MAHUI/Application.hpp>
+#include <MAHUI/Macros.hpp>
 #include <iostream>
 
 class MyApp : public Application {
