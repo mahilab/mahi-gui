@@ -6,7 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
-#include "Application.hpp"
+#include <MAHUI/Application.hpp>
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -30,7 +30,7 @@ Application::Application(int width, int height, const char* title) :
         throw std::runtime_error("Failed to initialize GLFW!");
 
     // Decide GL+GLSL versions
-#if __APPLE__,
+#if __APPLE__
     // GL 3.2 + GLSL 150
     const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);

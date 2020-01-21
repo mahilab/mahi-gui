@@ -1,4 +1,4 @@
-#include "Application.hpp"
+#include <MAHUI/Application.hpp>
 #include <iostream>
 
 class MyApp : public Application {
