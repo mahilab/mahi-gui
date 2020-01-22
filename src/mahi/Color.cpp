@@ -1,5 +1,5 @@
 #include <mahi/Color.hpp>
-// #include <mahi/Math.hpp>
+#include <mahi/Math.hpp>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
