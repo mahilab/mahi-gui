@@ -1,8 +1,8 @@
 #pragma once
 #include <memory>
-#include "imgui.h"
 #include <GLFW/glfw3.h>
 #include <mahi/Event.hpp>
+#include <mahi/Color.hpp>
 
 namespace mahi::gui {
 
@@ -19,7 +19,7 @@ public:
 public:
     Event<void(int,const char**)> onFileDrop;
 public:
-    ImVec4 backgroundColor;
+    Color backgroundColor;
 protected:
     GLFWwindow* m_window;
 };

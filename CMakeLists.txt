@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0)
 
+option(MAHI_GUI_EXAMPLES "Turn ON to build Syntacts example(s)" ON)
+
 # create project
 project(mahi_gui VERSION 1.0.0)
 # add modules
@@ -76,4 +78,6 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /MP")    # MULTICORE BUILDS
 endif()
 
-add_subdirectory(examples)
+if (MAHI_GUI_EXAMPLES)
+    add_subdirectory(examples)
+endif()

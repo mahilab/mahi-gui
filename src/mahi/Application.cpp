@@ -1,9 +1,11 @@
+#include <glad/glad.h>  
+#include <mahi/Application.hpp>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <iostream>
-#include <glad/glad.h>  
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
@@ -11,7 +13,6 @@
 #include <mahi/Icons/IconsFontAwesome5.hpp>
 #include <mahi/Icons/IconsFontAwesome5Brands.hpp>
 
-#include <mahi/Application.hpp>
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -148,7 +149,7 @@ void Application::run() {
         int display_w, display_h;
         glfwGetFramebufferSize(m_window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
+        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     	
