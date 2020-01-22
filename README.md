@@ -1,6 +1,6 @@
 ## mahi gui
 
-This library provides a basic foundation for making user interfaces and GUIs in C++. It includes [GLFW](https://www.glfw.org/) and [GLAD](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, and a few custom utility classes and functions to spice things up.
+This library provides a basic foundation for making user interfaces and GUIs in C++. It includes [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, and a few custom utility classes and functions to spice things up.
 
 ### Integration
 
