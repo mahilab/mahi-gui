@@ -1,34 +1,34 @@
 cmake_minimum_required(VERSION 3.13.0)
 
 # create project
-project(mahui VERSION 1.0.0)
+project(mahi_gui VERSION 1.0.0)
 # add modules
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
 include(GNUInstallDirs)
 
 # create target and add an alias
-add_library(mahui "")
-add_library(mahui::mahui ALIAS mahui)
-set_target_properties(mahui PROPERTIES DEBUG_POSTFIX -d)
-target_compile_features(mahui PUBLIC cxx_std_17 PRIVATE)
+add_library(mahi_gui "")
+add_library(mahi::gui ALIAS mahi_gui)
+set_target_properties(mahi_gui PROPERTIES DEBUG_POSTFIX -d)
+target_compile_features(mahi_gui PUBLIC cxx_std_17 PRIVATE)
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(mahui PUBLIC "/await" PRIVATE) # COROUTINES
+    target_compile_options(mahi_gui PUBLIC "/await" PRIVATE) # COROUTINES
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(mahui PUBLIC "-std=c++2a" "-fcoroutines-ts" "-stdlib=libc++") # COROUTINES
+    target_compile_options(mahi_gui PUBLIC "-std=c++2a" "-fcoroutines-ts" "-stdlib=libc++") # COROUTINES
 endif()
 
-add_subdirectory(src/MAHUI)
+add_subdirectory(src/mahi)
 
 # add include files
-file(GLOB_RECURSE MAHUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
-target_sources(mahui PRIVATE ${MAHUI_INCLUDE})
+file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
+target_sources(mahi_gui PRIVATE ${MAHI_GUI_INCLUDE})
 
 # GLFW
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(3rdparty/glfw)
-target_link_libraries(mahui PUBLIC glfw)
+target_link_libraries(mahi_gui PUBLIC glfw)
 
 # GLAD
 set(GLAD_SRC 
@@ -37,7 +37,7 @@ set(GLAD_SRC
     3rdparty/glad/src/glad.c
 )
 set(GLAD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glad/include)
-target_sources(mahui PRIVATE ${GLAD_SRC})
+target_sources(mahi_gui PRIVATE ${GLAD_SRC})
 
 # IMGUI
 set(IMGUI_SRC
@@ -57,10 +57,10 @@ set(IMGUI_SRC
     3rdparty/imgui/imgui_impl_opengl3.h
 )
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
-target_sources(mahui PRIVATE ${IMGUI_SRC})
+target_sources(mahi_gui PRIVATE ${IMGUI_SRC})
 
 # set target properties
-target_include_directories(mahui
+target_include_directories(mahi_gui
 	PUBLIC
 		$<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -76,8 +76,4 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /MP")    # MULTICORE BUILDS
 endif()
 
-# target_include_directories(mahui PUBLIC include ${GLAD_INCLUDE_DIR} ${IMGUI_INCLUDE_DIR})
-# add_subdirectory(src/MAHUI)
-
-add_executable(example examples/example.cpp)
-target_link_libraries(example mahui)
+add_subdirectory(examples)
