@@ -71,6 +71,21 @@ Application::Application(int width, int height, const char* title) :
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
 
+    // center window on creation
+    auto monitor = glfwGetPrimaryMonitor();
+    if (!monitor)
+        throw std::runtime_error("Failed to get Monitor!");
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+    if (!mode)
+        throw std::runtime_error("Failed to get Video Mode!");
+    int monitorX, monitorY;
+    glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
+    glfwSetWindowPos(m_window,
+                     monitorX + (mode->width - windowWidth) / 2,
+                     monitorY + (mode->height - windowHeight) / 2);
+
     // GLFW Callbacks
     glfwSetDropCallback(m_window, glfw_drop_callback);
 
