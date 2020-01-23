@@ -56,4 +56,4 @@ int main() {
 }
 ```
 
-Run and consult the examples for other features. Pay particular attention to [demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/examples/demo.cpp) which shows all of the functionality of the **ImGui** library. It calls the `ImGui::ShowDemoWindow()` function from [imgui_demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/3rdparty/imgui/imgui_demo.cpp), which itself is the absolute best place for **ImGui** examples. For a real-world example, see [Syntacts](https://github.com/mahilab/Syntacts/tree/master/gui/src) GUI, which is built entirely using `mahi gui`.
+Run and consult the examples for other features. Pay particular attention to [demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/examples/demo.cpp) which shows all of the functionality of the **ImGui** library. It calls the `ImGui::ShowDemoWindow()` function from [imgui_demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/3rdparty/imgui/imgui_demo.cpp), which itself is the absolute best place for **ImGui** examples. For a real-world example, see [Syntacts' GUI](https://github.com/mahilab/Syntacts/tree/master/gui/src), which is built entirely using **mahi gui**.
