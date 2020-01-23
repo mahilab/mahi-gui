@@ -19,8 +19,8 @@ public:
     /// Called once per frame
     virtual void update();    
 public:   
-    /// Emitted when a file(s) is dropped
-    Event<void(int,const char**)> onFileDrop;
+    /// Emitted when file(s) is dropped, passes list of filepaths
+    Event<void(const std::vector<std::string>&)> onFileDrop;
 public:
     Color backgroundColor;
 protected:

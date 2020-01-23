@@ -182,8 +182,12 @@ static void glfw_error_callback(int error, const char* description)
 
 static void glfw_drop_callback(GLFWwindow* window, int count, const char** paths)
 {
-    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-    app->onFileDrop.emit(count, paths);
+    static std::vector<std::string> pathsVec;
+    pathsVec.resize(count);
+    for (int i = 0; i < count; ++i)
+        pathsVec[i] = paths[i];
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));    
+    app->onFileDrop.emit(pathsVec);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
