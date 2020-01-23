@@ -1,4 +1,6 @@
 #include <mahi/Coroutine.hpp>
+#include <imgui.h>
+#include <chrono>
 
 namespace mahi::gui {
 
@@ -17,15 +19,17 @@ bool YieldInstruction::isOver() {
 }
 
 WaitForSeconds::WaitForSeconds(float duration) :
-   YieldInstruction(),
-   m_duration(duration),
-   m_elapsedTime(0.0f)
+   YieldInstruction()
 {
+    auto now = std::chrono::high_resolution_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    m_endPoint = std::chrono::time_point_cast<std::chrono::milliseconds>(now) + std::chrono::milliseconds(static_cast<int>(1000 * duration));
 }
 
 bool WaitForSeconds::isOver() {
-    // m_elapsedTime += Engine::deltaTime(); TODO!
-    return m_elapsedTime >= m_duration;
+    auto now = std::chrono::high_resolution_clock::now();
+    auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(now);
+    return now >= m_endPoint;
 }
 
 //==============================================================================
@@ -40,12 +44,12 @@ PromiseType::PromiseType() :
 PromiseType::~PromiseType() {
 }
 
-SuspendAlawys PromiseType::initial_suspend() {
-   return SuspendAlawys{}; // changing this to change start
+SuspendAlways PromiseType::initial_suspend() {
+   return SuspendAlways{}; // changing this to change start
 }
 
-SuspendAlawys PromiseType::final_suspend() {
-   return SuspendAlawys{};
+SuspendAlways PromiseType::final_suspend() {
+   return SuspendAlways{};
 }
 
 Enumerator PromiseType::get_return_object() {
@@ -62,14 +66,14 @@ SuspendNever PromiseType::return_void() {
    return SuspendNever{};
 }
 
-SuspendAlawys PromiseType::yield_value(YieldInstruction* value) {
+SuspendAlways PromiseType::yield_value(YieldInstruction* value) {
    m_instruction = std::shared_ptr<YieldInstruction>(value);
-   return SuspendAlawys{};
+   return SuspendAlways{};
 }
 
-SuspendAlawys PromiseType::yield_value(std::shared_ptr<YieldInstruction> value) {
+SuspendAlways PromiseType::yield_value(std::shared_ptr<YieldInstruction> value) {
     m_instruction = value;
-    return SuspendAlawys{};
+    return SuspendAlways{};
 }
 
 //==============================================================================

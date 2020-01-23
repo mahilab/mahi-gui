@@ -2,6 +2,7 @@
 
 #include <experimental/coroutine>
 #include <memory>
+#include <chrono>
 
 namespace mahi::gui {
 
@@ -10,8 +11,7 @@ namespace mahi::gui {
 //==============================================================================
 
 class Enumerator;
-class Object;
-using SuspendAlawys = std::experimental::suspend_always;
+using SuspendAlways = std::experimental::suspend_always;
 using SuspendNever  = std::experimental::suspend_never;
 
 //==============================================================================
@@ -30,8 +30,7 @@ struct WaitForSeconds : public YieldInstruction {
     WaitForSeconds(float duration);
     bool isOver() override;
 private:
-    float m_duration;
-    float m_elapsedTime;
+    std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::milliseconds> m_endPoint;
 };
 
 //==============================================================================
@@ -41,13 +40,13 @@ private:
 struct PromiseType {
     PromiseType();
     ~PromiseType();
-    SuspendAlawys initial_suspend();
-    SuspendAlawys final_suspend();
+    SuspendAlways initial_suspend();
+    SuspendAlways final_suspend();
     Enumerator get_return_object();
     void unhandled_exception();
     SuspendNever  return_void();
-    SuspendAlawys yield_value(YieldInstruction* value);
-    SuspendAlawys yield_value(std::shared_ptr<YieldInstruction> value);
+    SuspendAlways yield_value(YieldInstruction* value);
+    SuspendAlways yield_value(std::shared_ptr<YieldInstruction> value);
     std::shared_ptr<YieldInstruction> m_instruction;
 };
 
@@ -57,7 +56,6 @@ struct PromiseType {
 
 struct Coroutine : public YieldInstruction
 {
-
     /// Destructor
     ~Coroutine();
     /// Stops the Coroutine
@@ -96,16 +94,13 @@ public:
     Enumerator(Enumerator &&e);
     /// Advances Enumerator and returns true until completion
     bool moveNext();
-
-private:
-
-    friend struct PromiseType;
-
-    /// Constructor
-    Enumerator(std::shared_ptr<Coroutine> h);
     /// Gets the Coroutine
     std::shared_ptr<Coroutine> getCoroutine();
 
+private:
+    friend struct PromiseType;
+    /// Constructor
+    Enumerator(std::shared_ptr<Coroutine> h);
 private:
     std::shared_ptr<Coroutine> m_ptr;
 };

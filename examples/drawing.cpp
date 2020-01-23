@@ -5,9 +5,9 @@
 
 using namespace mahi::gui;
 
-class MyApp : public Application {
+class DrawingDemo : public Application {
 public:
-    MyApp() :
+    DrawingDemo() :
         Application(1500,500,"Drawing")
     { 
         backgroundColor = Grays::Black;
@@ -47,7 +47,7 @@ public:
 
 int main(int argc, char const *argv[])
 {
-    MyApp app;
-    app.run();
+    DrawingDemo demo;
+    demo.run();
     return 0;
 }

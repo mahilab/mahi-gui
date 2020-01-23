@@ -1,14 +1,15 @@
 #include <mahi/gui.hpp>
-#include "nfd.h"
 #include <thread>
 
 using namespace mahi::gui;
 
-class AppWithFileDialogs : public Application {
+class FileDemo : public Application {
 public:
-
-    using Application::Application;
-
+    FileDemo() : Application(150,150,"File Demo", false) {
+        // connect to the file drop event
+        onFileDrop.connect(this, &FileDemo::fileDropHandler);
+    }
+    
     void update() override {
         ImGui::SetNextWindowPos({0,0}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({150,150}, ImGuiCond_Always);
@@ -38,13 +39,18 @@ public:
         ImGui::End();
     }
 
+    void fileDropHandler(const std::vector<std::string>& paths) {
+        for (auto& p : paths) 
+            std::cout << p  << std::endl;
+    }
+    
     std::string out;
-    std::vector<std::string> outs;
+    std::vector<std::string> outs;    
 };
 
 int main( void )
 {
-    AppWithFileDialogs app(150,150,"File Dialogs", false);
-    app.run();
+    FileDemo demo;
+    demo.run();
     return 0;
 }
