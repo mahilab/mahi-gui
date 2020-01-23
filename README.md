@@ -29,6 +29,8 @@ That's it!
 ### Example Usage
 
 ```cpp
+// my_app.cpp
+
 #include <mahi/gui.hpp>
 using namespace mahi::gui;
 
