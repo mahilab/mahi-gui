@@ -9,6 +9,7 @@
 #include <mahi/Random.hpp>
 #include <mahi/Range.hpp>
 #include <mahi/Sequence.hpp>
+#include <mahi/System.hpp>
 #include <mahi/Tween.hpp>
 #include <mahi/Vec2.hpp>
 #include <mahi/Icons/IconsFontAwesome5.hpp>

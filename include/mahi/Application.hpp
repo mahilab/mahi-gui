@@ -8,20 +8,23 @@ namespace mahi::gui {
 
 class Application {
 public:
-    /// Constructor
-    Application(int width, int height, const char* title);  
+    /// Fullscreen Constructor
+    Application(const char* title, int monitor = 0);
+    /// Windowed Mode Constructor
+    Application(int width, int height, const char* title, bool resizable = true);  
     /// Destructor
     ~Application();
     /// Runs the application
     void run();
     /// Called once per frame
     virtual void update();    
-public:
+public:   
+    /// Emitted when a file(s) is dropped
     Event<void(int,const char**)> onFileDrop;
 public:
     Color backgroundColor;
 protected:
-    GLFWwindow* m_window;
+    GLFWwindow* window;
 };
 
 }

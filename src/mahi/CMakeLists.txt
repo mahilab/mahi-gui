@@ -5,6 +5,7 @@ target_sources(mahi_gui
     Coroutine.cpp
     Print.cpp
     Random.cpp
+    System.cpp
 )
 
 add_subdirectory(Fonts)

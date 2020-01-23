@@ -61,6 +61,10 @@ set(IMGUI_SRC
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 target_sources(mahi_gui PRIVATE ${IMGUI_SRC})
 
+# NATIVE FILE DIALOG
+add_subdirectory(3rdparty/nativefiledialog)
+target_link_libraries(mahi_gui PUBLIC nativefiledialog)
+
 # set target properties
 target_include_directories(mahi_gui
 	PUBLIC
