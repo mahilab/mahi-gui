@@ -65,6 +65,11 @@ target_sources(mahi_gui PRIVATE ${IMGUI_SRC})
 add_subdirectory(3rdparty/nativefiledialog)
 target_link_libraries(mahi_gui PUBLIC nativefiledialog)
 
+# platform specific
+if (WIN32)
+target_link_libraries(mahi_gui PUBLIC Pdh)
+endif()
+
 # set target properties
 target_include_directories(mahi_gui
 	PUBLIC

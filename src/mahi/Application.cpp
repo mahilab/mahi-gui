@@ -1,4 +1,3 @@
-#include <glad/glad.h>
 #include <mahi/Application.hpp>
 
 #include "imgui.h"
@@ -6,7 +5,6 @@
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <iostream>
-#include <GLFW/glfw3.h>
 #include <stdexcept>
 
 #include "Fonts/Fonts.hpp"

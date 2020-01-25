@@ -1,9 +1,25 @@
 #include <mahi/System.hpp>
 #include <nfd.h>
+#include <cstring>
+#include <ctime>
+#include <iomanip>
 
 #ifdef _WIN32
+    #include <pdh.h>
+    #include <psapi.h>
+    #include <tchar.h>
     #include <windows.h>
+#else
+    #include <errno.h>
+    #include <pthread.h>
+    #include <sched.h>
+    #include <sys/stat.h>
+    #include <sys/syscall.h>
+    #include <time.h>
+    #include <unistd.h>
 #endif
+
+
 
 namespace mahi::gui::System {
 
@@ -80,6 +96,114 @@ void openEmail(const std::string& address, const std::string& subject) {
     if (!subject.empty()) 
         str += "?subject=" + subject;
     ShellExecuteA(0, 0, str.c_str(), 0, 0 , 5);
+}
+
+
+// for CPU usage total
+static PDH_HQUERY cpuQuery;
+static PDH_HCOUNTER cpuTotal;
+
+// for CPU usage process
+static ULARGE_INTEGER lastCPU, lastSysCPU, lastUserCPU;
+static int numProcessors;
+static HANDLE self;
+
+// We need to initialize a few things for Windows functions, so we create a
+// simple class with the the init code in its constructor and create an isntance
+struct PerformanceInitializer {
+    PerformanceInitializer() {
+        // for CPU usage total
+        PdhOpenQuery(0, 0, &cpuQuery);
+        PdhAddCounter(cpuQuery, "\\Processor(_Total)\\% Processor Time", 0, &cpuTotal);
+        PdhCollectQueryData(cpuQuery);
+        // for CPU usage process
+        SYSTEM_INFO sysInfo;
+        FILETIME ftime, fsys, fuser;
+
+        GetSystemInfo(&sysInfo);
+        numProcessors = sysInfo.dwNumberOfProcessors;
+
+        GetSystemTimeAsFileTime(&ftime);
+        memcpy(&lastCPU, &ftime, sizeof(FILETIME));
+
+        self = GetCurrentProcess();
+        GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
+        memcpy(&lastSysCPU, &fsys, sizeof(FILETIME));
+        memcpy(&lastUserCPU, &fuser, sizeof(FILETIME));
+    }
+    ~PerformanceInitializer() { }
+};
+
+// create an instance, calls the init code in constructor
+PerformanceInitializer global_initializer;
+
+double cpuUsageTotal() {
+    PDH_FMT_COUNTERVALUE counterVal;
+    PdhCollectQueryData(cpuQuery);
+    PdhGetFormattedCounterValue(cpuTotal, PDH_FMT_DOUBLE, NULL, &counterVal);
+    return counterVal.doubleValue;
+}
+
+double cpuUsageProcess() {
+    FILETIME ftime, fsys, fuser;
+    ULARGE_INTEGER now, sys, user;
+    double percent;
+
+    GetSystemTimeAsFileTime(&ftime);
+    memcpy(&now, &ftime, sizeof(FILETIME));
+
+    GetProcessTimes(self, &ftime, &ftime, &fsys, &fuser);
+    memcpy(&sys, &fsys, sizeof(FILETIME));
+    memcpy(&user, &fuser, sizeof(FILETIME));
+    percent = (double)((sys.QuadPart - lastSysCPU.QuadPart) +
+        (user.QuadPart - lastUserCPU.QuadPart));
+    percent /= (now.QuadPart - lastCPU.QuadPart);
+    percent /= numProcessors;
+    lastCPU = now;
+    lastUserCPU = user;
+    lastSysCPU = sys;
+
+    return percent * 100;
+}
+
+std::size_t virtMemAvailable() {
+    MEMORYSTATUSEX mem_info;
+    mem_info.dwLength = sizeof(MEMORYSTATUSEX);
+    GlobalMemoryStatusEx(&mem_info);
+    return mem_info.ullTotalPageFile;
+}
+
+std::size_t virtMemUsedTotal() {
+    MEMORYSTATUSEX mem_info;
+    mem_info.dwLength = sizeof(MEMORYSTATUSEX);
+    GlobalMemoryStatusEx(&mem_info);
+    return mem_info.ullTotalPageFile - mem_info.ullAvailPageFile;
+}
+
+std::size_t virtMemUsedProcess() {
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+    return pmc.PrivateUsage;
+}
+
+std::size_t ramAvailable() {
+    MEMORYSTATUSEX mem_info;
+    mem_info.dwLength = sizeof(MEMORYSTATUSEX);
+    GlobalMemoryStatusEx(&mem_info);
+    return mem_info.ullTotalPhys;
+}
+
+std::size_t ramUsedTotal() {
+    MEMORYSTATUSEX mem_info;
+    mem_info.dwLength = sizeof(MEMORYSTATUSEX);
+    GlobalMemoryStatusEx(&mem_info);
+    return mem_info.ullTotalPhys - mem_info.ullAvailPhys;
+}
+
+std::size_t ramUsedProcess() {
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc));
+    return pmc.WorkingSetSize;
 }
 
 #else
