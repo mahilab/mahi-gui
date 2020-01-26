@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0)
 
 option(MAHI_GUI_EXAMPLES   "Turn ON to build Syntacts example(s)"            ON)
-option(MAHI_GUI_COROUTINES "Turn on to build experimental coroutine support" OFF)
+option(MAHI_GUI_COROUTINES "Turn on to build experimental coroutine support" ON)
 
 # create project
 project(mahi_gui VERSION 1.0.0)
