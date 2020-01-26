@@ -37,7 +37,7 @@ Application::Application(const char *title, int monitorIdx) : window(nullptr)
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW!");
     GLFWmonitor *monitor;
-    if (monitorIdx = 0)
+    if (monitorIdx == 0)
         auto monitor = glfwGetPrimaryMonitor();
     else
     {
