@@ -16,7 +16,7 @@ target_compile_features(mahi_gui PUBLIC cxx_std_17 PRIVATE)
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(mahi_gui PUBLIC "/await" PRIVATE) # COROUTINES
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(mahi_gui PUBLIC "-std=c++2a" "-fcoroutines-ts" "-stdlib=libc++") # COROUTINES
+    target_compile_options(mahi_gui PUBLIC "-fcoroutines-ts" "-stdlib=libc++") # COROUTINES
 endif()
 
 add_subdirectory(src/mahi)

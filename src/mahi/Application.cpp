@@ -246,7 +246,7 @@ static void configureImGui(GLFWwindow *window)
     // add fonts
     io.Fonts->Clear();
     ImFontConfig font_cfg;
-    strcpy_s(font_cfg.Name, "Roboto Mono Bold");
+    strcpy(font_cfg.Name, "Roboto Mono Bold");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
     std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
