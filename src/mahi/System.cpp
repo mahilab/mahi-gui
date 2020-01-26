@@ -86,6 +86,9 @@ DialogResult pickFolder(const std::string& defaultPath, std::string& outPath) {
         return DialogResult::Error;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// WINDOWS
+///////////////////////////////////////////////////////////////////////////////
 #ifdef _WIN32
 
 bool openFolder(const std::string& path) {
@@ -116,7 +119,6 @@ void openEmail(const std::string& address, const std::string& subject) {
         str += "?subject=" + subject;
     ShellExecuteA(0, 0, str.c_str(), 0, 0 , 5);
 }
-
 
 // for CPU usage total
 static PDH_HQUERY cpuQuery;
@@ -225,16 +227,59 @@ std::size_t ramUsedProcess() {
     return pmc.WorkingSetSize;
 }
 
-#else
+#elif(__APPLE__)
+
+///////////////////////////////////////////////////////////////////////////////
+// macOS
+///////////////////////////////////////////////////////////////////////////////
 
 void openUrl(const std::string& url) {
-    // TODO
+    std::string command = "open " + url;
+    system(command.c_str());
 }
 
 void openEmail(const std::string& address, const std::string& subject) {
-    // TODO
+    std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
+    std::string command = "open " + mailTo;
+    system(command.c_str());
+}
+
+
+double cpuUsageTotal() {
+    return 0; // TODO
+}
+
+double cpuUsageProcess() {
+    return 0; // TODO
+}
+
+std::size_t virtMemAvailable() {
+    return 0; // TODO
+}
+
+std::size_t virtMemUseTotal() {
+    return 0; // TODO
+}
+
+std::size_t virtMemUsedProcess() {
+    return 0; // TODO
+}
+
+std::size_t ramAvailable() {
+    return 0; // TODO
+}
+
+std::size_t ramUsedTotal() {
+    return 0; // TODO
+}
+
+std::size_t ramUsedProcess() {
+    return 0; // TODO
 }
 
 #endif
 
 } // namespace mahi::gui::System
+
+// Links/Resources
+// https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process

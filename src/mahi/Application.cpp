@@ -36,9 +36,11 @@ Application::Application(const char *title, int monitorIdx) : window(nullptr)
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW!");
-    GLFWmonitor *monitor;
-    if (monitorIdx == 0)
-        auto monitor = glfwGetPrimaryMonitor();
+    GLFWmonitor *monitor = nullptr;
+    if (monitorIdx == 0) {
+        monitor = glfwGetPrimaryMonitor();
+        std::cout << "using def mon" << std::endl;
+    }
     else
     {
         int count;
@@ -128,6 +130,7 @@ void Application::run()
         ImGui::NewFrame();
         // update
         update();
+#ifdef MAHI_GUI_COROUTINES
         // resume coroutines
         if (!m_coroutines.empty())
         {
@@ -139,6 +142,7 @@ void Application::run()
                     m_coroutines.push_back(std::move(coro));
             }
         }
+#endif 
         // Rendering
         ImGui::Render();
         int display_w, display_h;
@@ -163,6 +167,8 @@ void Application::update()
     // do nothing by default (user implemented)
 }
 
+#ifdef MAHI_GUI_COROUTINES
+
 std::shared_ptr<Coroutine> Application::startCoroutine(Enumerator &&e)
 {
     auto h = e.getCoroutine();
@@ -185,6 +191,8 @@ int Application::coroutineCount() const
 {
     return static_cast<int>(m_coroutines.size());
 }
+
+#endif
 
 namespace
 {

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0)
 
-option(MAHI_GUI_EXAMPLES "Turn ON to build Syntacts example(s)" ON)
+option(MAHI_GUI_EXAMPLES   "Turn ON to build Syntacts example(s)"            ON)
+option(MAHI_GUI_COROUTINES "Turn on to build experimental coroutine support" OFF)
 
 # create project
 project(mahi_gui VERSION 1.0.0)
@@ -13,12 +14,18 @@ add_library(mahi_gui "")
 add_library(mahi::gui ALIAS mahi_gui)
 set_target_properties(mahi_gui PROPERTIES DEBUG_POSTFIX -d)
 target_compile_features(mahi_gui PUBLIC cxx_std_17 PRIVATE)
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(mahi_gui PUBLIC "/await" PRIVATE) # COROUTINES
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(mahi_gui PUBLIC "-fcoroutines-ts") # COROUTINES
+
+# coroutines
+if(MAHI_GUI_COROUTINES)
+    target_compile_definitions(mahi_gui PUBLIC MAHI_GUI_COROUTINES)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        target_compile_options(mahi_gui PUBLIC "/await")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(mahi_gui PUBLIC "-fcoroutines-ts")
+    endif()
 endif()
 
+# add source files
 add_subdirectory(src/mahi)
 
 # add include files

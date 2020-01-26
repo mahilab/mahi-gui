@@ -5,7 +5,9 @@
 #include <GLFW/glfw3.h>
 #include <mahi/Event.hpp>
 #include <mahi/Color.hpp>
+#ifdef MAHI_GUI_COROUTINES
 #include <mahi/Coroutine.hpp>
+#endif
 
 namespace mahi::gui
 {
@@ -25,15 +27,6 @@ public:
     /// Called once per frame
     virtual void update();
 
-    /// Starts a coroutine
-    std::shared_ptr<Coroutine> startCoroutine(Enumerator &&coro);
-    /// Stops an already running coroutine
-    void stopCoroutine(std::shared_ptr<Coroutine> coro);
-    /// Stops all running coroutines
-    void stopCoroutines();
-    /// Returns the number of coroutines running
-    int coroutineCount() const;
-
 public:
     /// Emitted when file(s) is dropped, passes list of filepaths
     Event<void(const std::vector<std::string> &)> onFileDrop;
@@ -46,9 +39,20 @@ protected:
     /// Internal GLFW window handle
     GLFWwindow *window;
 
+#ifdef MAHI_GUI_COROUTINES
+public:
+    /// Starts a coroutine
+    std::shared_ptr<Coroutine> startCoroutine(Enumerator &&coro);
+    /// Stops an already running coroutine
+    void stopCoroutine(std::shared_ptr<Coroutine> coro);
+    /// Stops all running coroutines
+    void stopCoroutines();
+    /// Returns the number of coroutines running
+    int coroutineCount() const;
 private:
     /// Vector of running coroutines
     std::vector<Enumerator> m_coroutines;
+#endif
 };
 
 } // namespace mahi::gui
