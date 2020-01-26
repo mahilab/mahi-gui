@@ -3,6 +3,7 @@
 #include <cstring>
 #include <ctime>
 #include <iomanip>
+#include <filesystem>
 
 #ifdef _WIN32
     #include <pdh.h>
@@ -19,7 +20,7 @@
     #include <unistd.h>
 #endif
 
-
+namespace fs = std::filesystem;
 
 namespace mahi::gui::System {
 
@@ -87,6 +88,24 @@ DialogResult pickFolder(const std::string& defaultPath, std::string& outPath) {
 
 #ifdef _WIN32
 
+bool openFolder(const std::string& path) {
+    fs::path p(path);
+    if (fs::exists(p) && fs::is_directory(p)) {
+        ShellExecuteA(NULL, "open", p.generic_string().c_str(), NULL, NULL, SW_SHOWDEFAULT);
+        return true;
+    }
+    return false;
+}
+
+bool openFile(const std::string& path) {
+    fs::path p(path);
+    if (fs::exists(p) && fs::is_regular_file(p)) {
+        ShellExecuteA(NULL, "open", p.generic_string().c_str(), NULL, NULL, SW_SHOWDEFAULT);
+        return true;
+    }
+    return false;
+}
+
 void openUrl(const std::string& url) {
     ShellExecuteA(0, 0, url.c_str(), 0, 0 , 5);
 }
@@ -141,7 +160,7 @@ double cpuUsageTotal() {
     PDH_FMT_COUNTERVALUE counterVal;
     PdhCollectQueryData(cpuQuery);
     PdhGetFormattedCounterValue(cpuTotal, PDH_FMT_DOUBLE, NULL, &counterVal);
-    return counterVal.doubleValue;
+    return counterVal.doubleValue * 0.01;
 }
 
 double cpuUsageProcess() {
@@ -163,7 +182,7 @@ double cpuUsageProcess() {
     lastUserCPU = user;
     lastSysCPU = sys;
 
-    return percent * 100;
+    return percent;
 }
 
 std::size_t virtMemAvailable() {
