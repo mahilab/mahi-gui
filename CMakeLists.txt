@@ -53,10 +53,10 @@ set(IMGUI_SRC
     3rdparty/imgui/imstb_rectpack.h
     3rdparty/imgui/imstb_textedit.h
     3rdparty/imgui/imstb_truetype.h    
-    3rdparty/imgui/imgui_impl_glfw.cpp
-    3rdparty/imgui/imgui_impl_glfw.h
-    3rdparty/imgui/imgui_impl_opengl3.cpp
-    3rdparty/imgui/imgui_impl_opengl3.h
+    3rdparty/imgui/examples/imgui_impl_glfw.cpp
+    3rdparty/imgui/examples/imgui_impl_glfw.h
+    3rdparty/imgui/examples/imgui_impl_opengl3.cpp
+    3rdparty/imgui/examples/imgui_impl_opengl3.h
 )
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 target_sources(mahi_gui PRIVATE ${IMGUI_SRC})
