@@ -8,14 +8,16 @@ using namespace mahi::gui;
 class DrawingDemo : public Application {
 public:
     DrawingDemo() :
-        Application(1500,500,"Drawing")
+        Application("Drawing")
     { 
+        // disable viewports
+        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
         backgroundColor = Grays::Black;
-        generateDots({250,250}, 50, 5000);
-        generateDots({500,250}, 50, 5000);
-        generateDots({750,250}, 50, 5000);
-        generateDots({1000,250}, 50, 5000);
-        generateDots({1250,250}, 50, 5000);
+        generateDots({250,250}, 50, 20000);
+        generateDots({500,250}, 50, 20000);
+        generateDots({750,250}, 50, 20000);
+        generateDots({1000,250}, 50, 20000);
+        generateDots({1250,250}, 50, 20000);
     }
 
     virtual void update() override {
@@ -42,7 +44,7 @@ public:
     std::vector<std::vector<ImVec2>> dotGroups;
     std::default_random_engine gen;
     std::normal_distribution<float> dist;
-    ImU32 dotColor = ImGui::GetColorU32({0.5,0.5,0.5,1});
+    ImU32 dotColor = ImGui::GetColorU32({1,1,1,0.25f});
 };
 
 int main(int argc, char const *argv[])

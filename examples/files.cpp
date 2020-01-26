@@ -6,8 +6,10 @@ using namespace mahi::gui;
 class FileDemo : public Application {
 public:
     FileDemo() : Application(150,150,"File Demo", false) {
+        // disable viewports
+        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
         // connect to the file drop event
-        onFileDrop.connect(this, &FileDemo::fileDropHandler);
+        onFileDrop.connect(this, &FileDemo::fileDropHandler);        
     }
     
     void update() override {

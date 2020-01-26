@@ -6,6 +6,7 @@ class CoroDemo : public Application {
 public:
     CoroDemo() : Application(250,250, "Coroutine Demo", false) { 
         backgroundColor = Grays::Black;
+        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
     }
 
     void update() {
