@@ -58,10 +58,22 @@ int main() {
 
 Run and consult the examples for other features. Pay particular attention to [demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/examples/demo.cpp) which shows all of the functionality of the **ImGui** library. It calls the `ImGui::ShowDemoWindow()` function from [imgui_demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/3rdparty/imgui/imgui_demo.cpp), which itself is the absolute best place for **ImGui** examples. For a real-world example, see [Syntacts' GUI](https://github.com/mahilab/Syntacts/tree/master/gui/src), which is built entirely using **mahi gui**.
 
-### Building on Windows
+### Requirements
 
+- C++17 compiler (MSVC or Clang)
 
-### Building on macOS
+### Building Examples on Windows
+
+On Windows, we recommend using to MSVC 2017 or 2019:
+
+```shell
+> cd mahi-gui
+> mkdir build
+> cmake .. -G "Visual Studio 16 2019" -A x64
+> cmake --build . --config Release
+```
+
+### Building Examples on macOS
 
 On macOS, we will use `LLVM clang` to build `mahi-gui`. While `Xcode` uses an Apple flavored version of  the `clang` compiler by default, the version you have installed my not be [up to date](https://en.wikipedia.org/wiki/Xcode#Version_comparison_table) with the required version of LLVM (> 8.0.0). Therefore, for this tutorial download the pre-built binaries for the latest version of LLVM from [here](http://releases.llvm.org/download.html).
 
