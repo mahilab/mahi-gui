@@ -233,6 +233,16 @@ std::size_t ramUsedProcess() {
 // macOS
 ///////////////////////////////////////////////////////////////////////////////
 
+bool openFolder(const std::string& path) {
+    fs::path p(path);
+    if (fs::exists(p) && fs::is_directory(p)) {
+        std::string command = "open " + p.generic_string();
+        system(command.c_str());
+        return true;
+    }
+    return false;
+}
+
 void openUrl(const std::string& url) {
     std::string command = "open " + url;
     system(command.c_str());
