@@ -12,7 +12,7 @@
 #include <mahi/Vec2.hpp>
 #include <mahi/Icons/IconsFontAwesome5.hpp>
 #include <mahi/Icons/IconsFontAwesome5Brands.hpp>
-#include <imgui.h>
+#include <mahi/ImGui.hpp>
 
 #ifdef MAHI_GUI_COROUTINES
 #include <mahi/Coroutine.hpp>

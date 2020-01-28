@@ -5,6 +5,7 @@ target_sources(mahi_gui
     Print.cpp
     Random.cpp
     System.cpp
+    ImGui.cpp
 )
 
 if(MAHI_GUI_COROUTINES)
