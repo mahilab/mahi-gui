@@ -51,24 +51,30 @@ struct PlotItem {
 
 struct PlotAxis {
     PlotAxis();
-    bool show;
+    bool showGrid;
+    bool showTicks;
+    bool showLabels;
     float minimum;
     float maximum;
     int divisions;
     int subDivisions;
     ImVec4 color;
     float zoomRate;
+    bool lockMin;
+    bool lockMax;
 };
 
 struct PlotInterface {
     PlotInterface();
     PlotAxis xAxis;
     PlotAxis yAxis;
+    bool showCrosshairs;
+    bool showMousePos;
     ImVec4 frameColor;
     ImVec4 backgroundColor;
     ImVec4 borderColor;  
     std::vector<PlotItem> items;
-    // internal
+    // internal state
     bool _dragging;
 };
 

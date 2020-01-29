@@ -35,7 +35,7 @@ public:
         }
         // XBar
         plot.items[2].type = ImGui::PlotItem::XBar;
-        plot.items[2].color = Reds::FireBrick;
+        plot.items[2].color = withAlpha(Reds::FireBrick, 0.5f);
         plot.items[2].size = 0.5f;
         plot.items[2].data.resize(10);
         for (int i = 0; i < 10; ++i)
@@ -58,17 +58,32 @@ public:
         ImGui::Begin("Plots", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
         // demo controls (you don't need this)
-
-        ImGui::DragFloatRange2("##X-Axis", &plot.xAxis.minimum, &plot.xAxis.maximum, 0.01f, -10, 10);
-        ImGui::SameLine(); ImGui::Checkbox("##ShowX", &plot.xAxis.show);
+        ImGui::Text("X-Axis"); ImGui::SameLine();
+        ImGui::PushItemWidth(200);
+        ImGui::DragFloatRange2("##XRange", &plot.xAxis.minimum, &plot.xAxis.maximum, 0.01f, -10, 10); ImGui::SameLine();
+        ImGui::SliderInt2("##XDivisions", &plot.xAxis.divisions, 0, 20);
+        ImGui::PopItemWidth();
+        ImGui::SameLine(); ImGui::Checkbox("##GridX", &plot.xAxis.showGrid); 
+        ImGui::SameLine(); ImGui::Checkbox("##TicksX", &plot.xAxis.showTicks);
+        ImGui::SameLine(); ImGui::Checkbox("##LabelsX", &plot.xAxis.showLabels);
+        ImGui::SameLine(); ImGui::Checkbox("##LockMinX", &plot.xAxis.lockMin);
+        ImGui::SameLine(); ImGui::Checkbox("##LockMaxX", &plot.xAxis.lockMax);
         ImGui::SameLine(); ImGui::ColorEdit4("X-Axis Color", (float*)&plot.xAxis.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-        ImGui::SliderInt2("##X-Divisions", &plot.xAxis.divisions, 0, 20);
 
-        ImGui::DragFloatRange2("##Y-Axis", &plot.yAxis.minimum, &plot.yAxis.maximum, 0.01f, -10, 10);
-        ImGui::SameLine(); ImGui::Checkbox("##ShowY", &plot.yAxis.show);
+        ImGui::Text("Y-Axis"); ImGui::SameLine();
+        ImGui::PushItemWidth(200);
+        ImGui::DragFloatRange2("##YRange", &plot.yAxis.minimum, &plot.yAxis.maximum, 0.01f, -10, 10); ImGui::SameLine();         
+        ImGui::SliderInt2("##YDivisions", &plot.yAxis.divisions, 0, 20);
+        ImGui::SameLine(); ImGui::Checkbox("##ShowY", &plot.yAxis.showGrid);
+        ImGui::SameLine(); ImGui::Checkbox("##TicksY", &plot.yAxis.showTicks);
+        ImGui::SameLine(); ImGui::Checkbox("##LabelsY", &plot.yAxis.showLabels);
+        ImGui::SameLine(); ImGui::Checkbox("##LockMinY", &plot.yAxis.lockMin);
+        ImGui::SameLine(); ImGui::Checkbox("##LockMaxY", &plot.yAxis.lockMax);
         ImGui::SameLine(); ImGui::ColorEdit4("Y-Axis Color", (float*)&plot.yAxis.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-        ImGui::SliderInt2("##Y-Divisions", &plot.yAxis.divisions, 0, 20);
+        
+        ImGui::Text("      "); ImGui::SameLine(); ImGui::Checkbox("Crosshairs", &plot.showCrosshairs);
 
+        ImGui::Separator();
         ImGui::Checkbox("Line", &plot.items[0].show); ImGui::SameLine();
         ImGui::Checkbox("Scatter", &plot.items[1].show); ImGui::SameLine();
         ImGui::Checkbox("X Bar", &plot.items[2].show); ImGui::SameLine();
