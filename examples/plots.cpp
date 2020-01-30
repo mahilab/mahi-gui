@@ -6,7 +6,7 @@ class PlotDemo : public Application {
 public:
     PlotDemo() : Application(800,500,"Plot Demo") { 
         backgroundColor = Grays::Black;
-        ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
+        // ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
         // setup
         plot.xAxis.minimum = 0;
         plot.xAxis.maximum = 10;
@@ -47,42 +47,35 @@ public:
         plot.items[3].data.resize(10);
         for (int i = 0; i < 10; ++i)
             plot.items[3].data[i] = {Random::range(0.0f,2.0f), ((float)i + 0.5f) * 0.1f};
-
     }
+
+    void DemoAxisControls(const char* label, ImGui::PlotAxis& axis) {
+        ImGui::PushID(label);
+        ImGui::Text(label); ImGui::SameLine();
+        ImGui::PushItemWidth(200);
+        ImGui::DragFloatRange2("##Range", &axis.minimum, &axis.maximum, 0.01f, -10, 10); ImGui::SameLine();
+        ImGui::SliderInt2("##Divisions", &axis.divisions, 0, 20);
+        ImGui::PopItemWidth();
+        ImGui::SameLine(); ImGui::Checkbox("##Grid", &axis.showGrid); 
+        ImGui::SameLine(); ImGui::Checkbox("##Ticks", &axis.showTicks);
+        ImGui::SameLine(); ImGui::Checkbox("##Labels", &axis.showLabels);
+        ImGui::SameLine(); ImGui::Checkbox("##LockMin", &axis.lockMin);
+        ImGui::SameLine(); ImGui::Checkbox("##LockMax", &axis.lockMax);
+        ImGui::SameLine(); ImGui::Checkbox("##Flip", &axis.flip);
+        ImGui::SameLine(); ImGui::ColorEdit4("Axis Color", (float*)&axis.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::PopID();
+    }
+
 
     void update() override {
         Vec2 vpPos = ImGui::GetMainViewport()->Pos;
         Vec2 vpSize = ImGui::GetMainViewport()->Size;
         ImGui::SetNextWindowPos(vpPos + Vec2(5,5), ImGuiCond_Appearing);
         ImGui::SetNextWindowSize(vpSize - Vec2(10,10), ImGuiCond_Always);
-        ImGui::Begin("Plots", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
-
-        // demo controls (you don't need this)
-        ImGui::Text("X-Axis"); ImGui::SameLine();
-        ImGui::PushItemWidth(200);
-        ImGui::DragFloatRange2("##XRange", &plot.xAxis.minimum, &plot.xAxis.maximum, 0.01f, -10, 10); ImGui::SameLine();
-        ImGui::SliderInt2("##XDivisions", &plot.xAxis.divisions, 0, 20);
-        ImGui::PopItemWidth();
-        ImGui::SameLine(); ImGui::Checkbox("##GridX", &plot.xAxis.showGrid); 
-        ImGui::SameLine(); ImGui::Checkbox("##TicksX", &plot.xAxis.showTicks);
-        ImGui::SameLine(); ImGui::Checkbox("##LabelsX", &plot.xAxis.showLabels);
-        ImGui::SameLine(); ImGui::Checkbox("##LockMinX", &plot.xAxis.lockMin);
-        ImGui::SameLine(); ImGui::Checkbox("##LockMaxX", &plot.xAxis.lockMax);
-        ImGui::SameLine(); ImGui::ColorEdit4("X-Axis Color", (float*)&plot.xAxis.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-
-        ImGui::Text("Y-Axis"); ImGui::SameLine();
-        ImGui::PushItemWidth(200);
-        ImGui::DragFloatRange2("##YRange", &plot.yAxis.minimum, &plot.yAxis.maximum, 0.01f, -10, 10); ImGui::SameLine();         
-        ImGui::SliderInt2("##YDivisions", &plot.yAxis.divisions, 0, 20);
-        ImGui::SameLine(); ImGui::Checkbox("##ShowY", &plot.yAxis.showGrid);
-        ImGui::SameLine(); ImGui::Checkbox("##TicksY", &plot.yAxis.showTicks);
-        ImGui::SameLine(); ImGui::Checkbox("##LabelsY", &plot.yAxis.showLabels);
-        ImGui::SameLine(); ImGui::Checkbox("##LockMinY", &plot.yAxis.lockMin);
-        ImGui::SameLine(); ImGui::Checkbox("##LockMaxY", &plot.yAxis.lockMax);
-        ImGui::SameLine(); ImGui::ColorEdit4("Y-Axis Color", (float*)&plot.yAxis.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-        
+        ImGui::Begin("Plots", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+        DemoAxisControls("X-Axis",plot.xAxis);
+        DemoAxisControls("Y-Axis",plot.yAxis);        
         ImGui::Text("      "); ImGui::SameLine(); ImGui::Checkbox("Crosshairs", &plot.showCrosshairs);
-
         ImGui::Separator();
         ImGui::Checkbox("Line", &plot.items[0].show); ImGui::SameLine();
         ImGui::Checkbox("Scatter", &plot.items[1].show); ImGui::SameLine();
