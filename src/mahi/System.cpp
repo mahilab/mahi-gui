@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <cassert>
 #include <sstream>
+#include <iostream>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <pdh.h>
@@ -20,6 +22,8 @@
 #include <sys/syscall.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <sys/sysctl.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -360,14 +364,44 @@ std::size_t ramUsedProcess()
     return 0; // TODO
 }
 
+struct NameGetter {
+    NameGetter() {
+        FILE* stdoutFile = popen("sw_vers -productName","r");
+        if (stdoutFile) {
+            char buff[32];
+            char* stdout = fgets(buff, sizeof(buff), stdoutFile);
+            name = stdout;
+            if (!name.empty() && name[name.length()-1] == '\n')
+                name.erase(name.length()-1);
+            pclose(stdoutFile);
+        }
+    }
+    std::string name = "N/A";
+};
+
+struct VersionGetter {
+    VersionGetter() {
+        FILE* stdoutFile = popen("sw_vers -productVersion","r");
+        if (stdoutFile) {
+            char buff[32];
+            char* stdout = fgets(buff, sizeof(buff), stdoutFile);
+            ver = stdout;
+            if (!ver.empty() && ver[ver.length()-1] == '\n')
+                ver.erase(ver.length()-1);
+            pclose(stdoutFile);
+        }
+    }
+    std::string ver = "";
+};
+
 const std::string& osName() {
-    static std::string name = "macOS";
-    return name;
+    static NameGetter getter;
+    return getter.name;
 }
 
 const std::string& osVersion() {
-    static std::string ver = "";
-    return ver;
+    static VersionGetter getter;
+    return getter.ver;
 }
 
 #endif
