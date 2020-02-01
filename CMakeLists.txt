@@ -74,7 +74,7 @@ target_link_libraries(mahi_gui PUBLIC nativefiledialog)
 
 # platform specific
 if (WIN32)
-target_link_libraries(mahi_gui PUBLIC Pdh)
+target_link_libraries(mahi_gui PUBLIC Pdh Version)
 endif()
 
 # set target properties

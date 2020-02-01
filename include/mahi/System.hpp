@@ -59,5 +59,11 @@ std::size_t ramUsedTotal();
 /// Gets the RAM used by this process in bytes
 std::size_t ramUsedProcess();
 
+/// Gets string name of the OS
+const std::string& osName();
+
+/// Gets string representation of the OS version
+const std::string& osVersion();
+
 
 } // namespace mahi::gui::System
