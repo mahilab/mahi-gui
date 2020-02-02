@@ -18,3 +18,10 @@
 #include <mahi/Coroutine.hpp>
 #include <mahi/Range.hpp>
 #endif
+
+// 3rd party libs
+#include <nlohmann/json.hpp>
+
+namespace mahi::gui {
+    using json = nlohmann::json;
+}

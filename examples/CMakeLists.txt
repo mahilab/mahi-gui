@@ -10,6 +10,9 @@ target_link_libraries(files mahi::gui)
 add_executable(plots plots.cpp my_icon.rc)
 target_link_libraries(plots mahi::gui)
 
+add_executable(likert likert.cpp my_icon.rc)
+target_link_libraries(likert mahi::gui)
+
 if (MAHI_GUI_COROUTINES)
 add_executable(coroutines coroutines.cpp my_icon.rc)
 target_link_libraries(coroutines mahi::gui)

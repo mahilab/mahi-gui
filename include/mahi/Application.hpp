@@ -16,16 +16,27 @@ class Application
 {
 public:
     /// Fullscreen Constructor
-    Application(const char *title, int monitor = 0);
+    Application(const std::string& title = "", int monitor = 0);
     /// Windowed Mode Constructor
-    Application(int width, int height, const char *title, bool resizable = true);
+    Application(int width, int height, const std::string& title = "", bool resizable = true, int monitor = 0);
     /// Destructor
     ~Application();
 
     /// Runs the application
     void run();
+    /// Quit the application
+    void quit();
     /// Called once per frame
     virtual void update();
+
+    /// Set the window title
+    void setWindowTitle(const std::string& title);
+    /// Set the window position
+    void setWindowPos(int xpos, int ypos);
+    /// Set the window size
+    void setWindowSize(int width, int height);
+    /// Center the window on a monitor
+    void centerWindow(int monitor = 0);
 
 public:
     /// Emitted when file(s) is dropped, passes list of filepaths

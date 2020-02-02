@@ -60,6 +60,8 @@ set(IMGUI_SRC
     3rdparty/imgui/imstb_rectpack.h
     3rdparty/imgui/imstb_textedit.h
     3rdparty/imgui/imstb_truetype.h    
+    3rdparty/imgui/imgui_stdlib.h
+    3rdparty/imgui/imgui_stdlib.cpp
     3rdparty/imgui/examples/imgui_impl_glfw.cpp
     3rdparty/imgui/examples/imgui_impl_glfw.h
     3rdparty/imgui/examples/imgui_impl_opengl3.cpp
@@ -71,6 +73,9 @@ target_sources(mahi_gui PRIVATE ${IMGUI_SRC})
 # NATIVE FILE DIALOG
 add_subdirectory(3rdparty/nativefiledialog)
 target_link_libraries(mahi_gui PUBLIC nativefiledialog)
+
+# JSON
+set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json/include)
 
 # platform specific
 if (WIN32)
@@ -84,6 +89,7 @@ target_include_directories(mahi_gui
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${IMGUI_INCLUDE_DIR}
         ${GLAD_INCLUDE_DIR}
+        ${JSON_INCLUDE_DIR}
 	PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
