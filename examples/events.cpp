@@ -21,7 +21,7 @@ public:
         // connect Event using non-static member function
         onWindowResized.connect(this, &EventsDemo::windowResizeHandler); 
         // connect Event usign a static member function
-        onFileDrop.connect(fileDropHandler);
+        onFileDrop.connect(&EventsDemo::fileDropHandler);
         // connect Event using a free function
         onWindowClosed.connect(windowCloseHandler);
     }
