@@ -1,3 +1,4 @@
+// #define MAHI_GUI_NO_CONSOLE
 #include <mahi/gui.hpp>
 #include <filesystem>
 #include <fstream>
@@ -54,7 +55,7 @@ public:
             ImGui::SameLine(ImGui::GetWindowWidth() - 105);
             if (ImGui::ButtonColored("Submit", Reds::FireBrick, {100,0})) {
                 bool result = saveResponse();
-                if (result && closeOnSubmission)
+                if (result && autoClose)
                     quit();
             }
             // Header
@@ -75,7 +76,7 @@ public:
             float initialY = ImGui::GetCursorPos().y;
             for (int i = 0; i < questions.size(); ++i) {
                 ImGui::PushID(i);
-                ImGui::SetCursorPosY(initialY + qHeight * i);
+                ImGui::SetCursorPosY(initialY + rowHeight * i);
                 ImGui::Separator();
                 ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5);
                 ImGui::Text("[Q.%02d]",i+1); 
@@ -121,11 +122,13 @@ public:
                 file >> j;
                 title = j["title"].get<std::string>();
                 questions = j["questions"].get<std::vector<std::string>>();
-                closeOnSubmission = j["closeOnSubmission"].get<bool>();
-                qWidth = j["questionWidth"].get<float>();
-                qHeight = j["questionHeight"].get<float>();
+                autoClose = j["autoClose"].get<bool>();
+                rowHeight = j.count("rowHeight") > 0 ? j["rowHeight"].get<float>() : 30;
+                for (auto& q : questions)
+                    qWidth = 7 * q.length() > qWidth ? 7 * q.length() : qWidth;
+                qWidth += 75;
                 width = qWidth + 385;
-                height = 85 + qHeight * questions.size();
+                height = 85 + rowHeight * questions.size();
                 responses = std::vector<Response>(questions.size(), NoResponse); 
                 setWindowTitle(title);
                 setWindowSize(width, height);
@@ -204,10 +207,10 @@ public:
     std::vector<Response> responses;     ///< survey responses
     Gender sex = NoGender;               ///< is subject male?
     int age = -1;                        ///< subject age
-    bool closeOnSubmission = false;      ///< should the app close when the user submits a response?
+    bool autoClose = false;      ///< should the app close when the user submits a response?
     float width, height;                 ///< window width/height
-    float qWidth, qHeight;;              ///< row width/height
-    std::string message;                  ///< error message to dispaly
+    float qWidth, rowHeight;;            ///< row width/height
+    std::string message;                 ///< error message to dispaly
 };
 
 int main(int argc, char const *argv[])
@@ -217,16 +220,15 @@ int main(int argc, char const *argv[])
         json j;
         j["title"] = "My Likert Survey";
         j["questions"] = {"Making GUIs with mahi-gui is easy", 
-                          "Making GUIs with mahi-gui is hard",
+                          "I found it difficult to make GUIs with mahi-gui",
                           "Jelly beans are the best candy",
                           "Jelly beans are disgusting",
-                          "I love turtles",
-                          "I hate turtles",
+                          "I like turtles",
+                          "Turtles are disappointing",
                           "These questions are ridiculous",
                           "These questions are thought provoking"};
-        j["closeOnSubmission"] = true;
-        j["questionWidth"] = 350;
-        j["questionHeight"] = 30;
+        j["autoClose"] = true;
+        j["rowHeight"] = 30;
         std::ofstream file("likert.json");
         if (file.is_open())
             file << std::setw(4) << j;

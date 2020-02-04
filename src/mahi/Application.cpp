@@ -22,7 +22,11 @@ namespace
 {
 // GLFW
 static void glfw_context_version();
+static void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer);
 static void glfw_error_callback(int error, const char *description);
+static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos);
+static void glfw_size_callback(GLFWwindow* window, int width, int height);
+static void glfw_close_callback(GLFWwindow* window);
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths);
 // IMGUI
 static void configureImGui(GLFWwindow *window);
@@ -31,6 +35,8 @@ static void configureImGui(GLFWwindow *window);
 ///////////////////////////////////////////////////////////////////////////////
 // APPLICATION
 ///////////////////////////////////////////////////////////////////////////////
+
+Event<void(int, const std::string&)> Application::onError;
 
 Application::Application(const std::string & title, int monitorIdx) : window(nullptr)
 {
@@ -52,6 +58,12 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     if (!mode)
         throw std::runtime_error("Failed to get Video Mode!");
+   
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+   
     glfw_context_version();
     window = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, NULL);
     if (window == NULL)
@@ -60,8 +72,7 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsyncs
     // Setup GLFW Callbacks
-    glfwSetWindowUserPointer(window, this);
-    glfwSetDropCallback(window, glfw_drop_callback);
+    glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader (GLAD)!");
@@ -87,8 +98,7 @@ Application::Application(int width, int height, const std::string& title, bool r
     // Center window
     centerWindow(monitor);
     // Setup GLFW Callbacks
-    glfwSetWindowUserPointer(window, this);
-    glfwSetDropCallback(window, glfw_drop_callback);
+    glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
@@ -161,8 +171,24 @@ void Application::setWindowPos(int xpos, int ypos) {
     glfwSetWindowPos(window, xpos, ypos);
 }
 
+std::pair<int,int> Application::getWindowPos() const {
+    int xpos, ypos;
+    glfwGetWindowPos(window, &xpos, &ypos);
+    return {xpos, ypos};
+}
+
 void Application::setWindowSize(int width, int height) {
     glfwSetWindowSize(window, width, height);
+}
+
+std::pair<int,int> Application::getWindowSize() const {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    return {width, height};
+}
+
+void Application::setWindowSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) {
+    glfwSetWindowSizeLimits(window, minWidth, minHeight, maxWidth, maxHeight);
 }
 
 void Application::centerWindow(int monitorIdx) {
@@ -188,6 +214,34 @@ void Application::centerWindow(int monitorIdx) {
     int windowWidth, windowHeight;
     glfwGetWindowSize(window, &windowWidth, &windowHeight);
     glfwSetWindowPos(window, monitorX + (mode->width - windowWidth) / 2, monitorY + (mode->height - windowHeight) / 2);
+}
+
+void Application::minimizeWindow() {
+    glfwIconifyWindow(window);
+}
+
+void Application::maximizeWindow() {
+    glfwMaximizeWindow(window);
+}
+
+void Application::restoreWindow() {
+    glfwRestoreWindow(window);
+}
+
+void Application::hideWindow() {
+    glfwHideWindow(window);
+}
+
+void Application::showWindow() {
+    glfwShowWindow(window);
+}
+
+void Application::focusWindow() {
+    glfwFocusWindow(window);
+}
+
+void Application::requestWindowAttention() {
+    glfwRequestWindowAttention(window);
 }
 
 void Application::update()
@@ -247,9 +301,35 @@ static void glfw_context_version()
 #endif
 }
 
+void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer) {
+    glfwSetWindowUserPointer(window, userPointer);
+    glfwSetWindowPosCallback(window, glfw_pos_callback);
+    glfwSetWindowSizeCallback(window, glfw_size_callback);
+    glfwSetWindowCloseCallback(window, glfw_close_callback);
+    glfwSetDropCallback(window, glfw_drop_callback);
+}
+
 static void glfw_error_callback(int error, const char *description)
 {
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+    static std::string dsc = description;
+    Application::onError.emit(error, dsc);
+}
+
+static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos) {
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    app->onWindowMoved.emit(xpos, ypos);
+}
+
+static void glfw_size_callback(GLFWwindow* window, int width, int height) {
+    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+    app->onWindowResized.emit(width, height);
+}
+
+void glfw_close_callback(GLFWwindow* window) {
+    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+    auto close = app->onWindowClosed.emit();
+    if (!close) 
+        glfwSetWindowShouldClose(window, GLFW_FALSE);
 }
 
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths)
@@ -282,6 +362,9 @@ static void configureImGui(GLFWwindow *window)
     // add fonts
     io.Fonts->Clear();
     ImFontConfig font_cfg;
+    font_cfg.PixelSnapH = true;
+    font_cfg.OversampleH = 1;
+    font_cfg.OversampleV = 1;
     strcpy(font_cfg.Name, "Roboto Mono Bold");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
     std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
@@ -292,6 +375,8 @@ static void configureImGui(GLFWwindow *window)
     icons_config.PixelSnapH = true;
     icons_config.GlyphMinAdvanceX = 14.0f;
     icons_config.GlyphOffset = ImVec2(0, 0);
+    icons_config.OversampleH = 1;
+    icons_config.OversampleV = 1;
 
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};

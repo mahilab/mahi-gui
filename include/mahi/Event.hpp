@@ -276,4 +276,22 @@ private:
     CollectorResult result_;
 };
 
+//! Returns true if all slots return true, else false. Does not short-circuit. Returns true if there are no slots.
+struct CollectorBooleanAnd {
+	typedef bool CollectorResult;
+
+	explicit CollectorBooleanAnd() : result_( true ) {}
+
+	const CollectorResult& result() const	{ return result_; }
+
+	inline bool	operator()( bool r )
+	{
+		result_ = ( result_ && r );
+		return true;
+	}
+
+private:
+	CollectorResult result_;
+};
+
 } // namespace mahi::gui
