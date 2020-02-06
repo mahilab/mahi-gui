@@ -74,6 +74,89 @@ bool ButtonColored(const char* label, const ImVec4& color, const ImVec2& size) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// DOUBLES
+///////////////////////////////////////////////////////////////////////////////
+
+bool DragDouble(const char* label, double* v, float v_speed, double v_min, double v_max, const char* format, float power)
+{
+    return DragScalar(label, ImGuiDataType_Double, v, v_speed, &v_min, &v_max, format, power);
+}
+
+bool DragDouble2(const char* label, double v[2], float v_speed, double v_min, double v_max, const char* format, float power)
+{
+    return DragScalarN(label, ImGuiDataType_Double, v, 2, v_speed, &v_min, &v_max, format, power);
+}
+
+bool DragDouble3(const char* label, double v[3], float v_speed, double v_min, double v_max, const char* format, float power)
+{
+    return DragScalarN(label, ImGuiDataType_Double, v, 3, v_speed, &v_min, &v_max, format, power);
+}
+
+bool DragDouble4(const char* label, double v[4], float v_speed, double v_min, double v_max, const char* format, float power)
+{
+    return DragScalarN(label, ImGuiDataType_Double, v, 4, v_speed, &v_min, &v_max, format, power);
+}
+
+bool DragDoubleRange2(const char* label, double* v_current_min, double* v_current_max, float v_speed, double v_min, double v_max, const char* format, const char* format_max, float power)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+    PushID(label);
+    BeginGroup();
+    PushMultiItemsWidths(2, CalcItemWidth());
+
+    bool value_changed = DragDouble("##min", v_current_min, v_speed, (v_min >= v_max) ? -FLT_MAX : v_min, (v_min >= v_max) ? *v_current_max : ImMin(v_max, *v_current_max), format, power);
+    PopItemWidth();
+    SameLine(0, g.Style.ItemInnerSpacing.x);
+    value_changed |= DragDouble("##max", v_current_max, v_speed, (v_min >= v_max) ? *v_current_min : ImMax(v_min, *v_current_min), (v_min >= v_max) ? FLT_MAX : v_max, format_max ? format_max : format, power);
+    PopItemWidth();
+    SameLine(0, g.Style.ItemInnerSpacing.x);
+
+    TextEx(label, FindRenderedTextEnd(label));
+    EndGroup();
+    PopID();
+    return value_changed;
+}
+
+bool SliderDouble(const char* label, double* v, double v_min, double v_max, const char* format, float power)
+{
+    return SliderScalar(label, ImGuiDataType_Double, v, &v_min, &v_max, format, power);
+}
+
+bool SliderDouble2(const char* label, double v[2], double v_min, double v_max, const char* format, float power)
+{
+    return SliderScalarN(label, ImGuiDataType_Double, v, 2, &v_min, &v_max, format, power);
+}
+
+bool SliderDouble3(const char* label, double v[3], double v_min, double v_max, const char* format, float power)
+{
+    return SliderScalarN(label, ImGuiDataType_Double, v, 3, &v_min, &v_max, format, power);
+}
+
+bool SliderDouble4(const char* label, double v[4], double v_min, double v_max, const char* format, float power)
+{
+    return SliderScalarN(label, ImGuiDataType_Double, v, 4, &v_min, &v_max, format, power);
+}
+
+bool InputDouble2(const char* label, double v[2], const char* format, ImGuiInputTextFlags flags)
+{
+    return InputScalarN(label, ImGuiDataType_Double, v, 2, NULL, NULL, format, flags);
+}
+
+bool InputDouble3(const char* label, double v[3], const char* format, ImGuiInputTextFlags flags)
+{
+    return InputScalarN(label, ImGuiDataType_Double, v, 3, NULL, NULL, format, flags);
+}
+
+bool InputDouble4(const char* label, double v[4], const char* format, ImGuiInputTextFlags flags)
+{
+    return InputScalarN(label, ImGuiDataType_Double, v, 4, NULL, NULL, format, flags);
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // PLOT
 //////////////////////////////////////////////////////////////////////////////
 
@@ -226,8 +309,12 @@ PlotInterface::PlotInterface() : showCrosshairs(false), showMousePos(true), enab
     selectionColor = {.118f, .565f, 1, 0.25};
 }
 
-bool Plot(const char* label_id, PlotInterface& plot, const std::vector<PlotItem>& items,  const ImVec2& size) {
-    
+bool Plot(const char* label_id, PlotInterface& plot, const std::vector<PlotItem>& items, const ImVec2& size) {
+    return Plot(label_id, &plot, &items[0], items.size(), size);
+}
+
+bool Plot(const char* label_id, PlotInterface* plot_ptr, const PlotItem* items, int nItems, const ImVec2& size) {
+    PlotInterface& plot = *plot_ptr;
     // ImGui front matter
     ImGuiWindow* Window = GetCurrentWindow();
     if (Window->SkipItems)
@@ -423,16 +510,16 @@ bool Plot(const char* label_id, PlotInterface& plot, const std::vector<PlotItem>
     }    
     
     // render plot items
-    for (auto& item : items) {
-        if (item.show) {
-            if (item.type == PlotItem::Line)
-                RenderPlotItemLine(item, plot, pix, DrawList);
-            else if (item.type == PlotItem::Scatter)
-                RenderPlotItemScatter(item, plot, pix, DrawList);
-            else if (item.type == PlotItem::XBar)
-                RenderPlotItemXBar(item, plot, pix, DrawList);
-            else if (item.type == PlotItem::YBar)
-                RenderPlotItemYBar(item, plot, pix, DrawList);
+    for (int i = 0; i < nItems; ++i) {
+        if (items[i].show) {
+            if (items[i].type == PlotItem::Line)
+                RenderPlotItemLine(items[i], plot, pix, DrawList);
+            else if (items[i].type == PlotItem::Scatter)
+                RenderPlotItemScatter(items[i], plot, pix, DrawList);
+            else if (items[i].type == PlotItem::XBar)
+                RenderPlotItemXBar(items[i], plot, pix, DrawList);
+            else if (items[i].type == PlotItem::YBar)
+                RenderPlotItemYBar(items[i], plot, pix, DrawList);
         }
     }   
 

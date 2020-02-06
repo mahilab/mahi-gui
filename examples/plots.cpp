@@ -99,7 +99,7 @@ public:
 
 
         // plot (you want this)
-        ImGui::Plot("My Plot", plot, items);
+        ImGui::Plot("My Plot", &plot, &items[0], items.size());
         ImGui::End();
 
     }
