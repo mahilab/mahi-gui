@@ -2,7 +2,7 @@
 
 ## mahi-gui
 
-This library provides a basic all-in-one foundation for making user interfaces and GUIs in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, and a few custom utility classes such as Coroutines and Events to spice things up. 
+This library provides an all-in-one package for making GUIs and 2D visualizations in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, [NanoVG](https://github.com/memononen/nanovg) for drawing vector graphics, and a few custom utility classes such as Coroutines and Events to spice things up. 
 
 ### Integration
 

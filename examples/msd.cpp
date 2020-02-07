@@ -54,10 +54,6 @@ public:
     }
 
     void update() override {
-        ImGui::Begin("Visualization");
-        auto& draw = *ImGui::GetWindowDrawList();
-        draw.AddRectFilled({100,100},{200,200},ImGui::GetColorU32(Reds::Crimson));
-        ImGui::End();
 
         ImGui::Begin("Mass Spring Damper");
         ImGui::DragDouble("M",&msd.m,1,0,100,"%.1f kg");
@@ -67,9 +63,6 @@ public:
         ImGui::DragDouble("T Max",&tmax, 1, 0, 100, "%.0f s");
         if (ImGui::Button("Simulate"))
             simulate();
-        ImGui::End();
-
-        ImGui::Begin("Plot");
         ImGui::Plot("Plot", &plot, &xplot, 1);
         ImGui::End();
 
@@ -91,11 +84,10 @@ public:
             maxx = std::max(maxx, msd.x);
             t += tstep;
         }
-        print(minx, maxx);
         plot.xAxis.minimum = 0;
         plot.xAxis.maximum = tmax;
-        plot.yAxis.minimum = minx * 1.1;
-        plot.yAxis.maximum = maxx * 1.1;
+        plot.yAxis.minimum = minx;
+        plot.yAxis.maximum = maxx;
     }
 
     MassSpringDamper msd;
