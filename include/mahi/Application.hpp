@@ -4,6 +4,7 @@
 #include <utility>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <nanovg.h>
 #include <mahi/Event.hpp>
 #include <mahi/Color.hpp>
 #ifdef MAHI_GUI_COROUTINES
@@ -29,6 +30,9 @@ public:
     void quit();
     /// Called once per frame
     virtual void update();
+
+    /// Get the current time
+    double time() const;
 
     /// Set the window title
     void setWindowTitle(const std::string& title);
@@ -58,6 +62,11 @@ public:
     void focusWindow();
     /// Notify the user by requesting window attention
     void requestWindowAttention();
+    /// Enable/disable VSync
+    void enableVSync(bool enable);
+
+    /// Get the mouse position 
+    std::pair<float,float> getMousePosition() const;
 
 public:
     /// Emitted when the Window moves
@@ -78,6 +87,8 @@ public:
 protected:
     /// Internal GLFW window handle, you can use glfwXXX functions with this
     GLFWwindow *window;
+    /// Internal NanoVG context pointer
+    NVGcontext* vg;
 
 #ifdef MAHI_GUI_COROUTINES
 public:

@@ -1,5 +1,8 @@
 #include <mahi/Application.hpp>
 
+#define NANOVG_GL3_IMPLEMENTATION
+#include "nanovg_gl.h"
+
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "examples/imgui_impl_glfw.h"
@@ -70,12 +73,16 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsyncs
+    enableVSync(true);
     // Setup GLFW Callbacks
     glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader (GLAD)!");
+    // initialize NanoVg
+    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (vg == NULL)
+        throw std::runtime_error("Failed to create NanoVG context!");
     // Setup ImGui
     configureImGui(window);
 }
@@ -94,7 +101,7 @@ Application::Application(int width, int height, const std::string& title, bool r
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsyncs
+    enableVSync(true);
     // Center window
     centerWindow(monitor);
     // Setup GLFW Callbacks
@@ -102,6 +109,10 @@ Application::Application(int width, int height, const std::string& title, bool r
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
+        // initialize NanoVg
+    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (vg == NULL)
+        throw std::runtime_error("Failed to create NanoVG context!");
     // Setup ImGui
     configureImGui(window);
 }
@@ -111,6 +122,7 @@ Application::~Application()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    nvgDeleteGL3(vg);
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -125,6 +137,17 @@ void Application::run()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        // Clear frame, setup dendering
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        glViewport(0, 0, fbWidth, fbHeight);
+        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
+        glClear(GL_COLOR_BUFFER_BIT);
+        // nanovg
+        int winWidth, winHeight;
+        glfwGetWindowSize(window, &winWidth, &winHeight);
+        float pxRatio = (float)fbWidth / (float)winWidth;
+        nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
         // update
         update();
 #ifdef MAHI_GUI_COROUTINES
@@ -140,13 +163,8 @@ void Application::run()
             }
         }
 #endif 
-        // Rendering
+        nvgEndFrame(vg);
         ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
-        glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
@@ -161,6 +179,10 @@ void Application::run()
 
 void Application::quit() {
     glfwSetWindowShouldClose(window, 1);
+}
+
+double Application::time() const {
+    return glfwGetTime();
 }
 
 void Application::setWindowTitle(const std::string& title) {
@@ -243,6 +265,21 @@ void Application::focusWindow() {
 void Application::requestWindowAttention() {
     glfwRequestWindowAttention(window);
 }
+
+void Application::enableVSync(bool enable) {
+    if (enable)
+        glfwSwapInterval(1); // Enable vsync
+    else
+        glfwSwapInterval(0); // Disable vsync
+}
+
+
+std::pair<float,float> Application::getMousePosition() const {
+    double x,y;
+    glfwGetCursorPos(window, &x, &y);
+    return {(float)x,(float)y};
+}
+
 
 void Application::update()
 {
@@ -356,7 +393,7 @@ static void configureImGui(GLFWwindow *window)
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
+    // io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
     
     // add fonts
@@ -388,8 +425,7 @@ static void configureImGui(GLFWwindow *window)
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
     unsigned char *fontCopy3 = new unsigned char[fa_brands_400_ttf_len];
     std::memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
-    io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);
-   
+    io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);   
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
 

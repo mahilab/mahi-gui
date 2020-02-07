@@ -40,13 +40,8 @@ add_subdirectory(3rdparty/glfw)
 target_link_libraries(mahi_gui PUBLIC glfw)
 
 # GLAD
-set(GLAD_SRC 
-    3rdparty/glad/include/glad/glad.h
-    3rdparty/glad/include/KHR/khrplatform.h
-    3rdparty/glad/src/glad.c
-)
-set(GLAD_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glad/include)
-target_sources(mahi_gui PRIVATE ${GLAD_SRC})
+add_subdirectory(3rdparty/glad)
+target_link_libraries(mahi_gui PUBLIC glad)
 
 # IMGUI
 set(IMGUI_SRC
@@ -77,6 +72,10 @@ target_link_libraries(mahi_gui PUBLIC nativefiledialog)
 # JSON
 set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json/include)
 
+# NANOVG
+add_subdirectory(3rdparty/nanovg)
+target_link_libraries(mahi_gui PUBLIC nanovg)
+
 # platform specific
 if (WIN32)
 target_link_libraries(mahi_gui PUBLIC Pdh Version)
@@ -88,7 +87,6 @@ target_include_directories(mahi_gui
 		$<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${IMGUI_INCLUDE_DIR}
-        ${GLAD_INCLUDE_DIR}
         ${JSON_INCLUDE_DIR}
 	PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src

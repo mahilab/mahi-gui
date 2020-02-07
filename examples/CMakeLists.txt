@@ -16,6 +16,12 @@ target_link_libraries(likert mahi::gui)
 add_executable(events events.cpp my_icon.rc)
 target_link_libraries(events mahi::gui)
 
+add_executable(msd msd.cpp my_icon.rc)
+target_link_libraries(msd mahi::gui)
+
+add_executable(nvg nvg.cpp my_icon.rc)
+target_link_libraries(nvg mahi::gui)
+
 if (MAHI_GUI_COROUTINES)
 add_executable(coroutines coroutines.cpp my_icon.rc)
 target_link_libraries(coroutines mahi::gui)
