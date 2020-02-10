@@ -17,7 +17,16 @@
 //
 
 #include <stdio.h>
-#include <glad/glad.h>
+#ifdef NANOVG_GLEW
+#	include <GL/glew.h>
+#endif
+#ifdef NANOVG_GLAD
+#  include <glad/glad.h>
+#endif
+#ifdef __APPLE__
+#	define GLFW_INCLUDE_GLCOREARB
+#endif
+// #define GLFW_INCLUDE_GLEXT
 #include <GLFW/glfw3.h>
 #include "nanovg.h"
 #define NANOVG_GL3_IMPLEMENTATION
@@ -97,11 +106,12 @@ int main()
 	}
 	// GLEW generates GL error because it calls glGetString(GL_EXTENSIONS), we'll consume it here.
 	glGetError();
-#endif
-
+#elif NANOVG_GLAD
 	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0) {
-		printf("Could not init glew.\n");
+		printf("Could not init GLAD.\n");
+		return -1;
 	}
+#endif
 
 #ifdef DEMO_MSAA
 	vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);

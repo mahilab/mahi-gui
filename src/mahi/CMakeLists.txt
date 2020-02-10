@@ -5,6 +5,7 @@ target_sources(mahi_gui
     Print.cpp
     Random.cpp
     System.cpp
+    Svg.cpp
     imgui_custom.cpp
 )
 

@@ -4,9 +4,14 @@ using namespace mahi::gui;
 
 class NvgDemo : public Application {
 public:
+    NSVGimage* image;
     NvgDemo() : Application(250,250,"NVG Demo") { 
         backgroundColor = Grays::Gray10;
         enableVSync(false);
+        image = nsvgParseFromFile("olho_vetorial.svg", "px", 96.0f); 
+    }
+    ~NvgDemo() {
+        nsvgDelete(image);
     }
     void update() override { 
 
@@ -24,9 +29,10 @@ public:
         auto [w,h] = getWindowSize();
         auto [x,y] = getMousePosition();
         double t = time();
-
+        nvgScale(vg,2,2);
+        svgDraw(vg, image);
+        nvgScale(vg,0.5,0.5);
         drawEyes(vg, (w-150)/2, (h-100)/2, 150, 100, x, y, t);
-
         nvgBeginPath(vg);
         nvgCircle(vg, x, y, 5);
         nvgFillColor(vg, nvgRGBA(255,192,0,255));
@@ -101,9 +107,14 @@ public:
     }
 };
 
+
+
 int main(int argc, char const *argv[])
 {
     NvgDemo demo;
     demo.run();
     return 0;
 }
+
+
+

@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <glad/glad.h>
+#ifdef NANOVG_GLEW
+#  include <GL/glew.h>
+#elif NANOVG_GLAD
+#  include <glad/glad.h>
+#endif
 #include <GLFW/glfw3.h>
 #include "nanovg.h"
 

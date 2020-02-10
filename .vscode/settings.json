@@ -77,6 +77,8 @@
         "string_view": "cpp",
         "cinttypes": "cpp",
         "codecvt": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "forward_list": "cpp",
+        "valarray": "cpp"
     }
 }

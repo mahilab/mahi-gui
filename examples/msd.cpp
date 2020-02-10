@@ -6,15 +6,18 @@ class Integrator {
 public:
     Integrator(double initial = 0.0) : integral(initial) { }
     double update(double x, double t) {
-        integral += (t - last_t) * (0.5 * (last_x + x));
+        if (step_count > 0)
+            integral += (t - last_t) * (0.5 * (last_x + x));
         last_x = x;
         last_t = t;
+        step_count++;
         return integral;
     }
 private:
-    double last_x;  ///< Integrand at previous call to integrate()
-    double last_t;  ///< Time at previous call to integrate()
-    double integral; ///< The integral value
+    double last_x   = 0; ///< Integrand at previous call to integrate()
+    double last_t   = 0; ///< Time at previous call to integrate()
+    double integral = 0; ///< The integral value
+    int step_count  = 0;
 };
 
 // Simulated system to control
@@ -36,8 +39,8 @@ public:
     }
     // Properties
     double m = 10; // mass, kg    
-    double k = 20; // spring, N/m
-    double b = 30; // damping, Ns/m
+    double k = 50; // spring, N/m
+    double b = 10; // damping, Ns/m
     // State
     double x; // position, m
     double xd; // velocity, m/s
@@ -49,13 +52,13 @@ private:
 
 class MsdDemo : public Application {
 public:
-    MsdDemo() : Application(500,500,"MSD Demo") { 
-        // ImGui::DisableViewports();
+    MsdDemo() : Application(1000,500,"MSD Demo") { 
+        ImGui::DisableViewports();
+        backgroundColor = Grays::Black;
     }
 
     void update() override {
-
-        ImGui::Begin("Mass Spring Damper");
+        ImGui::BeginFixed("Mass Spring Damper",{10,10}, {480,480}, ImGuiWindowFlags_NoTitleBar);
         ImGui::DragDouble("M",&msd.m,1,0,100,"%.1f kg");
         ImGui::DragDouble("K",&msd.k,1,0,100,"%.1f N/m");
         ImGui::DragDouble("B",&msd.b,1,0,100,"%.1f Ns/m");
@@ -90,8 +93,12 @@ public:
         plot.yAxis.maximum = maxx;
     }
 
+    void drawMsd() {
+        
+    }
+
     MassSpringDamper msd;
-    double x0 = 0, xd0 = 0;
+    double x0 = 5, xd0 = 0;
     ImGui::PlotInterface plot;
     ImGui::PlotItem xplot;
     double tmax = 10;

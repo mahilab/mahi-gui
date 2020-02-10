@@ -13,6 +13,7 @@
 #include <mahi/Icons/IconsFontAwesome5.hpp>
 #include <mahi/Icons/IconsFontAwesome5Brands.hpp>
 #include <mahi/imgui_custom.hpp>
+#include <mahi/Svg.hpp>
 
 #ifdef MAHI_GUI_COROUTINES
 #include <mahi/Coroutine.hpp>
@@ -21,6 +22,7 @@
 
 // 3rd party libs
 #include <nlohmann/json.hpp>
+#include <nanosvg.h>
 
 namespace mahi::gui {
     using json = nlohmann::json;

@@ -76,6 +76,9 @@ set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json/include)
 add_subdirectory(3rdparty/nanovg)
 target_link_libraries(mahi_gui PUBLIC nanovg)
 
+# NANOSVG
+set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
+
 # platform specific
 if (WIN32)
 target_link_libraries(mahi_gui PUBLIC Pdh Version)
@@ -88,6 +91,7 @@ target_include_directories(mahi_gui
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         ${IMGUI_INCLUDE_DIR}
         ${JSON_INCLUDE_DIR}
+        ${NANOSVG_INCLUDE_DIR}
 	PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )

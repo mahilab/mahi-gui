@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-// #ifdef NANOVG_GLEW
-// #  include <GL/glew.h>
-// #endif
-#include <glad/glad.h>
+#ifdef NANOVG_GLEW
+#  include <GL/glew.h>
+#elif NANOVG_GLAD
+#  include <glad/glad.h>
+#endif
 #include <GLFW/glfw3.h>
 #include "nanovg.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -812,7 +813,7 @@ int loadDemoData(NVGcontext* vg, DemoData* data)
 
 	for (i = 0; i < 12; i++) {
 		char file[128];
-		snprintf(file, 128, "../example/images/image%d.jpg", i+1);
+		snprintf(file, 128, "images/image%d.jpg", i+1);
 		data->images[i] = nvgCreateImage(vg, file, 0);
 		if (data->images[i] == 0) {
 			printf("Could not load %s.\n", file);
@@ -820,22 +821,22 @@ int loadDemoData(NVGcontext* vg, DemoData* data)
 		}
 	}
 
-	data->fontIcons = nvgCreateFont(vg, "icons", "../example/entypo.ttf");
+	data->fontIcons = nvgCreateFont(vg, "icons", "entypo.ttf");
 	if (data->fontIcons == -1) {
 		printf("Could not add font icons.\n");
 		return -1;
 	}
-	data->fontNormal = nvgCreateFont(vg, "sans", "../example/Roboto-Regular.ttf");
+	data->fontNormal = nvgCreateFont(vg, "sans", "Roboto-Regular.ttf");
 	if (data->fontNormal == -1) {
 		printf("Could not add font italic.\n");
 		return -1;
 	}
-	data->fontBold = nvgCreateFont(vg, "sans-bold", "../example/Roboto-Bold.ttf");
+	data->fontBold = nvgCreateFont(vg, "sans-bold", "Roboto-Bold.ttf");
 	if (data->fontBold == -1) {
 		printf("Could not add font bold.\n");
 		return -1;
 	}
-	data->fontEmoji = nvgCreateFont(vg, "emoji", "../example/NotoEmoji-Regular.ttf");
+	data->fontEmoji = nvgCreateFont(vg, "emoji", "NotoEmoji-Regular.ttf");
 	if (data->fontEmoji == -1) {
 		printf("Could not add font emoji.\n");
 		return -1;
