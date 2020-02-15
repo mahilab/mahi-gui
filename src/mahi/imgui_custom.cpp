@@ -242,10 +242,8 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
         pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.yAxis.minimum);
     }    
     auto color = GetColorU32(item.color);
-    for (int i = 0; i < pointsPx.size() - 1; ++i) {
-        if (i % 2 == 0)
+    for (int i = 0; i < pointsPx.size() - 1; ++i) 
             DrawList.AddLine(pointsPx[i],pointsPx[i+1],color,item.size);
-    }
     // DrawList.AddPolyline(&pointsPx[0], (int)pointsPx.size(), GetColorU32(item.color), false, item.size);    
 }
 
