@@ -241,7 +241,12 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
         pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.xAxis.minimum);
         pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.yAxis.minimum);
     }    
-    DrawList.AddPolyline(&pointsPx[0], (int)pointsPx.size(), GetColorU32(item.color), false, item.size);    
+    auto color = GetColorU32(item.color);
+    for (int i = 0; i < pointsPx.size() - 1; ++i) {
+        if (i % 2 == 0)
+            DrawList.AddLine(pointsPx[i],pointsPx[i+1],color,item.size);
+    }
+    // DrawList.AddPolyline(&pointsPx[0], (int)pointsPx.size(), GetColorU32(item.color), false, item.size);    
 }
 
 inline void RenderPlotItemScatter(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
