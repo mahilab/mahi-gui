@@ -1,7 +1,8 @@
-#define MAHI_GUI_NO_CONSOLE
+// #define MAHI_GUI_NO_CONSOLE
 
 #include <mahi/gui.hpp>
 #include <iostream>
+#include <tuple>
 
 using namespace mahi::gui;
 

@@ -78,7 +78,7 @@ int main(int, char**)
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
     bool err = glewInit() != GLEW_OK;
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
-    bool err = gladLoadGLLoader((GLADloadproc) glfwGetProcAddress) == 0;
+    bool err = gladLoadGL() == 0;
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING)
     bool err = false;
     glbinding::initialize([](const char* name) { return (glbinding::ProcAddress)glfwGetProcAddress(name); });

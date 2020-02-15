@@ -1,12 +1,14 @@
-#include <glad/glad.h>
 #include <mahi/Application.hpp>
 
+#define NANOVG_GL3_IMPLEMENTATION
+#include "nanovg_gl.h"
+
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
+#include "examples/imgui_impl_glfw.h"
+#include "examples/imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <iostream>
-#include <GLFW/glfw3.h>
 #include <stdexcept>
 
 #include "Fonts/Fonts.hpp"
@@ -23,7 +25,11 @@ namespace
 {
 // GLFW
 static void glfw_context_version();
+static void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer);
 static void glfw_error_callback(int error, const char *description);
+static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos);
+static void glfw_size_callback(GLFWwindow* window, int width, int height);
+static void glfw_close_callback(GLFWwindow* window);
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths);
 // IMGUI
 static void configureImGui(GLFWwindow *window);
@@ -33,14 +39,16 @@ static void configureImGui(GLFWwindow *window);
 // APPLICATION
 ///////////////////////////////////////////////////////////////////////////////
 
-Application::Application(const char *title, int monitorIdx) : window(nullptr)
+Event<void(int, const std::string&)> Application::onError;
+
+Application::Application(const std::string & title, int monitorIdx) : window(nullptr)
 {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW!");
-    GLFWmonitor *monitor;
-    if (monitorIdx = 0)
-        auto monitor = glfwGetPrimaryMonitor();
+    GLFWmonitor *monitor = nullptr;
+    if (monitorIdx == 0) 
+        monitor = glfwGetPrimaryMonitor();
     else
     {
         int count;
@@ -53,24 +61,33 @@ Application::Application(const char *title, int monitorIdx) : window(nullptr)
     const GLFWvidmode *mode = glfwGetVideoMode(monitor);
     if (!mode)
         throw std::runtime_error("Failed to get Video Mode!");
+   
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+   
     glfw_context_version();
-    window = glfwCreateWindow(mode->width, mode->height, title, monitor, NULL);
+    window = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, NULL);
     if (window == NULL)
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsyncs
+    enableVSync(true);
     // Setup GLFW Callbacks
-    glfwSetWindowUserPointer(window, this);
-    glfwSetDropCallback(window, glfw_drop_callback);
+    glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
-        throw std::runtime_error("Failed to initialize OpenGL loader!");
+        throw std::runtime_error("Failed to initialize OpenGL loader (GLAD)!");
+    // initialize NanoVg
+    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (vg == NULL)
+        throw std::runtime_error("Failed to create NanoVG context!");
     // Setup ImGui
     configureImGui(window);
 }
 
-Application::Application(int width, int height, const char *title, bool resizable) : window(nullptr)
+Application::Application(int width, int height, const std::string& title, bool resizable, int monitor) : window(nullptr)
 {
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -79,32 +96,23 @@ Application::Application(int width, int height, const char *title, bool resizabl
     glfw_context_version();
     if (!resizable)
         glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    window = glfwCreateWindow(width, height, title, NULL, NULL);
+    window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (window == NULL)
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsyncs
+    enableVSync(true);
     // Center window
-    auto monitor = glfwGetPrimaryMonitor();
-    if (!monitor)
-        throw std::runtime_error("Failed to get Monitor!");
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-    if (!mode)
-        throw std::runtime_error("Failed to get Video Mode!");
-    int monitorX, monitorY;
-    glfwGetMonitorPos(monitor, &monitorX, &monitorY);
-    int windowWidth, windowHeight;
-    glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    glfwSetWindowPos(window,
-                     monitorX + (mode->width - windowWidth) / 2,
-                     monitorY + (mode->height - windowHeight) / 2);
+    centerWindow(monitor);
     // Setup GLFW Callbacks
-    glfwSetWindowUserPointer(window, this);
-    glfwSetDropCallback(window, glfw_drop_callback);
+    glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
+        // initialize NanoVg
+    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (vg == NULL)
+        throw std::runtime_error("Failed to create NanoVG context!");
     // Setup ImGui
     configureImGui(window);
 }
@@ -114,6 +122,7 @@ Application::~Application()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    nvgDeleteGL3(vg);
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -128,8 +137,20 @@ void Application::run()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        // Clear frame, setup dendering
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        glViewport(0, 0, fbWidth, fbHeight);
+        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
+        glClear(GL_COLOR_BUFFER_BIT);
+        // nanovg
+        int winWidth, winHeight;
+        glfwGetWindowSize(window, &winWidth, &winHeight);
+        float pxRatio = (float)fbWidth / (float)winWidth;
+        nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
         // update
         update();
+#ifdef MAHI_GUI_COROUTINES
         // resume coroutines
         if (!m_coroutines.empty())
         {
@@ -141,13 +162,9 @@ void Application::run()
                     m_coroutines.push_back(std::move(coro));
             }
         }
-        // Rendering
+#endif 
+        nvgEndFrame(vg);
         ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
-        glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
@@ -160,10 +177,116 @@ void Application::run()
     }
 }
 
+void Application::quit() {
+    glfwSetWindowShouldClose(window, 1);
+}
+
+double Application::time() const {
+    return glfwGetTime();
+}
+
+void Application::setWindowTitle(const std::string& title) {
+    glfwSetWindowTitle(window, title.c_str());
+}
+
+void Application::setWindowPos(int xpos, int ypos) {
+    glfwSetWindowPos(window, xpos, ypos);
+}
+
+std::pair<int,int> Application::getWindowPos() const {
+    int xpos, ypos;
+    glfwGetWindowPos(window, &xpos, &ypos);
+    return {xpos, ypos};
+}
+
+void Application::setWindowSize(int width, int height) {
+    glfwSetWindowSize(window, width, height);
+}
+
+std::pair<int,int> Application::getWindowSize() const {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    return {width, height};
+}
+
+void Application::setWindowSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) {
+    glfwSetWindowSizeLimits(window, minWidth, minHeight, maxWidth, maxHeight);
+}
+
+void Application::centerWindow(int monitorIdx) {
+    GLFWmonitor *monitor = nullptr;
+    if (monitorIdx == 0) 
+        monitor = glfwGetPrimaryMonitor();
+    else
+    {
+        int count;
+        auto monitors = glfwGetMonitors(&count);
+        if (monitorIdx < count)
+            monitor = monitors[monitorIdx];
+        else
+            monitor = glfwGetPrimaryMonitor();
+    }
+    if (!monitor)
+        throw std::runtime_error("Failed to get Monitor!");
+    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+    if (!mode)
+        throw std::runtime_error("Failed to get Video Mode!");
+    int monitorX, monitorY;
+    glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(window, &windowWidth, &windowHeight);
+    glfwSetWindowPos(window, monitorX + (mode->width - windowWidth) / 2, monitorY + (mode->height - windowHeight) / 2);
+}
+
+void Application::minimizeWindow() {
+    glfwIconifyWindow(window);
+}
+
+void Application::maximizeWindow() {
+    glfwMaximizeWindow(window);
+}
+
+void Application::restoreWindow() {
+    glfwRestoreWindow(window);
+}
+
+void Application::hideWindow() {
+    glfwHideWindow(window);
+}
+
+void Application::showWindow() {
+    glfwShowWindow(window);
+}
+
+void Application::focusWindow() {
+    glfwFocusWindow(window);
+}
+
+void Application::requestWindowAttention() {
+    glfwRequestWindowAttention(window);
+}
+
+void Application::enableVSync(bool enable) {
+    if (enable)
+        glfwSwapInterval(1); // Enable vsync
+    else
+        glfwSwapInterval(0); // Disable vsync
+}
+
+
+std::pair<float,float> Application::getMousePosition() const {
+    double x,y;
+    glfwGetCursorPos(window, &x, &y);
+    return {(float)x,(float)y};
+}
+
+
 void Application::update()
 {
     // do nothing by default (user implemented)
 }
+
+#ifdef MAHI_GUI_COROUTINES
 
 std::shared_ptr<Coroutine> Application::startCoroutine(Enumerator &&e)
 {
@@ -187,6 +310,8 @@ int Application::coroutineCount() const
 {
     return static_cast<int>(m_coroutines.size());
 }
+
+#endif
 
 namespace
 {
@@ -213,9 +338,35 @@ static void glfw_context_version()
 #endif
 }
 
+void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer) {
+    glfwSetWindowUserPointer(window, userPointer);
+    glfwSetWindowPosCallback(window, glfw_pos_callback);
+    glfwSetWindowSizeCallback(window, glfw_size_callback);
+    glfwSetWindowCloseCallback(window, glfw_close_callback);
+    glfwSetDropCallback(window, glfw_drop_callback);
+}
+
 static void glfw_error_callback(int error, const char *description)
 {
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+    static std::string dsc = description;
+    Application::onError.emit(error, dsc);
+}
+
+static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos) {
+    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+    app->onWindowMoved.emit(xpos, ypos);
+}
+
+static void glfw_size_callback(GLFWwindow* window, int width, int height) {
+    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+    app->onWindowResized.emit(width, height);
+}
+
+void glfw_close_callback(GLFWwindow* window) {
+    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+    auto close = app->onWindowClosed.emit();
+    if (!close) 
+        glfwSetWindowShouldClose(window, GLFW_FALSE);
 }
 
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths)
@@ -240,15 +391,18 @@ static void configureImGui(GLFWwindow *window)
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    //io.ConfigViewportsNoAutoMerge = true;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    // io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
-
+    
     // add fonts
     io.Fonts->Clear();
     ImFontConfig font_cfg;
-    strcpy_s(font_cfg.Name, "Roboto Mono Bold");
+    font_cfg.PixelSnapH = true;
+    font_cfg.OversampleH = 1;
+    font_cfg.OversampleV = 1;
+    strcpy(font_cfg.Name, "Roboto Mono Bold");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
     std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
@@ -258,6 +412,8 @@ static void configureImGui(GLFWwindow *window)
     icons_config.PixelSnapH = true;
     icons_config.GlyphMinAdvanceX = 14.0f;
     icons_config.GlyphOffset = ImVec2(0, 0);
+    icons_config.OversampleH = 1;
+    icons_config.OversampleV = 1;
 
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
@@ -269,11 +425,8 @@ static void configureImGui(GLFWwindow *window)
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
     unsigned char *fontCopy3 = new unsigned char[fa_brands_400_ttf_len];
     std::memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
-    io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);
+    io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);   
 
-    // Setup Dear ImGui style
-    // ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
     ImGuiStyle *imStyle = &ImGui::GetStyle();
 
     // Main
@@ -347,6 +500,10 @@ static void configureImGui(GLFWwindow *window)
     colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
     colors[ImGuiCol_ModalWindowDimBg] = ImVec4(1.00f, 0.98f, 0.95f, 0.73f);
 
+    // Setup Dear ImGui style
+    // ImGui::StyleColorsDark();
+    // ImGui::StyleColorsLight();
+
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
     ImGuiStyle &style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -366,6 +523,10 @@ static void configureImGui(GLFWwindow *window)
     const char *glsl_version = "#version 130";
 #endif
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    // // create device objects and set font  (Evan added this so it may break things)
+    // ImGui_ImplOpenGL3_CreateDeviceObjects();
+    // ImGui::SetCurrentFont(ImGui::GetDefaultFont());
 }
 
 } // namespace

@@ -1,8 +1,8 @@
 <img src="https://raw.githubusercontent.com/mahilab/mahi-gui/master/mahi-gui.png" width="100"> 
 
-## mahi gui
+## mahi-gui
 
-This library provides a basic all-in-one foundation for making user interfaces and GUIs in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, and a few custom utility classes such as Coroutines and Events to spice things up. 
+This library provides an all-in-one package for making GUIs and 2D visualizations in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, [NanoVG](https://github.com/memononen/nanovg) for drawing vector graphics, and a few custom utility classes such as Coroutines and Events to spice things up. 
 
 ### Integration
 
@@ -57,3 +57,30 @@ int main() {
 ```
 
 Run and consult the examples for other features. Pay particular attention to [demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/examples/demo.cpp) which shows all of the functionality of the **ImGui** library. It calls the `ImGui::ShowDemoWindow()` function from [imgui_demo.cpp](https://github.com/mahilab/mahi-gui/blob/master/3rdparty/imgui/imgui_demo.cpp), which itself is the absolute best place for **ImGui** examples. For a real-world example, see [Syntacts' GUI](https://github.com/mahilab/Syntacts/tree/master/gui/src), which is built entirely using **mahi gui**.
+
+### Requirements
+
+- C++17 compiler (MSVC or Clang)
+
+### Building Examples on Windows
+
+On Windows, we recommend using to MSVC 2017 or 2019:
+
+```shell
+> cd mahi-gui
+> mkdir build
+> cmake .. -G "Visual Studio 16 2019" -A x64
+> cmake --build . --config Release
+```
+
+### Building Examples on macOS
+
+On macOS, we will use `LLVM clang` to build `mahi-gui`. While `Xcode` uses an Apple flavored version of  the `clang` compiler by default, the version you have installed my not be [up to date](https://en.wikipedia.org/wiki/Xcode#Version_comparison_table) with the required version of LLVM (> 8.0.0). Therefore, for this tutorial download the pre-built binaries for the latest version of LLVM from [here](http://releases.llvm.org/download.html).
+
+```shell
+> cd mahi-gui
+> mkdir build
+> cmake .. -DCMAKE_C_COMPILER="/path/to/clang/bin/clang" -DCMAKE_CXX_COMPILER="/path/to/clang/bin/clang++"
+> cmake --build . --config Release
+```
+
