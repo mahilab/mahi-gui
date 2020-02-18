@@ -54,7 +54,6 @@ class MsdDemo : public Application {
 public:
     MsdDemo() : Application(1000,500,"MSD Demo") { 
         ImGui::DisableViewports();
-        backgroundColor = Grays::Black;
     }
 
     void update() override {

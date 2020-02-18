@@ -43,6 +43,13 @@ float luminance(const Color& color);
 
 constexpr Color fromBits(uint8_t r, uint8_t g, uint8_t b) { return {r / 255.0f, g / 255.0f, b / 255.0f, 1.0f}; }
 
+namespace Colors {
+    constexpr Color Black = {0,0,0,1};
+    constexpr Color White = {1,1,1,1};
+    constexpr Color Transparent = {0,0,0,0};
+    constexpr Color Auto = {0,0,0,-1}; // any color with -1 alpha will be treated as Colors::Auto
+}
+
 namespace Pinks
 {
     constexpr Color Pink = fromBits(255,192,203);

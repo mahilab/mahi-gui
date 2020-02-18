@@ -79,6 +79,7 @@ struct PlotItem {
     std::vector<ImVec2> data;
     ImVec4 color;
     float size; 
+    std::string label;
     // internal
     int _begin;
 };
@@ -105,6 +106,7 @@ struct PlotInterface {
     PlotAxis yAxis;
     bool showCrosshairs;
     bool showMousePos;
+    bool showLegend;
     bool enableSelection;
     bool enableControls;
     ImVec4 frameColor;
@@ -139,6 +141,15 @@ inline void PlotItemBufferPoint(PlotItem& item, float x, float y, int maxPoints)
             item._begin = 0;
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// STYLES
+///////////////////////////////////////////////////////////////////////////////
+
+void StyleColorsMahiDark1();
+void StyleColorsMahiDark2();
+void StyleColorsMahiDark3();
+void StyleColorsMahiDark4();
 
 
 } // namespace ImGui
