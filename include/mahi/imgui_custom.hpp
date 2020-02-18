@@ -79,6 +79,8 @@ struct PlotItem {
     std::vector<ImVec2> data;
     ImVec4 color;
     float size; 
+    // internal
+    int _begin;
 };
 
 struct PlotAxis {
@@ -109,7 +111,7 @@ struct PlotInterface {
     ImVec4 backgroundColor;
     ImVec4 borderColor;  
     ImVec4 selectionColor;
-    // internal state
+    // internal
     bool _dragging;
     bool _selecting;
     ImVec2 _selectStart;
@@ -117,5 +119,26 @@ struct PlotInterface {
 
 bool Plot(const char* label_id, PlotInterface* plot, const PlotItem* items, int nItems, const ImVec2& size = {-1,-1});
 bool Plot(const char* label_id, PlotInterface& plot, const std::vector<PlotItem>& items, const ImVec2& size = {-1,-1});
+
+// REALTIME HELPERS
+
+inline void PlotItemRollPoint(PlotItem& item, float x, float y, float span = 10) {
+    float xmod = fmod(x, span);
+    if (!item.data.empty() && xmod < item.data.back().x)
+        item.data.clear();
+    item.data.push_back(ImVec2(xmod, y));
+}
+
+inline void PlotItemBufferPoint(PlotItem& item, float x, float y, int maxPoints) {
+    if (item.data.size() < maxPoints) 
+        item.data.push_back(ImVec2(x,y));
+    else {
+        item.data[item._begin] = ImVec2(x,y);
+        item._begin++;
+        if (item._begin == maxPoints)
+            item._begin = 0;
+    }
+}
+
 
 } // namespace ImGui

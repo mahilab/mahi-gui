@@ -232,6 +232,8 @@ inline void TransformTicks(std::vector<Tick>& ticks, float tMin, float tMax, flo
 }
 
 inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
+    if (item.data.size() < 2)
+        return;
     static std::vector<ImVec2> pointsPx(10000); // up front allocation
     pointsPx.resize(item.data.size());
     const float mx = (pix.Max.x - pix.Min.x) / (plot.xAxis.maximum - plot.xAxis.minimum);
@@ -242,9 +244,15 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
         pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.yAxis.minimum);
     }    
     auto color = GetColorU32(item.color);
-    for (int i = 0; i < pointsPx.size() - 1; ++i) 
-            DrawList.AddLine(pointsPx[i],pointsPx[i+1],color,item.size);
-    // DrawList.AddPolyline(&pointsPx[0], (int)pointsPx.size(), GetColorU32(item.color), false, item.size);    
+    int segments = (int)item.data.size() - 1;
+    int i = item._begin;
+    for (int s = 0; s < segments; ++s) {
+        int j = i + 1;
+        if (j == item.data.size())
+            j = 0;
+        DrawList.AddLine(pointsPx[i],pointsPx[j],color,item.size);
+        i = j;
+    }
 }
 
 inline void RenderPlotItemScatter(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
@@ -294,7 +302,7 @@ inline void RenderPlotItemYBar(const PlotItem& item, const PlotInterface& plot, 
 } // private namespace
 
 PlotItem::PlotItem() : 
-    show(true), type(PlotItem::Line), data(), color(1,1,1,1), size(1) {
+    show(true), type(PlotItem::Line), data(), color(1,1,1,1), size(1), _begin(0) {
 }
 
 PlotAxis::PlotAxis() :
@@ -511,7 +519,7 @@ bool Plot(const char* label_id, PlotInterface* plot_ptr, const PlotItem* items, 
         for (auto& yt : yTicks)
             DrawList.AddLine({grid_bb.Min.x, yt.pixels},{grid_bb.Max.x, yt.pixels}, yt.major ? color_y1 : color_y2, 1);
     }    
-    
+  
     // render plot items
     for (int i = 0; i < nItems; ++i) {
         if (items[i].show) {
