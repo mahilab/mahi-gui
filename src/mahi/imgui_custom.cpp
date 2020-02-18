@@ -232,6 +232,8 @@ inline void TransformTicks(std::vector<Tick>& ticks, float tMin, float tMax, flo
 }
 
 inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
+    if (item.data.size() < 2)
+        return;
     static std::vector<ImVec2> pointsPx(10000); // up front allocation
     pointsPx.resize(item.data.size());
     const float mx = (pix.Max.x - pix.Min.x) / (plot.xAxis.maximum - plot.xAxis.minimum);
@@ -514,7 +516,7 @@ bool Plot(const char* label_id, PlotInterface* plot_ptr, const PlotItem* items, 
     
     // render plot items
     for (int i = 0; i < nItems; ++i) {
-        if (items[i].show) {
+        if (items[i].show && items[i].data.size() > 0) {
             if (items[i].type == PlotItem::Line)
                 RenderPlotItemLine(items[i], plot, pix, DrawList);
             else if (items[i].type == PlotItem::Scatter)
