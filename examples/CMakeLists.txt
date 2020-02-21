@@ -10,6 +10,9 @@ target_link_libraries(files mahi::gui)
 add_executable(plots plots.cpp my_icon.rc)
 target_link_libraries(plots mahi::gui)
 
+add_executable(rt_plots rt_plots.cpp my_icon.rc)
+target_link_libraries(rt_plots mahi::gui)
+
 add_executable(likert likert.cpp my_icon.rc)
 target_link_libraries(likert mahi::gui)
 

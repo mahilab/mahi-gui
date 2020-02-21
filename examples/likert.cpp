@@ -23,7 +23,6 @@ public:
 
     /// Constructor
     Likert() : Application(500,500,"",false) { 
-        backgroundColor = Grays::Black;
         loaded = load();
     }
 
