@@ -12,6 +12,12 @@ void EnableViewports();
 /// Disable Viewports
 void DisableViewports();
 
+/// Enable Docking
+void EnableDocking();
+
+/// Disable Docking
+void DisableDocking();
+
 /// Begins a fixed size ImGui window (useful for single window apps)
 bool BeginFixed(const char* name, const ImVec2& pos, const ImVec2& size, ImGuiWindowFlags flags = 0);
 

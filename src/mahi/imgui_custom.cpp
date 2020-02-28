@@ -14,16 +14,24 @@
 namespace ImGui
 {
 
-/// Enable Viewports
 void EnableViewports()
 {
     ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 }
 
-/// Disable Viewports
 void DisableViewports()
 {
     ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
+}
+
+void EnableDocking()
+{
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+}
+
+void DisableDocking()
+{
+    ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_DockingEnable;
 }
 
 bool BeginFixed(const char *name, const ImVec2 &pos, const ImVec2 &size, ImGuiWindowFlags flags)
