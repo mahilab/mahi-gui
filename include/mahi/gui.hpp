@@ -1,23 +1,23 @@
 #pragma once
 
-#include <mahi/Application.hpp>
-#include <mahi/Color.hpp>
-#include <mahi/Macros.hpp>
-#include <mahi/Math.hpp>
-#include <mahi/Print.hpp>
-#include <mahi/Random.hpp>
-#include <mahi/Sequence.hpp>
-#include <mahi/System.hpp>
-#include <mahi/Tween.hpp>
-#include <mahi/Vec2.hpp>
-#include <mahi/Icons/IconsFontAwesome5.hpp>
-#include <mahi/Icons/IconsFontAwesome5Brands.hpp>
-#include <mahi/imgui_custom.hpp>
-#include <mahi/Svg.hpp>
+#include <mahi/gui/Application.hpp>
+#include <mahi/gui/Color.hpp>
+#include <mahi/gui/Macros.hpp>
+#include <mahi/gui/Math.hpp>
+#include <mahi/gui/Print.hpp>
+#include <mahi/gui/Random.hpp>
+#include <mahi/gui/Sequence.hpp>
+#include <mahi/gui/System.hpp>
+#include <mahi/gui/Tween.hpp>
+#include <mahi/gui/Vec2.hpp>
+#include <mahi/gui/Icons/IconsFontAwesome5.hpp>
+#include <mahi/gui/Icons/IconsFontAwesome5Brands.hpp>
+#include <mahi/gui/imgui_custom.hpp>
+#include <mahi/gui/Svg.hpp>
 
 #ifdef MAHI_GUI_COROUTINES
-#include <mahi/Coroutine.hpp>
-#include <mahi/Range.hpp>
+#include <mahi/gui/Coroutine.hpp>
+#include <mahi/gui/Range.hpp>
 #endif
 
 // 3rd party libs

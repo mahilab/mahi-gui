@@ -1,13 +1,31 @@
 cmake_minimum_required(VERSION 3.13.0)
 
+#===============================================================================
+# USER OPTIONS
+#===============================================================================
+
 option(MAHI_GUI_EXAMPLES   "Turn ON to build mahi-gui example(s)"            ON)
 option(MAHI_GUI_COROUTINES "Turn ON to build experimental coroutine support" ON)
 
+#===============================================================================
+# FRONT MATTER
+#===============================================================================
+
 # create project
 project(mahi_gui VERSION 1.0.0)
+
+# tell user they can't have shared version of MEL if they try
+if (BUILD_SHARED_LIBS)
+    message(FATAL_ERROR "MEL does not yet support shared libaries")
+endif()
+
 # add modules
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
 include(GNUInstallDirs)
+
+# Enable IDE folders and set them for predefined CMake projects
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
 # create target and add an alias
 add_library(mahi_gui "")
@@ -26,7 +44,7 @@ if(MAHI_GUI_COROUTINES)
 endif()
 
 # add source files
-add_subdirectory(src/mahi)
+add_subdirectory(src/mahi/gui)
 
 # add include files
 file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")

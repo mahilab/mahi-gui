@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include <mahi/Color.hpp>
-#include <mahi/Vec2.hpp>
+#include <mahi/gui/Color.hpp>
+#include <mahi/gui/Vec2.hpp>
 
 //---- Define assertion handler. Defaults to calling assert().
 //#define IM_ASSERT(_EXPR)  MyAssert(_EXPR)
