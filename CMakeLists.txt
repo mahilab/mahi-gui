@@ -20,7 +20,7 @@ project(mahi-gui VERSION 1.0.0 LANGUAGES C CXX)
 
 # tell user they can't have shared version of MEL if they try
 if (BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "MEL does not yet support shared libaries")
+    message(FATAL_ERROR "mahi::gui does not support shared libaries")
 endif()
 
 # add ./cmake to CMake module path so our .cmake files can be found
@@ -95,45 +95,30 @@ set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
 #===============================================================================
 
 # create target and add an alias
-add_library(gui "")
-add_library(mahi::gui ALIAS gui)
-set_target_properties(gui PROPERTIES DEBUG_POSTFIX -d)
-target_compile_features(gui PUBLIC cxx_std_17 PRIVATE)
-message("Building mahi::gui")
-set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
-
-# add install rule
-install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+add_library(mahi-gui "")
+add_library(mahi::gui ALIAS mahi-gui)
+set_target_properties(mahi-gui PROPERTIES DEBUG_POSTFIX -d)
+target_compile_features(mahi-gui PUBLIC cxx_std_17)
+install(TARGETS mahi-gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # set necessary coroutine options
 if(MAHI_GUI_COROUTINES)
-    target_compile_definitions(gui PUBLIC MAHI_GUI_COROUTINES)
+    target_compile_definitions(mahi-gui PUBLIC MAHI_GUI_COROUTINES)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        target_compile_options(gui PUBLIC "/await")
+        target_compile_options(mahi-gui PUBLIC "/await")
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(gui PUBLIC "-fcoroutines-ts")
+        target_compile_options(mahi-gui PUBLIC "-fcoroutines-ts")
     endif()
 endif()
 
 # add source files
 add_subdirectory(src/mahi/gui)
-target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
+target_sources(mahi-gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
 
 # add include files
 file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
-target_sources(gui PRIVATE ${MAHI_GUI_INCLUDE})
-
-# link libraries
-target_link_libraries(gui PUBLIC glfw)
-target_link_libraries(gui PUBLIC glad)
-target_link_libraries(gui PUBLIC nanovg)
-target_link_libraries(gui PRIVATE nativefiledialog)
-if (WIN32)
-    target_link_libraries(gui PRIVATE Pdh Version)
-endif()
-
-# set target properties
-target_include_directories(gui
+target_sources(mahi-gui PRIVATE ${MAHI_GUI_INCLUDE}) # for intellisense 
+target_include_directories(mahi-gui
 	PUBLIC
 		$<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -143,6 +128,15 @@ target_include_directories(gui
 	PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# link libraries
+target_link_libraries(mahi-gui PUBLIC glfw)
+target_link_libraries(mahi-gui PUBLIC glad)
+target_link_libraries(mahi-gui PUBLIC nanovg)
+target_link_libraries(mahi-gui PRIVATE nativefiledialog)
+if (WIN32)
+    target_link_libraries(mahi-gui PRIVATE Pdh Version)
+endif()
 
 #===============================================================================
 # EXAMPLE EXECUTABLES
@@ -173,7 +167,6 @@ install(DIRECTORY 3rdparty/glad/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 install(FILES ${IMGUI_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanovg/src/nanovg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanosvg/src/nanosvg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
 
 # set where we want to install our config
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/mahi-gui)

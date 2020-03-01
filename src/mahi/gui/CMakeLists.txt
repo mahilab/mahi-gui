@@ -1,4 +1,4 @@
-target_sources(gui
+target_sources(mahi-gui
     PRIVATE
     Application.cpp
     Color.cpp
@@ -10,7 +10,7 @@ target_sources(gui
 )
 
 if(MAHI_GUI_COROUTINES)
-    target_sources(gui
+    target_sources(mahi-gui
         PRIVATE
         Coroutine.cpp
     )
