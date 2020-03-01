@@ -1,4 +1,4 @@
-target_sources(mahi-gui
+target_sources(gui
     PRIVATE
         FontAwesome5.cpp
         FontAwesome5Brands.cpp

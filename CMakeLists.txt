@@ -95,30 +95,31 @@ set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
 #===============================================================================
 
 # create target and add an alias
-add_library(mahi-gui "")
-add_library(mahi::gui ALIAS mahi-gui)
-set_target_properties(mahi-gui PROPERTIES DEBUG_POSTFIX -d)
-target_compile_features(mahi-gui PUBLIC cxx_std_17)
-install(TARGETS mahi-gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+add_library(gui "")
+add_library(mahi::gui ALIAS gui)
+set_target_properties(gui PROPERTIES DEBUG_POSTFIX -d)
+target_compile_features(gui PUBLIC cxx_std_17)
+install(TARGETS gui EXPORT gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
 # set necessary coroutine options
 if(MAHI_GUI_COROUTINES)
-    target_compile_definitions(mahi-gui PUBLIC MAHI_GUI_COROUTINES)
+    target_compile_definitions(gui PUBLIC MAHI_GUI_COROUTINES)
     if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        target_compile_options(mahi-gui PUBLIC "/await")
+        target_compile_options(gui PUBLIC "/await")
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(mahi-gui PUBLIC "-fcoroutines-ts")
+        target_compile_options(gui PUBLIC "-fcoroutines-ts")
     endif()
 endif()
 
 # add source files
 add_subdirectory(src/mahi/gui)
-target_sources(mahi-gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
+target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
 
 # add include files
 file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
-target_sources(mahi-gui PRIVATE ${MAHI_GUI_INCLUDE}) # for intellisense 
-target_include_directories(mahi-gui
+target_sources(gui PRIVATE ${MAHI_GUI_INCLUDE}) # for intellisense 
+target_include_directories(gui
 	PUBLIC
 		$<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -130,12 +131,12 @@ target_include_directories(mahi-gui
 )
 
 # link libraries
-target_link_libraries(mahi-gui PUBLIC glfw)
-target_link_libraries(mahi-gui PUBLIC glad)
-target_link_libraries(mahi-gui PUBLIC nanovg)
-target_link_libraries(mahi-gui PRIVATE nativefiledialog)
+target_link_libraries(gui PUBLIC glfw)
+target_link_libraries(gui PUBLIC glad)
+target_link_libraries(gui PUBLIC nanovg)
+target_link_libraries(gui PRIVATE nativefiledialog)
 if (WIN32)
-    target_link_libraries(mahi-gui PRIVATE Pdh Version)
+    target_link_libraries(gui PRIVATE Pdh Version)
 endif()
 
 #===============================================================================
