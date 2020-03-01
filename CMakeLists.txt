@@ -24,7 +24,7 @@ if (BUILD_SHARED_LIBS)
 endif()
 
 # add ./cmake to CMake module path so our .cmake files can be found
-list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
+list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(GNUInstallDirs) # defines conventional GNU isntallation directories
 
 # Enable IDE folders and set them for predefined CMake projects
