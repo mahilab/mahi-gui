@@ -1,3 +1,7 @@
+# mahi::gui CMakeLists.txt
+# Evan Pezent (epezent@rice.edu)
+# Updated: 2/2020
+
 cmake_minimum_required(VERSION 3.13.0)
 
 #===============================================================================
@@ -12,107 +16,20 @@ option(MAHI_GUI_COROUTINES "Turn ON to build experimental coroutine support" ON)
 #===============================================================================
 
 # create project
-project(mahi_gui VERSION 1.0.0)
+project(mahi-gui VERSION 1.0.0 LANGUAGES C CXX)
 
 # tell user they can't have shared version of MEL if they try
 if (BUILD_SHARED_LIBS)
     message(FATAL_ERROR "MEL does not yet support shared libaries")
 endif()
 
-# add modules
+# add ./cmake to CMake module path so our .cmake files can be found
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
-include(GNUInstallDirs)
+include(GNUInstallDirs) # defines conventional GNU isntallation directories
 
 # Enable IDE folders and set them for predefined CMake projects
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
-
-# create target and add an alias
-add_library(mahi_gui "")
-add_library(mahi::gui ALIAS mahi_gui)
-set_target_properties(mahi_gui PROPERTIES DEBUG_POSTFIX -d)
-target_compile_features(mahi_gui PUBLIC cxx_std_17 PRIVATE)
-
-# coroutines
-if(MAHI_GUI_COROUTINES)
-    target_compile_definitions(mahi_gui PUBLIC MAHI_GUI_COROUTINES)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        target_compile_options(mahi_gui PUBLIC "/await")
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(mahi_gui PUBLIC "-fcoroutines-ts")
-    endif()
-endif()
-
-# add source files
-add_subdirectory(src/mahi/gui)
-
-# add include files
-file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
-target_sources(mahi_gui PRIVATE ${MAHI_GUI_INCLUDE})
-
-# GLFW
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(3rdparty/glfw)
-target_link_libraries(mahi_gui PUBLIC glfw)
-
-# GLAD
-add_subdirectory(3rdparty/glad)
-target_link_libraries(mahi_gui PUBLIC glad)
-
-# IMGUI
-set(IMGUI_SRC
-    3rdparty/imgui/imconfig.h
-    3rdparty/imgui/imgui_demo.cpp
-    3rdparty/imgui/imgui_draw.cpp
-    3rdparty/imgui/imgui_internal.h
-    3rdparty/imgui/imgui_widgets.cpp
-    3rdparty/imgui/imgui.cpp
-    3rdparty/imgui/imgui.h
-    3rdparty/imgui/imstb_rectpack.h
-    3rdparty/imgui/imstb_textedit.h
-    3rdparty/imgui/imstb_truetype.h    
-    3rdparty/imgui/imgui_stdlib.h
-    3rdparty/imgui/imgui_stdlib.cpp
-    3rdparty/imgui/examples/imgui_impl_glfw.cpp
-    3rdparty/imgui/examples/imgui_impl_glfw.h
-    3rdparty/imgui/examples/imgui_impl_opengl3.cpp
-    3rdparty/imgui/examples/imgui_impl_opengl3.h
-)
-set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
-target_sources(mahi_gui PRIVATE ${IMGUI_SRC})
-
-# NATIVE FILE DIALOG
-add_subdirectory(3rdparty/nativefiledialog)
-target_link_libraries(mahi_gui PUBLIC nativefiledialog)
-
-# JSON
-set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json/include)
-
-# NANOVG
-add_subdirectory(3rdparty/nanovg)
-target_link_libraries(mahi_gui PUBLIC nanovg)
-
-# NANOSVG
-set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
-
-# platform specific
-if (WIN32)
-target_link_libraries(mahi_gui PUBLIC Pdh Version)
-endif()
-
-# set target properties
-target_include_directories(mahi_gui
-	PUBLIC
-		$<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        ${IMGUI_INCLUDE_DIR}
-        ${JSON_INCLUDE_DIR}
-        ${NANOSVG_INCLUDE_DIR}
-	PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3") # ALL WARNINGS
@@ -120,6 +37,181 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /MP")    # MULTICORE BUILDS
 endif()
 
+#===============================================================================
+# 3RD PARTY DEPENDENCIES
+#===============================================================================
+
+# GLFW
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(3rdparty/glfw)
+install(TARGETS glfw EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# GLAD
+add_subdirectory(3rdparty/glad)
+install(TARGETS glad EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# NATIVE FILE DIALOG
+add_subdirectory(3rdparty/nativefiledialog)
+install(TARGETS nativefiledialog EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# IMGUI
+set(IMGUI_HEADERS
+    3rdparty/imgui/imconfig.h
+    3rdparty/imgui/imgui_internal.h
+    3rdparty/imgui/imgui.h
+    3rdparty/imgui/imstb_rectpack.h
+    3rdparty/imgui/imstb_textedit.h
+    3rdparty/imgui/imstb_truetype.h    
+    3rdparty/imgui/imgui_stdlib.h
+)
+
+set(IMGUI_SRC
+    3rdparty/imgui/imgui_demo.cpp
+    3rdparty/imgui/imgui_draw.cpp
+    3rdparty/imgui/imgui_widgets.cpp
+    3rdparty/imgui/imgui.cpp
+    3rdparty/imgui/imgui_stdlib.cpp
+    3rdparty/imgui/examples/imgui_impl_glfw.cpp
+    3rdparty/imgui/examples/imgui_impl_glfw.h
+    3rdparty/imgui/examples/imgui_impl_opengl3.cpp
+    3rdparty/imgui/examples/imgui_impl_opengl3.h
+)
+set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
+
+# JSON
+set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json/include)
+
+# NANOVG
+add_subdirectory(3rdparty/nanovg)
+install(TARGETS nanovg EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# NANOSVG
+set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
+
+#===============================================================================
+# CREATE LIBRARY
+#===============================================================================
+
+# create target and add an alias
+add_library(gui "")
+add_library(mahi::gui ALIAS gui)
+set_target_properties(gui PROPERTIES DEBUG_POSTFIX -d)
+target_compile_features(gui PUBLIC cxx_std_17 PRIVATE)
+message("Building mahi::gui")
+set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
+
+# add install rule
+install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# set necessary coroutine options
+if(MAHI_GUI_COROUTINES)
+    target_compile_definitions(gui PUBLIC MAHI_GUI_COROUTINES)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        target_compile_options(gui PUBLIC "/await")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(gui PUBLIC "-fcoroutines-ts")
+    endif()
+endif()
+
+# add source files
+add_subdirectory(src/mahi/gui)
+target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
+
+# add include files
+file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
+target_sources(gui PRIVATE ${MAHI_GUI_INCLUDE})
+
+# link libraries
+target_link_libraries(gui PUBLIC glfw)
+target_link_libraries(gui PUBLIC glad)
+target_link_libraries(gui PUBLIC nanovg)
+target_link_libraries(gui PRIVATE nativefiledialog)
+if (WIN32)
+    target_link_libraries(gui PRIVATE Pdh Version)
+endif()
+
+# set target properties
+target_include_directories(gui
+	PUBLIC
+		$<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${IMGUI_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${JSON_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${NANOSVG_INCLUDE_DIR}>
+	PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+#===============================================================================
+# EXAMPLE EXECUTABLES
+#===============================================================================
+
 if (MAHI_GUI_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+#===============================================================================
+# INSTALL
+#===============================================================================
+
+if (MSVC)
+    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(MAHI_GUI_INSTALL_POSTFIX "") # 64 bit Windows is default
+    else()
+        set(MAHI_GUI_INSTALL_POSTFIX "-x86")
+    endif()
+endif()
+
+set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}${MAHI_GUI_INSTALL_POSTFIX}")
+
+# install headers
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY ${JSON_INCLUDE_DIR}/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY 3rdparty/glad/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${IMGUI_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES 3rdparty/nanovg/src/nanovg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES 3rdparty/nanosvg/src/nanosvg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+
+# set where we want to install our config
+set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/mahi-gui)
+
+# export the targets to a script
+install(EXPORT mahi-gui-targets
+	FILE
+		mahi-gui-targets.cmake
+	NAMESPACE
+		mahi::
+	DESTINATION
+		${INSTALL_CONFIGDIR}
+)
+
+# include helper functions for creating config files that can be included by other projects to find and use a package
+include(CMakePackageConfigHelpers)
+
+# generate a package configuration file and a package version file
+configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/mahi-gui-config.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/mahi-gui-config.cmake
+	INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
+)
+
+write_basic_package_version_file(
+	${CMAKE_CURRENT_BINARY_DIR}/mahi-gui-config-version.cmake
+	VERSION ${PROJECT_VERSION}
+	COMPATIBILITY AnyNewerVersion
+)
+
+# install the config and configversion modules
+install(FILES
+	${CMAKE_CURRENT_BINARY_DIR}/mahi-gui-config.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/mahi-gui-config-version.cmake
+	DESTINATION ${INSTALL_CONFIGDIR}
+)
+
+# export from the build tree
+export(EXPORT mahi-gui-targets
+	   NAMESPACE mahi::
+	   FILE ${CMAKE_CURRENT_BINARY_DIR}/mahi-gui-targets.cmake)
+

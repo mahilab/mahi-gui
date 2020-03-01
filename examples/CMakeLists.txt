@@ -1,31 +1,26 @@
-add_executable(demo demo.cpp my_icon.rc)
-target_link_libraries(demo mahi::gui)
+macro(mahi_gui_example target)
+    # create executable
+    add_executable(${target} "ex_${target}.cpp" my_icon.rc)
+    # set dependencies
+    target_link_libraries(${target} mahi::gui)
+    # add install rule
+    install(TARGETS ${target}
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    set_target_properties(${target} PROPERTIES FOLDER "Examples")
+    set_target_properties(${target} PROPERTIES DEBUG_POSTFIX -d)
+endmacro(mahi_gui_example)
 
-add_executable(drawing drawing.cpp my_icon.rc)
-target_link_libraries(drawing mahi::gui)
-
-add_executable(files files.cpp my_icon.rc)
-target_link_libraries(files mahi::gui)
-
-add_executable(plots plots.cpp my_icon.rc)
-target_link_libraries(plots mahi::gui)
-
-add_executable(rt_plots rt_plots.cpp my_icon.rc)
-target_link_libraries(rt_plots mahi::gui)
-
-add_executable(likert likert.cpp my_icon.rc)
-target_link_libraries(likert mahi::gui)
-
-add_executable(events events.cpp my_icon.rc)
-target_link_libraries(events mahi::gui)
-
-add_executable(msd msd.cpp my_icon.rc)
-target_link_libraries(msd mahi::gui)
-
-add_executable(nvg nvg.cpp my_icon.rc)
-target_link_libraries(nvg mahi::gui)
+mahi_gui_example(demo)
+mahi_gui_example(drawing)
+mahi_gui_example(files)
+mahi_gui_example(plots)
+mahi_gui_example(rt_plots)
+mahi_gui_example(likert)
+mahi_gui_example(events)
+mahi_gui_example(msd)
+mahi_gui_example(nvg)
 
 if (MAHI_GUI_COROUTINES)
-add_executable(coroutines coroutines.cpp my_icon.rc)
-target_link_libraries(coroutines mahi::gui)
+mahi_gui_example(coroutines)
 endif()

@@ -9,7 +9,10 @@ set(NATIVE_FILE_DIALOG_SRC
 )
 
 add_library(nativefiledialog STATIC ${NATIVE_FILE_DIALOG_SRC})
-target_include_directories(nativefiledialog PUBLIC include)
+target_include_directories(nativefiledialog PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>  
+    $<INSTALL_INTERFACE:include>  # <prefix>/include/mylib
+)
 target_link_libraries(nativefiledialog comctl32.lib)
 
 elseif(APPLE)
@@ -24,7 +27,10 @@ set(NATIVE_FILE_DIALOG_SRC
 )
 
 add_library(nativefiledialog STATIC ${NATIVE_FILE_DIALOG_SRC})
-target_include_directories(nativefiledialog PUBLIC include)
+target_include_directories(nativefiledialog PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>  
+    $<INSTALL_INTERFACE:include>  # <prefix>/include/mylib
+)
 target_link_libraries(nativefiledialog PRIVATE ${APPKIT_LIBRARY})
 
 endif()

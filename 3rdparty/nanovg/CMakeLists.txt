@@ -9,7 +9,10 @@ set(NANOVG_SRC
 )
 
 add_library(nanovg ${NANOVG_SRC})
-target_include_directories(nanovg PUBLIC src)
+target_include_directories(nanovg PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>  
+    $<INSTALL_INTERFACE:include>  # <prefix>/include/mylib
+)
 target_compile_definitions(nanovg PUBLIC NANOVG_GLAD)
 
 add_executable(nanovg-demo example/demo.h example/demo.c example/example_gl3.c example/perf.c example/perf.h example/stb_image_write.h)

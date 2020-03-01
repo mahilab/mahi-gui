@@ -1,0 +1,11 @@
+target_sources(gui
+    PRIVATE
+        FontAwesome5.cpp
+        FontAwesome5Brands.cpp
+        RobotoRegular.cpp
+        RobotoBold.cpp
+        RobotoItalic.cpp
+        RobotoMonoRegular.cpp
+        RobotoMonoBold.cpp
+        RobotoMonoItalic.cpp
+)
