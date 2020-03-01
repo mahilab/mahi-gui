@@ -1,7 +1,7 @@
 #pragma once
 #include <nanovg.h>
 
-class NSVGimage;
+struct NSVGimage;
 
 namespace mahi::gui {
 
