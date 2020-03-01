@@ -1,4 +1,6 @@
-<img src="https://raw.githubusercontent.com/mahilab/mahi-gui/master/mahi-gui.png" width="100"> 
+<p align="center">
+<img src="https://raw.githubusercontent.com/mahilab/mahi-gui/master/mahi-gui.png" width="256"> 
+</p>
 
 ## mahi-gui
 
