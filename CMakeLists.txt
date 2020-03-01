@@ -99,7 +99,7 @@ add_library(gui "")
 add_library(mahi::gui ALIAS gui)
 set_target_properties(gui PROPERTIES DEBUG_POSTFIX -d)
 target_compile_features(gui PUBLIC cxx_std_17)
-install(TARGETS gui EXPORT gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
 # set necessary coroutine options
@@ -134,9 +134,9 @@ target_include_directories(gui
 target_link_libraries(gui PUBLIC glfw)
 target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
-target_link_libraries(gui PRIVATE nativefiledialog)
+target_link_libraries(gui PUBLIC nativefiledialog)
 if (WIN32)
-    target_link_libraries(gui PRIVATE Pdh Version)
+    target_link_libraries(gui PUBLIC Pdh Version)
 endif()
 
 #===============================================================================
