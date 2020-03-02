@@ -1,4 +1,5 @@
 #include <mahi/gui/Application.hpp>
+#include <mahi/gui/System.hpp>
 
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
@@ -10,6 +11,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 
 #include "Fonts/Fonts.hpp"
 #include <mahi/gui/Icons/IconsFontAwesome5.hpp>
@@ -73,7 +75,7 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    enableVSync(true);
+    setVSync(true);
     // Setup GLFW Callbacks
     glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
@@ -101,7 +103,7 @@ Application::Application(int width, int height, const std::string& title, bool r
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    enableVSync(true);
+    setVSync(true);
     // Center window
     centerWindow(monitor);
     // Setup GLFW Callbacks
@@ -130,6 +132,7 @@ Application::~Application()
 void Application::run()
 {
     ImGuiIO &io = ImGui::GetIO();
+    double lastTime = 0;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -172,6 +175,12 @@ void Application::run()
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
+        }
+        if (!m_vsync && m_frameTime > 0) {
+            double elapsed = time() - lastTime;
+            double remaining = m_frameTime - elapsed;
+            System::sleep(remaining);
+            lastTime = time();
         }
         glfwSwapBuffers(window);
     }
@@ -266,11 +275,17 @@ void Application::requestWindowAttention() {
     glfwRequestWindowAttention(window);
 }
 
-void Application::enableVSync(bool enable) {
-    if (enable)
+void Application::setVSync(bool enabled) {
+    m_vsync = enabled;
+    if (m_vsync)
         glfwSwapInterval(1); // Enable vsync
     else
         glfwSwapInterval(0); // Disable vsync
+}
+
+void Application::setFrameLimit(int hertz) {
+    setVSync(false);
+    m_frameTime = 1.f / (double)hertz;
 }
 
 

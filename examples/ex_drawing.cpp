@@ -18,7 +18,7 @@ public:
         generateDots({750,250}, 50, 20000);
         generateDots({1000,250}, 50, 20000);
         generateDots({1250,250}, 50, 20000);
-        enableVSync(false);
+        setVSync(false);
     }
 
     virtual void update() override {

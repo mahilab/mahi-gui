@@ -65,5 +65,7 @@ const std::string& osName();
 /// Gets string representation of the OS version
 const std::string& osVersion();
 
+/// Sleeps the thread for a given amount of time as accurately as possible
+void sleep(double seconds);
 
 } // namespace mahi::gui::System

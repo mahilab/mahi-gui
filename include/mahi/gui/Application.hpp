@@ -63,7 +63,9 @@ public:
     /// Notify the user by requesting window attention
     void requestWindowAttention();
     /// Enable/disable VSync
-    void enableVSync(bool enable);
+    void setVSync(bool enabled);
+    /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit) 
+    void setFrameLimit(int hertz);
 
     /// Get the mouse position 
     std::pair<float,float> getMousePosition() const;
@@ -89,6 +91,10 @@ protected:
     GLFWwindow *window;
     /// Internal NanoVG context pointer
     NVGcontext* vg;
+
+private:
+    bool m_vsync;
+    double m_frameTime;
 
 #ifdef MAHI_GUI_COROUTINES
 public:

@@ -14,10 +14,10 @@ public:
         ImGui::Text("ImGui will always be drawn on top of NanoVG");
         ImGui::Text("even if it is called first in update()");
         if (ImGui::Button("VSync On"))
-            enableVSync(true);
+            setVSync(true);
         ImGui::SameLine();
         if (ImGui::Button("VSync Off"))
-            enableVSync(false);
+            setVSync(false);
         ImGui::Text("%.3f FPS", ImGui::GetIO().Framerate);
         ImGui::End();
 
