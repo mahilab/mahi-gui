@@ -49,6 +49,8 @@ inline ImVec2 Remap(const ImVec2& x, const ImVec2& x0, const ImVec2& x1, const I
     return out;
 }
 
+bool ModeSelector(int* currentMode, const std::vector<std::string>& modes, bool horizontal = true);
+
 ///////////////////////////////////////////////////////////////////////////////
 // DOUBLES
 ///////////////////////////////////////////////////////////////////////////////
@@ -146,6 +148,11 @@ inline void PlotItemBufferPoint(PlotItem& item, float x, float y, int maxPoints)
         if (item._begin == maxPoints)
             item._begin = 0;
     }
+}
+
+inline void PlotScrollX(PlotInterface& plot, float time, float history) {
+    plot.xAxis.maximum = time;
+    plot.xAxis.minimum = time - history;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
