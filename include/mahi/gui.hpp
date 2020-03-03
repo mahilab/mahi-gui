@@ -13,6 +13,7 @@
 #include <mahi/gui/Icons/IconsFontAwesome5.hpp>
 #include <mahi/gui/Icons/IconsFontAwesome5Brands.hpp>
 #include <mahi/gui/imgui_custom.hpp>
+#include <mahi/gui/imgui_plot.hpp>
 #include <mahi/gui/Svg.hpp>
 
 #ifdef MAHI_GUI_COROUTINES

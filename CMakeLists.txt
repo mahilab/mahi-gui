@@ -136,7 +136,7 @@ target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
 target_link_libraries(gui PUBLIC nativefiledialog)
 if (WIN32)
-    target_link_libraries(gui PUBLIC Pdh Version)
+    target_link_libraries(gui PUBLIC winmm Pdh Version)
 endif()
 
 #===============================================================================

@@ -7,6 +7,7 @@ target_sources(gui
     System.cpp
     Svg.cpp
     imgui_custom.cpp
+    imgui_plot.cpp
 )
 
 if(MAHI_GUI_COROUTINES)

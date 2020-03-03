@@ -9,10 +9,13 @@ public:
     {
         // ImGui::DisableViewports();
         // setup
+        plot.title = "My Plot";
         plot.xAxis.minimum = 0;
         plot.xAxis.maximum = 10;
+        plot.xAxis.label = "My X-Axis";
         plot.yAxis.minimum = 0;
         plot.yAxis.maximum = 1;
+        plot.yAxis.label = "My Y-Axis";
         items.resize(4);
         // Line
         items[0].label = "Line";
@@ -72,10 +75,10 @@ public:
         ImGui::Checkbox("##Grid", &axis.showGrid);
         ImGui::HoverTooltip("Show Grid", 0);
         ImGui::SameLine();
-        ImGui::Checkbox("##Ticks", &axis.showTicks);
+        ImGui::Checkbox("##Ticks", &axis.showTickMarks);
         ImGui::HoverTooltip("Show Ticks", 0);
         ImGui::SameLine();
-        ImGui::Checkbox("##Labels", &axis.showLabels);
+        ImGui::Checkbox("##Labels", &axis.showTickLabels);
         ImGui::HoverTooltip("Show Labels", 0);
         ImGui::SameLine();
         ImGui::Checkbox("##LockMin", &axis.lockMin);
@@ -88,6 +91,10 @@ public:
         ImGui::HoverTooltip("Flip", 0);
         ImGui::SameLine();
         ImGui::ColorEdit4("Axis Color", (float *)&axis.color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::SameLine();
+        ImGui::PushItemWidth(-1);
+        ImGui::InputText("##Axis Label", &axis.label);
+        ImGui::PopItemWidth();
         ImGui::PopID();
     }
 
@@ -117,6 +124,10 @@ public:
         ImGui::ColorEdit4("Border Color", (float *)&plot.borderColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
         ImGui::ColorEdit4("Selection Color", (float *)&plot.selectionColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::SameLine();
+        ImGui::PushItemWidth(-1);
+        ImGui::InputText("##Plot Title", &plot.title);
+        ImGui::PopItemWidth();
 
         ImGui::Separator();
         ImGui::Checkbox("Line", &items[0].show);
