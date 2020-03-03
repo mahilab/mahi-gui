@@ -14,19 +14,23 @@
 namespace mahi::gui
 {
 
+/// A Windowed Application
 class Application
 {
 public:
-    /// Fullscreen Constructor
-    Application(const std::string& title = "", int monitor = 0);
-    /// Windowed Mode Constructor
-    Application(int width, int height, const std::string& title = "", bool resizable = true, int monitor = 0);
+
+    /// Hidden Main Window Constructor (for using ImGui windows exclusively)
+    Application();
+    /// Fullscreen Main Window Constructor
+    Application(const std::string& title, int monitor = 0);
+    /// Windowed Main Window Constructor
+    Application(int width, int height, const std::string& title, bool resizable = true, int monitor = 0);
     /// Destructor
     ~Application();
 
     /// Runs the application
     void run();
-    /// Quit the application
+    /// Quitd the application
     void quit();
     /// Called once per frame
     virtual void update();

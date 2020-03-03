@@ -1,5 +1,3 @@
-#define MAHI_GUI_NO_CONSOLE
-
 #include <mahi/gui.hpp>
 #include <random>
 
@@ -8,7 +6,7 @@ using namespace mahi::gui;
 class DrawingDemo : public Application {
 public:
     DrawingDemo() :
-        Application("Drawing")
+        Application("Drawing",0)
     { 
         // disable viewports
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;

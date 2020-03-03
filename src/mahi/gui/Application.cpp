@@ -43,6 +43,34 @@ static void configureImGui(GLFWwindow *window);
 
 Event<void(int, const std::string&)> Application::onError;
 
+Application::Application() : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
+{
+    // Setup window
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
+        throw std::runtime_error("Failed to initialize GLFW!");
+    glfw_context_version();
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    window = glfwCreateWindow(100, 100, "", NULL, NULL);
+    if (window == NULL)
+        throw std::runtime_error("Failed to create Window!");
+    // Setup OpenGL context
+    glfwMakeContextCurrent(window);
+    setVSync(true);
+    // Setup GLFW Callbacks
+    glfw_setup_window_callbacks(window, this);
+    // Initialize OpenGL loader
+    if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
+        throw std::runtime_error("Failed to initialize OpenGL loader!");
+        // initialize NanoVg
+    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (vg == NULL)
+        throw std::runtime_error("Failed to create NanoVG context!");
+    // Setup ImGui
+    configureImGui(window);
+    ImGui::GetIO().ConfigViewportsNoAutoMerge = true;
+}
+
 Application::Application(const std::string & title, int monitorIdx) : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
 {
     glfwSetErrorCallback(glfw_error_callback);

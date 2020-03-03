@@ -20,6 +20,7 @@ mahi_gui_example(likert)
 mahi_gui_example(events)
 mahi_gui_example(msd)
 mahi_gui_example(nvg)
+mahi_gui_example(hidden)
 
 if (MAHI_GUI_COROUTINES)
 mahi_gui_example(coroutines)
