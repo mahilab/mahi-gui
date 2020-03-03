@@ -57,6 +57,8 @@ public:
         items[3].data.resize(10);
         for (int i = 0; i < 10; ++i)
             items[3].data[i] = {Random::range(0.0f, 2.0f), ((float)i + 0.5f) * 0.1f};
+
+        ImGui::DisableViewports();
     }
 
     void DemoAxisControls(const char *label, ImGui::PlotAxis &axis)
@@ -102,9 +104,7 @@ public:
     {
         Vec2 vpPos = ImGui::GetMainViewport()->Pos;
         Vec2 vpSize = ImGui::GetMainViewport()->Size;
-        ImGui::SetNextWindowPos(vpPos, ImGuiCond_Appearing);
-        ImGui::SetNextWindowSize(vpSize, ImGuiCond_Always);
-        ImGui::Begin("Plots", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+        ImGui::BeginFixed("Plots", vpPos, vpSize, ImGuiWindowFlags_NoTitleBar);
         DemoAxisControls("X-Axis", plot.xAxis);
         DemoAxisControls("Y-Axis", plot.yAxis);
         ImGui::Text("      ");
@@ -113,9 +113,9 @@ public:
         ImGui::SameLine();
         ImGui::Checkbox("Mouse Position", &plot.showMousePos);
         ImGui::SameLine();
-        ImGui::Checkbox("Enable Selection", &plot.enableSelection);
+        ImGui::Checkbox("Selection", &plot.enableSelection);
         ImGui::SameLine();
-        ImGui::Checkbox("Enable Controls", &plot.enableControls);
+        ImGui::Checkbox("Controls", &plot.enableControls);
         ImGui::SameLine();
         ImGui::ColorEdit4("Frame Color", (float *)&plot.frameColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();

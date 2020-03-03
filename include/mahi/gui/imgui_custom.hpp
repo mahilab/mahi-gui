@@ -31,7 +31,7 @@ void BeginDisabled(bool disabled = true, float alpha = 0.25f);
 void EndDisabled();
 
 /// A button that acts like a toggle, dimming itself when disabled.
-void EnableButton(const char* label, bool* enabled, const ImVec2& size = ImVec2(0,0));
+void ToggleButton(const char* label, bool* toggled, const ImVec2& size = ImVec2(0,0));
 
 /// A regular button with a color.
 bool ButtonColored(const char* label, const ImVec4& color, const ImVec2& size = ImVec2(0,0));

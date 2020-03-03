@@ -10,7 +10,7 @@ public:
         if (open1) {
             ImGui::Begin("Window 1", &open1);
             if (ImGui::Button("Open Window 2"))
-                open2 = true;
+                open2 = true;            
             ImGui::End();
         }
 

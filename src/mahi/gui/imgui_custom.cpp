@@ -77,13 +77,13 @@ void EndDisabled()
     }
 }
 
-void EnableButton(const char *label, bool *enabled, const ImVec2 &size)
+void ToggleButton(const char *label, bool *toggled, const ImVec2 &size)
 {
-    bool dim = !*enabled;
+    bool dim = !*toggled;
     if (dim)
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f);
     if (ImGui::Button(label, size))
-        *enabled = !(*enabled);
+        *toggled = !(*toggled);
     if (dim)
         ImGui::PopStyleVar();
 }

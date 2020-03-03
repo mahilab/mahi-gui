@@ -286,16 +286,18 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     const ImRect grid_bb(canvas_bb.Min + ImVec2(lPadding, tPadding), canvas_bb.Max - ImVec2(0, bPadding));
     const bool grid_hovered = grid_bb.Contains(IO.MousePos);
 
-    // axis label bb
-    const ImRect xTickLabels_bb(grid_bb.GetBL(), canvas_bb.Max);
-    const ImRect yTickLabels_bb(frame_bb.Min, grid_bb.GetBL());
+    // axis region bb
+    const ImRect xAxisRegion_bb(grid_bb.Min + ImVec2(10,0), {grid_bb.Max.x, frame_bb.Max.y});
+    const bool xAxisRegion_hovered = xAxisRegion_bb.Contains(IO.MousePos);
+    const ImRect yAxisRegion_bb({frame_bb.Min.x, grid_bb.Min.y}, grid_bb.Max - ImVec2(0,10));
+    const bool yAxisRegion_hovered = yAxisRegion_bb.Contains(IO.MousePos);
 
     // legend bb
     const ImVec2 legend_offset(10, 10);
     const ImVec2 legend_padding(5, 5);
     const float legend_icon_size = textHeight;
 
-    ImRect legend_bb;
+    ImRect legend_content_bb, legend_bb;
     bool legend_hovered = false;
     if (plot.showLegend && nItems > 0)
     {
@@ -305,7 +307,8 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             auto labelWidth = CalcTextSize(items[i].label.c_str());
             maxLabelWidth = labelWidth.x > maxLabelWidth ? labelWidth.x : maxLabelWidth;
         }
-        legend_bb = ImRect(grid_bb.Min + legend_offset, grid_bb.Min + legend_offset + ImVec2(maxLabelWidth, nItems * textHeight));
+        legend_content_bb = ImRect(grid_bb.Min + legend_offset, grid_bb.Min + legend_offset + ImVec2(maxLabelWidth, nItems * textHeight));
+        legend_bb = ImRect(legend_content_bb.Min, legend_content_bb.Max + legend_padding * 2 + ImVec2(legend_icon_size, 0));
         legend_hovered = frame_hovered && legend_bb.Contains(IO.MousePos);
     }
 
@@ -348,31 +351,39 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         plot._dragging = true;
     }
     // scroll zoom
-    if (frame_hovered && grid_hovered)
+    if (frame_hovered && (xAxisRegion_hovered || yAxisRegion_hovered))
     {
         float xRange = plot.xAxis.maximum - plot.xAxis.minimum;
         float yRange = plot.yAxis.maximum - plot.yAxis.minimum;
         if (IO.MouseWheel < 0)
         {
-            if (!plot.xAxis.lockMin)
-                plot.xAxis.minimum -= plot.xAxis.zoomRate * xRange;
-            if (!plot.xAxis.lockMax)
-                plot.xAxis.maximum += plot.xAxis.zoomRate * xRange;
-            if (!plot.yAxis.lockMin)
-                plot.yAxis.minimum -= plot.yAxis.zoomRate * yRange;
-            if (!plot.yAxis.lockMax)
-                plot.yAxis.maximum += plot.yAxis.zoomRate * yRange;
+            if (xAxisRegion_hovered) {
+                if (!plot.xAxis.lockMin)
+                    plot.xAxis.minimum -= plot.xAxis.zoomRate * xRange;
+                if (!plot.xAxis.lockMax)
+                    plot.xAxis.maximum += plot.xAxis.zoomRate * xRange;
+            }
+            if (yAxisRegion_hovered) {
+                if (!plot.yAxis.lockMin)
+                    plot.yAxis.minimum -= plot.yAxis.zoomRate * yRange;
+                if (!plot.yAxis.lockMax)
+                    plot.yAxis.maximum += plot.yAxis.zoomRate * yRange;
+            }
         }
         if (IO.MouseWheel > 0)
         {
-            if (!plot.xAxis.lockMin)
-                plot.xAxis.minimum += plot.xAxis.zoomRate * xRange / (1.0f + 2.0f * plot.xAxis.zoomRate);
-            if (!plot.xAxis.lockMax)
-                plot.xAxis.maximum -= plot.xAxis.zoomRate * xRange / (1.0f + 2.0f * plot.xAxis.zoomRate);
-            if (!plot.yAxis.lockMin)
-                plot.yAxis.minimum += plot.yAxis.zoomRate * yRange / (1.0f + 2.0f * plot.yAxis.zoomRate);
-            if (!plot.yAxis.lockMax)
-                plot.yAxis.maximum -= plot.yAxis.zoomRate * yRange / (1.0f + 2.0f * plot.yAxis.zoomRate);
+            if (xAxisRegion_hovered) {
+                if (!plot.xAxis.lockMin)
+                    plot.xAxis.minimum += plot.xAxis.zoomRate * xRange / (1.0f + 2.0f * plot.xAxis.zoomRate);
+                if (!plot.xAxis.lockMax)
+                    plot.xAxis.maximum -= plot.xAxis.zoomRate * xRange / (1.0f + 2.0f * plot.xAxis.zoomRate);
+            }
+            if (yAxisRegion_hovered) {
+                if (!plot.yAxis.lockMin)
+                    plot.yAxis.minimum += plot.yAxis.zoomRate * yRange / (1.0f + 2.0f * plot.yAxis.zoomRate);
+                if (!plot.yAxis.lockMax)
+                    plot.yAxis.maximum -= plot.yAxis.zoomRate * yRange / (1.0f + 2.0f * plot.yAxis.zoomRate);
+            }
         }
     }
 
@@ -472,7 +483,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render crosshairs
-    if (plot.showCrosshairs && grid_hovered && frame_hovered && !plot._dragging && !plot._selecting)
+    if (plot.showCrosshairs && grid_hovered && frame_hovered && !plot._dragging && !plot._selecting && !legend_hovered)
     {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
         ImVec2 xy = IO.MousePos;
@@ -493,18 +504,27 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     // render legend
     if (plot.showLegend && nItems > 0)
     {
-        DrawList.AddRectFilled(legend_bb.Min, legend_bb.Max + legend_padding * 2 + ImVec2(legend_icon_size, 0), GetColorU32(ImGuiCol_PopupBg));
-        DrawList.AddRect(legend_bb.Min, legend_bb.Max + legend_padding * 2 + ImVec2(legend_icon_size, 0), color_border);
+        DrawList.AddRectFilled(legend_bb.Min, legend_bb.Max, GetColorU32(ImGuiCol_PopupBg));
+        DrawList.AddRect(legend_bb.Min, legend_bb.Max, color_border);
         for (int i = 0; i < nItems; ++i)
-        {
-            auto iconColor = items[i].show ? GetColorU32(items[i].color) : color_txt_dis;
+        {           
             ImRect icon_bb;
-            icon_bb.Min = legend_bb.Min + legend_padding + ImVec2(0, i * textHeight) + ImVec2(2, 2);
-            icon_bb.Max = legend_bb.Min + legend_padding + ImVec2(0, i * textHeight) + ImVec2(legend_icon_size - 2, legend_icon_size - 2);
-            if (legend_hovered && icon_bb.Contains(IO.MousePos) && IO.MouseClicked[0])
-                items[i].show = !items[i].show;
+            icon_bb.Min = legend_content_bb.Min + legend_padding + ImVec2(0, i * textHeight) + ImVec2(2, 2);
+            icon_bb.Max = legend_content_bb.Min + legend_padding + ImVec2(0, i * textHeight) + ImVec2(legend_icon_size - 2, legend_icon_size - 2);
+            ImU32 iconColor;
+            if (legend_hovered && icon_bb.Contains(IO.MousePos)) {
+                auto colAlpha = items[i].color;
+                colAlpha.w = 0.5f;
+                iconColor = items[i].show ? GetColorU32(colAlpha) : GetColorU32(ImGuiCol_TextDisabled, 0.5f);
+                if (IO.MouseClicked[0])
+                    items[i].show = !items[i].show;
+            }
+            else {
+                iconColor = items[i].show ? GetColorU32(items[i].color) : color_txt_dis;
+            }
             DrawList.AddRectFilled(icon_bb.Min, icon_bb.Max, iconColor, 1);
-            DrawList.AddText(legend_bb.Min + legend_padding + ImVec2(legend_icon_size, i * textHeight), items[i].show ? color_txt : color_txt_dis, items[i].label.c_str());
+            DrawList.AddText(legend_content_bb.Min + legend_padding + ImVec2(legend_icon_size, i * textHeight), items[i].show ? color_txt : color_txt_dis, items[i].label.c_str());
+            
         }
     }
 
@@ -561,7 +581,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     // AddTextVertical(&DrawList, "Hello, World", frame_bb.Min, color_ytxt);
 
     PushID(id);
-    if (frame_hovered && grid_hovered && IO.MouseClicked[2] && plot.enableControls)
+    if (frame_hovered && grid_hovered && IO.MouseClicked[2] && plot.enableControls && !legend_hovered)
         ImGui::OpenPopup("##Context");
     if (ImGui::BeginPopup("##Context"))
     {
@@ -570,34 +590,34 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         ImGui::LabelText("##X-Axis", "X-Axis");
         ImGui::DragFloat("##Xmin", &plot.xAxis.minimum, 0.01f + 0.01f * (plot.xAxis.maximum - plot.xAxis.minimum), -INFINITY, plot.xAxis.maximum - FLT_EPSILON);
         ImGui::SameLine();
-        ImGui::EnableButton((plot.xAxis.lockMin ? ICON_FA_LOCK "##Xmin" : ICON_FA_LOCK_OPEN "##Xmin"), &plot.xAxis.lockMin, {20, 0});
+        ImGui::ToggleButton((plot.xAxis.lockMin ? ICON_FA_LOCK "##Xmin" : ICON_FA_LOCK_OPEN "##Xmin"), &plot.xAxis.lockMin, {20, 0});
         ImGui::DragFloat("##Xmax", &plot.xAxis.maximum, 0.01f + 0.01f * (plot.xAxis.maximum - plot.xAxis.minimum), plot.xAxis.minimum + FLT_EPSILON, INFINITY);
         ImGui::SameLine();
-        ImGui::EnableButton((plot.xAxis.lockMax ? ICON_FA_LOCK "##Xmax" : ICON_FA_LOCK_OPEN "##Xmax"), &plot.xAxis.lockMax, {20, 0});
-        ImGui::EnableButton(ICON_FA_ARROWS_ALT_H, &plot.xAxis.flip, ImVec2(20, 0));
+        ImGui::ToggleButton((plot.xAxis.lockMax ? ICON_FA_LOCK "##Xmax" : ICON_FA_LOCK_OPEN "##Xmax"), &plot.xAxis.lockMax, {20, 0});
+        ImGui::ToggleButton(ICON_FA_ARROWS_ALT_H, &plot.xAxis.flip, ImVec2(20, 0));
         ImGui::SameLine();
-        ImGui::EnableButton("01##X", &plot.xAxis.showTickLabels, ImVec2(23, 0));
+        ImGui::ToggleButton("01##X", &plot.xAxis.showTickLabels, ImVec2(23, 0));
         ImGui::SameLine();
-        ImGui::EnableButton(ICON_FA_GRIP_LINES_VERTICAL, &plot.xAxis.showGrid, ImVec2(23, 0));
+        ImGui::ToggleButton(ICON_FA_GRIP_LINES_VERTICAL, &plot.xAxis.showGrid, ImVec2(23, 0));
         ImGui::SameLine();
-        ImGui::EnableButton(ICON_FA_ELLIPSIS_H, &plot.xAxis.showTickMarks, ImVec2(23, 0));
+        ImGui::ToggleButton(ICON_FA_ELLIPSIS_H, &plot.xAxis.showTickMarks, ImVec2(23, 0));
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
         ImGui::LabelText("##Y-Axis", "Y-Axis");
         ImGui::DragFloat("##Ymin", &plot.yAxis.minimum, 0.01f + 0.01f * (plot.yAxis.maximum - plot.yAxis.minimum), -INFINITY, plot.yAxis.maximum - FLT_EPSILON);
         ImGui::SameLine();
-        ImGui::EnableButton((plot.yAxis.lockMin ? ICON_FA_LOCK "##Ymin" : ICON_FA_LOCK_OPEN "##Ymin"), &plot.yAxis.lockMin, {20, 0});
+        ImGui::ToggleButton((plot.yAxis.lockMin ? ICON_FA_LOCK "##Ymin" : ICON_FA_LOCK_OPEN "##Ymin"), &plot.yAxis.lockMin, {20, 0});
         ImGui::DragFloat("##Ymax", &plot.yAxis.maximum, 0.01f + 0.01f * (plot.yAxis.maximum - plot.yAxis.minimum), plot.yAxis.minimum + FLT_EPSILON, INFINITY);
         ImGui::SameLine();
-        ImGui::EnableButton((plot.yAxis.lockMax ? ICON_FA_LOCK "##Ymax" : ICON_FA_LOCK_OPEN "##Ymax"), &plot.yAxis.lockMax, {20, 0});
-        ImGui::EnableButton(ICON_FA_ARROWS_ALT_V, &plot.yAxis.flip, ImVec2(20, 0));
+        ImGui::ToggleButton((plot.yAxis.lockMax ? ICON_FA_LOCK "##Ymax" : ICON_FA_LOCK_OPEN "##Ymax"), &plot.yAxis.lockMax, {20, 0});
+        ImGui::ToggleButton(ICON_FA_ARROWS_ALT_V, &plot.yAxis.flip, ImVec2(20, 0));
         ImGui::SameLine();
-        ImGui::EnableButton("01##Y", &plot.yAxis.showTickLabels, ImVec2(23, 0));
+        ImGui::ToggleButton("01##Y", &plot.yAxis.showTickLabels, ImVec2(23, 0));
         ImGui::SameLine();
-        ImGui::EnableButton(ICON_FA_GRIP_LINES, &plot.yAxis.showGrid, ImVec2(23, 0));
+        ImGui::ToggleButton(ICON_FA_GRIP_LINES, &plot.yAxis.showGrid, ImVec2(23, 0));
         ImGui::SameLine();
-        ImGui::EnableButton(ICON_FA_ELLIPSIS_V, &plot.yAxis.showTickMarks, ImVec2(23, 0));
+        ImGui::ToggleButton(ICON_FA_ELLIPSIS_V, &plot.yAxis.showTickMarks, ImVec2(23, 0));
         ImGui::EndGroup();
         ImGui::SameLine();
         ImGui::BeginGroup();
@@ -609,21 +629,22 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         ImGui::PopItemWidth();
         ImGui::EndGroup();
         ImGui::Separator();
-        ImGui::EnableButton(ICON_FA_CROSSHAIRS, &plot.showCrosshairs, {30, 0});
+        ImGui::ToggleButton(ICON_FA_CROSSHAIRS, &plot.showCrosshairs, {30, 0});
         ImGui::SameLine();
-        ImGui::EnableButton("X,Y", &plot.showMousePos, {30, 0});
+        ImGui::ToggleButton("X,Y", &plot.showMousePos, {30, 0});
         ImGui::SameLine();
-        ImGui::EnableButton(ICON_FA_VECTOR_SQUARE, &plot.enableSelection, {30, 0});
+        ImGui::ToggleButton(ICON_FA_VECTOR_SQUARE, &plot.enableSelection, {30, 0});
         ImGui::SameLine();
-        ImGui::EnableButton(ICON_FA_LIST, &plot.showLegend, {30, 0});
+        ImGui::ToggleButton(ICON_FA_LIST, &plot.showLegend, {30, 0});
         ImGui::EndPopup();
     }
     PopID();
 
 #if 0
+    DrawList.AddRect(legend_bb.Min, legend_bb.Max, GetColorU32({0,1,0,1}));
     DrawList.AddRect(canvas_bb.Min, canvas_bb.Max, GetColorU32({1,0,0,1}));
-    DrawList.AddRect(xTickLabels_bb.Min, xTickLabels_bb.Max, GetColorU32({1,0,1,1}));
-    DrawList.AddRect(yTickLabels_bb.Min, yTickLabels_bb.Max, GetColorU32({1,0,1,1}));
+    DrawList.AddRect(xAxisRegion_bb.Min, xAxisRegion_bb.Max, GetColorU32({1,0,1,1}));
+    DrawList.AddRect(yAxisRegion_bb.Min, yAxisRegion_bb.Max, GetColorU32({1,1,0,1}));
 #endif
 }
 
