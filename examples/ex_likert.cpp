@@ -25,6 +25,7 @@ public:
 
     /// Constructor
     Likert() : Application(500,500,"",false) { 
+        ImGui::DisableViewports();
         loaded = load();
     }
 
