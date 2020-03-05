@@ -106,6 +106,9 @@ target_compile_features(gui PUBLIC cxx_std_17)
 install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
+# defines
+target_compile_definitions(gui PUBLIC MAHI_GUI) # for compatibility checks
+
 # add source files
 add_subdirectory(src/mahi/gui)
 target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})

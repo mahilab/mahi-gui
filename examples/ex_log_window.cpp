@@ -43,8 +43,10 @@ public:
 
     LogWindowDemo() {
         // add writer to MAHI_LOG
-        MAHI_LOG->add_writer(&writer);
-        MAHI_LOG->set_max_severity(Debug);
+        if (MahiLogger) {
+            MahiLogger->add_writer(&writer);
+            MahiLogger->set_max_severity(Debug);
+        }
     }
 
     void update()
