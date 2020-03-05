@@ -1,4 +1,4 @@
-#include <Mahi/Gui/System.hpp>
+#include <Mahi/Gui/Native.hpp>
 #include <nfd.h>
 #include <cstring>
 #include <ctime>

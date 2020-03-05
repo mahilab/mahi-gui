@@ -4,7 +4,7 @@
 #include <Mahi/Gui/Color.hpp>
 #include <Mahi/Gui/Macros.hpp>
 #include <Mahi/Gui/Sequence.hpp>
-#include <Mahi/Gui/System.hpp>
+#include <Mahi/Gui/Native.hpp>
 #include <Mahi/Gui/Tween.hpp>
 #include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>

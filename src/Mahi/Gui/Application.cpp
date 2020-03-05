@@ -1,10 +1,13 @@
 #include <Mahi/Gui/Application.hpp>
-#include <Mahi/Gui/System.hpp>
+#include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
+#include <Mahi/Gui/Icons/IconsFontAwesome5Brands.hpp>
+#include <Mahi/Gui/imgui_custom.hpp>
+#include <Mahi/Util/System.hpp>
+#include <Mahi/Util/Timing/Clock.hpp>
+#include "Fonts/Fonts.hpp"
 
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
-
-#include <Mahi/Gui/imgui_custom.hpp>
 #include "imgui_internal.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
@@ -12,13 +15,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-
-#include "Fonts/Fonts.hpp"
-#include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
-#include <Mahi/Gui/Icons/IconsFontAwesome5Brands.hpp>
-
-#include <Mahi/Util/System.hpp>
-#include <Mahi/Util/Timing/Clock.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 // FORWARDS
