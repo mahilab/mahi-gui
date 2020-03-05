@@ -23,6 +23,6 @@ mahi_gui_example(nvg)
 mahi_gui_example(hidden)
 mahi_gui_example(log_window)
 
-if (MAHI_GUI_COROUTINES)
+if (MAHI_UTIL_COROUTINES)
 mahi_gui_example(coroutines)
 endif()

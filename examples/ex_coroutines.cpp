@@ -34,7 +34,7 @@ public:
     Enumerator move(int axis) {
         float t = 0;
         while (t < 5) {
-            pos[axis] = 125 + 50 * std::sin(2*Math::PI*t + Math::HALFPI * axis);
+            pos[axis] = 125 + 50 * std::sin(2*PI*t + HALFPI * axis);
             t += ImGui::GetIO().DeltaTime;
             co_yield nullptr;
         }
