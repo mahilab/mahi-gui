@@ -1,4 +1,4 @@
-#include <mahi/gui.hpp>
+#include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 #include <thread>
 
@@ -19,17 +19,17 @@ public:
         ImGui::SetNextWindowSize({150,150}, ImGuiCond_Always);
         ImGui::Begin("Save Dialog", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
         if (ImGui::Button(ICON_FA_SAVE)) {
-            if (System::saveDialog("png,jpeg;pdf", "", out) == System::DialogResult::Okay)
+            if (saveDialog("png,jpeg;pdf", "", out) == DialogResult::DialogOkay)
                 print("Path: {}",out);
         }           
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FILE)) {
-            if (System::openDialog("png,jpeg;pdf", "", out) == System::DialogResult::Okay)
+            if (openDialog("png,jpeg;pdf", "", out) == DialogResult::DialogOkay)
                 print("Path: {}",out);
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_COPY)) {
-            if (System::openDialog("png,jpeg;pdf", "", outs) == System::DialogResult::Okay)
+            if (openDialog("png,jpeg;pdf", "", outs) == DialogResult::DialogOkay)
             {
                 for (auto& o : outs)
                     print("Path: {}", o);
@@ -37,7 +37,7 @@ public:
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FOLDER_OPEN)) {
-            if (System::pickFolder("", out) == System::DialogResult::Okay)
+            if (pickFolder("", out) == DialogResult::DialogOkay)
                 print("Path: {}",out); 
         }
         ImGui::End();

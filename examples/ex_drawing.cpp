@@ -1,4 +1,4 @@
-#include <mahi/gui.hpp>
+#include <Mahi/Gui.hpp>
 #include <random>
 
 using namespace mahi::gui;

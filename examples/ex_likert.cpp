@@ -1,5 +1,5 @@
 // #define MAHI_GUI_NO_CONSOLE
-#include <mahi/gui.hpp>
+#include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 #include <filesystem>
 #include <fstream>

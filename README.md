@@ -33,7 +33,7 @@ That's it!
 ```cpp
 // my_app.cpp
 
-#include <mahi/gui.hpp>
+#include <Mahi/Gui.hpp>
 using namespace mahi::gui;
 
 // Inherit from Application

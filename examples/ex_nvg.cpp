@@ -1,4 +1,4 @@
-#include <mahi/gui.hpp>
+#include <Mahi/Gui.hpp>
 #include <mahi/Util.hpp>
 
 using namespace mahi::gui;

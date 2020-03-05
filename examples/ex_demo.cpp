@@ -1,6 +1,6 @@
 // #define MAHI_GUI_NO_CONSOLE
 
-#include <mahi/gui.hpp>
+#include <Mahi/Gui.hpp>
 #include <iostream>
 #include <tuple>
 
@@ -17,7 +17,7 @@ public:
         // A custom Window
         ImGui::Begin("My ImGui Window");
         if (ImGui::Button(ICON_FA_HOME))
-            System::openUrl("https://mahilab.rice.edu/");
+            openUrl("https://mahilab.rice.edu/");
         ImGui::SameLine();
         if (ImGui::Button("Quit Demo", ImVec2(-1,0)))
             quit();
