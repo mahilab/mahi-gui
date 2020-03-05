@@ -17,6 +17,9 @@
 #include <mahi/gui/Icons/IconsFontAwesome5.hpp>
 #include <mahi/gui/Icons/IconsFontAwesome5Brands.hpp>
 
+#include <Mahi/Util/System.hpp>
+#include <Mahi/Util/Timing/Clock.hpp>
+
 ///////////////////////////////////////////////////////////////////////////////
 // FORWARDS
 ///////////////////////////////////////////////////////////////////////////////
@@ -41,7 +44,7 @@ static void configureImGui(GLFWwindow *window);
 // APPLICATION
 ///////////////////////////////////////////////////////////////////////////////
 
-Event<void(int, const std::string&)> Application::onError;
+util::Event<void(int, const std::string&)> Application::onError;
 
 Application::Application() : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
 {
@@ -68,7 +71,6 @@ Application::Application() : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
         throw std::runtime_error("Failed to create NanoVG context!");
     // Setup ImGui
     configureImGui(window);
-    ImGui::GetIO().ConfigViewportsNoAutoMerge = true;
 }
 
 Application::Application(const std::string & title, int monitorIdx) : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
@@ -160,7 +162,7 @@ Application::~Application()
 void Application::run()
 {
     ImGuiIO &io = ImGui::GetIO();
-    double lastTime = 0;
+    util::Clock clock;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -181,11 +183,11 @@ void Application::run()
         nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
         // update
         update();
-#ifdef MAHI_GUI_COROUTINES
+#ifdef MAHI_COROUTINES
         // resume coroutines
         if (!m_coroutines.empty())
         {
-            std::vector<Enumerator> temp;
+            std::vector<util::Enumerator> temp;
             temp.swap(m_coroutines);
             for (auto &coro : temp)
             {
@@ -204,11 +206,10 @@ void Application::run()
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
-        if (!m_vsync && m_frameTime > 0) {
-            double elapsed = time() - lastTime;
-            double remaining = m_frameTime - elapsed;
-            System::sleep(remaining);
-            lastTime = time();
+        if (!m_vsync && m_frameTime != util::Time::Inf) {
+            
+            util::sleep(m_frameTime - clock.get_elapsed_time());       
+            clock.restart();     
         }
         glfwSwapBuffers(window);
     }
@@ -218,8 +219,8 @@ void Application::quit() {
     glfwSetWindowShouldClose(window, 1);
 }
 
-double Application::time() const {
-    return glfwGetTime();
+util::Time Application::time() const {
+    return util::seconds(glfwGetTime());
 }
 
 void Application::setWindowTitle(const std::string& title) {
@@ -311,11 +312,10 @@ void Application::setVSync(bool enabled) {
         glfwSwapInterval(0); // Disable vsync
 }
 
-void Application::setFrameLimit(int hertz) {
+void Application::setFrameLimit(util::Frequency freq) {
     setVSync(false);
-    m_frameTime = 1.f / (double)hertz;
+    m_frameTime = freq.to_time();
 }
-
 
 std::pair<float,float> Application::getMousePosition() const {
     double x,y;
@@ -329,16 +329,16 @@ void Application::update()
     // do nothing by default (user implemented)
 }
 
-#ifdef MAHI_GUI_COROUTINES
+#ifdef MAHI_COROUTINES
 
-std::shared_ptr<Coroutine> Application::startCoroutine(Enumerator &&e)
+std::shared_ptr<util::Coroutine> Application::startCoroutine(util::Enumerator &&e)
 {
     auto h = e.getCoroutine();
     m_coroutines.push_back(std::move(e));
     return h;
 }
 
-void Application::stopCoroutine(std::shared_ptr<Coroutine> routine)
+void Application::stopCoroutine(std::shared_ptr<util::Coroutine> routine)
 {
     if (routine)
         routine->stop();
@@ -436,7 +436,7 @@ static void configureImGui(GLFWwindow *window)
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    // io.ConfigViewportsNoAutoMerge = true;
+    io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
     
     // add fonts

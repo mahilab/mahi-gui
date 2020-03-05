@@ -1,9 +1,11 @@
 // #define MAHI_GUI_NO_CONSOLE
 #include <mahi/gui.hpp>
+#include <Mahi/Util.hpp>
 #include <filesystem>
 #include <fstream>
 
 using namespace mahi::gui;
+using namespace mahi::util;
 namespace fs = std::filesystem;
 
 /// Basic Likert survey application
@@ -35,9 +37,9 @@ public:
             ImGui::InputText("Subject     ", &subject);
             ImGui::SameLine();
             ImGui::SetNextItemWidth(50);
-            if (ImGui::BeginCombo("Age     ", age != -1 ? str(age).c_str() : "")) {
+            if (ImGui::BeginCombo("Age     ", age != -1 ? std::to_string(age).c_str() : "")) {
                 for (int i = 0; i < 100; ++i) {
-                    if (ImGui::Selectable(str(i).c_str(), i == age))
+                    if (ImGui::Selectable(std::to_string(i).c_str(), i == age))
                         age = i;
                     if (age == i)
                         ImGui::SetItemDefaultFocus();
@@ -163,7 +165,7 @@ public:
         // make sure every question answered
         for (int i = 0; i < responses.size();  ++i) {
             if (responses[i] == NoResponse) {
-                message = "Please respond to Question " + str(i+1);
+                message = "Please respond to Question " + std::to_string(i+1);
                 ImGui::OpenPopup("Message");
                 return false;
             }

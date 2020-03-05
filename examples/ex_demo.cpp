@@ -9,7 +9,7 @@ using namespace mahi::gui;
 class Demo : public Application {
 public:
     
-    Demo() : Application(500,500,"Demo") { }
+    Demo() : Application() { }
 
     virtual void update() override {
         // Official ImGui demo (see imgui_demo.cpp for full example)
@@ -18,6 +18,9 @@ public:
         ImGui::Begin("My ImGui Window");
         if (ImGui::Button(ICON_FA_HOME))
             System::openUrl("https://mahilab.rice.edu/");
+        ImGui::SameLine();
+        if (ImGui::Button("Quit Demo", ImVec2(-1,0)))
+            quit();
         ImGui::End();
     }
 };

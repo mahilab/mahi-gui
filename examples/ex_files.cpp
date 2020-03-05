@@ -1,7 +1,9 @@
 #include <mahi/gui.hpp>
+#include <Mahi/Util.hpp>
 #include <thread>
 
 using namespace mahi::gui;
+using namespace mahi::util;
 
 class FileDemo : public Application {
 public:
@@ -18,25 +20,25 @@ public:
         ImGui::Begin("Save Dialog", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
         if (ImGui::Button(ICON_FA_SAVE)) {
             if (System::saveDialog("png,jpeg;pdf", "", out) == System::DialogResult::Okay)
-                print(out);
+                print("Path: {}",out);
         }           
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FILE)) {
             if (System::openDialog("png,jpeg;pdf", "", out) == System::DialogResult::Okay)
-                print(out);
+                print("Path: {}",out);
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_COPY)) {
             if (System::openDialog("png,jpeg;pdf", "", outs) == System::DialogResult::Okay)
             {
                 for (auto& o : outs)
-                    print(o);
+                    print("Path: {}", o);
             }
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FOLDER_OPEN)) {
             if (System::pickFolder("", out) == System::DialogResult::Okay)
-                print(out); 
+                print("Path: {}",out); 
         }
         ImGui::End();
     }

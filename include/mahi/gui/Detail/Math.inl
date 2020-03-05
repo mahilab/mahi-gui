@@ -4,168 +4,9 @@
 #include <numeric>
 #include <iomanip>
 
-namespace mahi::gui {
-namespace Math {
-
-template <typename T, typename TArray>
-inline void linspace(T a, T b, TArray& array) {
-    if (array.size() == 0)
-        return;
-    std::size_t N = array.size();
-    T delta = (b - a) / (N - 1);
-    array[0] = a;
-    for (std::size_t i = 1; i < N - 1; i++)
-        array[i] = array[i - 1] + delta;
-    array[N - 1] = b;
-    return array;
-}
-
-template <typename T>
-inline T clamp(T value, T min, T max) {
-    return value <= min ? min : value >= max ? max : value;
-}
-
-template <typename T>
-inline T clamp01(T value) {
-    return value <= 0 ? 0 : value >= 1 ? 1 : value;
-}
-
-template <typename T>
-inline T wrapToPi(T angle) {
-    angle = std::fmod(angle + PI, TWOPI);
-    if (angle < 0)
-        angle += TWOPI;
-    return angle - PI;
-}
-
-
-template <typename T>
-inline T wrapTo2Pi(T angle) {
-    angle = std::fmod(angle, TWOPI);
-    if (angle < 0)
-        angle += TWOPI;
-    return angle;
-}
-
-template <typename T>
-inline bool approximately(T a, T b, T delta) {
-    return std::abs(a-b) < delta;
-}
-
-template <typename T>
-inline int sign(T value) {
-    return (0 < value) - (value < 0);
-}
-
-inline bool isEven(int value) {
-    return !(value % 2);
-}
-
-inline bool isOdd(int value) {
-    return (value % 2);
-}
-
-template <typename T, typename TArray>
-inline T sum(const TArray& data) {
-    T s = 0;
-    for (std::size_t i = 0; i < data.size(); ++i)
-        s += data[i];
-    return s;
-}
-
-template <typename T, typename TArray>
-inline T mean(const TArray& data) {
-    T den = static_cast<T>(1) / static_cast<T>(data.size());
-    T mean = 0;
-    for (std::size_t i = 0; i < data.size(); ++i)
-        mean += data[i] * den;
-    return mean;
-}
-
-template <typename T, typename TArray>
-inline T stddev(const TArray& data, T& meanOut) {
-    if (data.size() > 0) {
-        meanOut = mean(data);
-        TArray diff(data.size());
-        std::transform(data.begin(), data.end(), diff.begin(), [meanOut](T x) { return x - meanOut; });
-        T sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0);
-        return std::sqrt(sq_sum / data.size());
-    }
-    else {
-        return 0;
-    }
-}
-
-template <typename T>
-inline T interp(T x, T x0, T x1, T y0, T y1) {
-    return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
-}
-
-template <typename T>
-inline int orderOfMagnitude(T value) {
-    if (value == 0)
-        return 0;
-    else
-        return static_cast<int>(floor(log10(std::abs(value))));
-}
-
-inline std::size_t precision(int order) {
-    std::size_t prec;
-    if (order >= 1)
-        prec = 0;
-    else if (order == 0)
-        prec = 1;
-    else
-        prec = -order + 1;
-    return prec;
-}
-
-template <typename T>
-inline T roundUpToNearest(T value, T interval)
-{
-    if (interval == 0)
-        return value;
-    T rem = fmod(abs(value), interval);
-    if (rem == 0)
-        return value;
-    if (value < 0)
-        return -(abs(value) - rem);
-    else
-        return value + interval - rem;
-}
-
-template <typename T>
-inline T roundDownToNearest(T value, T interval) {
-    if (interval == 0)
-        return value;
-    T rem = fmod(abs(value), interval);
-    if (rem == 0)
-        return value;
-    if (value < 0)
-        return -(abs(value) - rem);
-    else
-        return value - rem;
-}
-
-template <typename T>
-inline T roundToNearest(T value, T interval) {
-    if (value >= 0) {
-        T rem = fmod(value, interval);
-        value = rem > interval * static_cast<T>(0.5) ? value + interval - rem : value - rem;
-    }
-    else {
-        value = -value;
-        T rem = fmod(value, interval);
-        value = rem > interval * static_cast<T>(0.5) ? value + interval - rem : value - rem;
-        value = -value;
-
-    }
-    return value;
-}
-
-//==============================================================================
-// VECTOR ALGEBRA
-//==============================================================================
+namespace mahi {
+namespace gui {
+namespace math {
 
 inline Vec2 absVec(const Vec2& v) {
     return Vec2(std::abs(v.x), std::abs(v.y));
@@ -195,11 +36,6 @@ inline float dot(const Vec2& lhs, const Vec2& rhs) {
 inline float cross(const Vec2& lhs, const Vec2& rhs) {
     return lhs.x * rhs.y - lhs.y * rhs.x;
 }
-
-
-//==============================================================================
-// GEOMETRY
-//==============================================================================
 
 inline bool parallel(const Vec2& a1,const Vec2& a2,
                      const Vec2& b1,const Vec2& b2)
@@ -233,7 +69,7 @@ inline Vec2 intersection(const Vec2& a1, const Vec2& a2,
     float v3 = ((a1.x - a2.x) * (b1.y - b2.y) - (a1.y - a2.y) * (b1.x - b2.x));
 
     if (v3 == 0)
-        return Vec2(INF,INF);
+        return Vec2((float)util::INF,(float)util::INF);
     else
         return Vec2((v1 * (b1.x - b2.x) - v2 * (a1.x - a2.x)) / v3,
                             (v1 * (b1.y - b2.y) - v2 * (a1.y - a2.y)) / v3);
@@ -313,7 +149,7 @@ inline bool isConvex(const std::vector<Vec2>& polygon) {
 }
 
 inline float angle(const Vec2& V) {
-    return atan2(V.y, V.x);
+    return std::atan2(V.y, V.x);
 }
 
 inline float angle(const Vec2& V1, const Vec2 V2) {
@@ -321,12 +157,13 @@ inline float angle(const Vec2& V1, const Vec2 V2) {
 }
 
 inline int winding(const Vec2& a, const Vec2 b) {
-    return sign(cross(a, b));
+    return util::sign(cross(a, b));
 }
 
 inline int winding(const Vec2& a, const Vec2& b, const Vec2& c) {
     return winding((b - a), (c - b));
 }
 
-}  // namespace Math
-}  // namespace mahi::gui
+}  // namespace math
+}  // namespace gui
+}  // namespace mahi

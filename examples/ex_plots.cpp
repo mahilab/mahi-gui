@@ -1,6 +1,8 @@
 #include <mahi/gui.hpp>
+#include <Mahi/Util.hpp>
 
 using namespace mahi::gui;
+using namespace mahi::util;
 
 class PlotDemo : public Application
 {
@@ -26,7 +28,7 @@ public:
         for (int i = 0; i < 10000; ++i)
         {
             float x = i * 0.001f;
-            float y = 0.5f + 0.5f * std::sin(2 * Math::PI * 1 * x);
+            float y = 0.5f + 0.5f * std::sin(2 * PI * 1 * x);
             items[0].data[i] = {x, y};
         }
         // Scatter
@@ -38,7 +40,7 @@ public:
         for (int i = 0; i < 100; ++i)
         {
             float x = i * 0.1f;
-            float y = 0.1f * x + Random::range(-0.1f, 0.1f);
+            float y = 0.1f * x + random_range(-0.1f, 0.1f);
             items[1].data[i] = {x, y};
         }
         // XBar
@@ -48,7 +50,7 @@ public:
         items[2].size = 0.5f;
         items[2].data.resize(10);
         for (int i = 0; i < 10; ++i)
-            items[2].data[i] = {(float)i + 0.5f, Random::range(0.0f, 1.0f)};
+            items[2].data[i] = {(float)i + 0.5f, (float)random_range(0.0, 1.0)};
         // YBar
         items[3].label = "Y-Bar";
         items[3].type = ImGui::PlotItem::YBar;
@@ -56,7 +58,7 @@ public:
         items[3].size = 0.05f;
         items[3].data.resize(10);
         for (int i = 0; i < 10; ++i)
-            items[3].data[i] = {Random::range(0.0f, 2.0f), ((float)i + 0.5f) * 0.1f};
+            items[3].data[i] = {(float)random_range(0.0, 2.0), ((float)i + 0.5f) * 0.1f};
 
         ImGui::DisableViewports();
     }

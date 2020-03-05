@@ -5,10 +5,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <nanovg.h>
-#include <mahi/gui/Event.hpp>
 #include <mahi/gui/Color.hpp>
-#ifdef MAHI_GUI_COROUTINES
-#include <mahi/gui/Coroutine.hpp>
+#include <Mahi/Util/Event.hpp>
+#include <Mahi/Util/Timing/Time.hpp>
+#include <Mahi/Util/Timing/Frequency.hpp>
+
+#ifdef MAHI_COROUTINES
+#include <Mahi/Util/Coroutine.hpp>
 #endif
 
 namespace mahi::gui
@@ -36,7 +39,7 @@ public:
     virtual void update();
 
     /// Get the current time
-    double time() const;
+    util::Time time() const;
 
     /// Set the window title
     void setWindowTitle(const std::string& title);
@@ -69,22 +72,22 @@ public:
     /// Enable/disable VSync
     void setVSync(bool enabled);
     /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit) 
-    void setFrameLimit(int hertz);
+    void setFrameLimit(util::Frequency freq);
 
     /// Get the mouse position 
     std::pair<float,float> getMousePosition() const;
 
 public:
     /// Emitted when the Window moves
-    Event<void(int,int)> onWindowMoved;
+    util::Event<void(int,int)> onWindowMoved;
     /// Emitted when the Window is resized
-    Event<void(int,int)> onWindowResized;
+    util::Event<void(int,int)> onWindowResized;
     /// Emitted right before the Window is closed; return false to cancel the close
-    Event<bool(void), CollectorBooleanAnd> onWindowClosed;
+    util::Event<bool(void), util::CollectorBooleanAnd> onWindowClosed;
     /// Emitted when file(s) is dropped, passes list of filepaths
-    Event<void(const std::vector<std::string>&)> onFileDrop;
+    util::Event<void(const std::vector<std::string>&)> onFileDrop;
     /// Emitted when there is an internal GLFW error (error code, description)
-    static Event<void(int, const std::string&)> onError;
+    static util::Event<void(int, const std::string&)> onError;
 
 public:
     /// Window background color
@@ -98,21 +101,21 @@ protected:
 
 private:
     bool m_vsync;
-    double m_frameTime;
+    util::Time m_frameTime;
 
-#ifdef MAHI_GUI_COROUTINES
+#ifdef MAHI_COROUTINES
 public:
     /// Starts a coroutine
-    std::shared_ptr<Coroutine> startCoroutine(Enumerator &&coro);
+    std::shared_ptr<util::Coroutine> startCoroutine(util::Enumerator &&coro);
     /// Stops an already running coroutine
-    void stopCoroutine(std::shared_ptr<Coroutine> coro);
+    void stopCoroutine(std::shared_ptr<util::Coroutine> coro);
     /// Stops all running coroutines
     void stopCoroutines();
     /// Returns the number of coroutines running
     int coroutineCount() const;
 private:
     /// Vector of running coroutines
-    std::vector<Enumerator> m_coroutines;
+    std::vector<util::Enumerator> m_coroutines;
 #endif
 };
 

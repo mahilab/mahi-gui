@@ -1,6 +1,7 @@
 #include <mahi/gui.hpp>
 
 using namespace mahi::gui;
+using namespace mahi::util;
 
 class CoroDemo : public Application {
 public:

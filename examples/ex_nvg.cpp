@@ -1,6 +1,8 @@
 #include <mahi/gui.hpp>
+#include <mahi/Util.hpp>
 
 using namespace mahi::gui;
+using namespace mahi::util;
 
 class NvgDemo : public Application {
 public:
@@ -18,12 +20,16 @@ public:
         ImGui::SameLine();
         if (ImGui::Button("VSync Off"))
             setVSync(false);
+        static int lim = 120;
+        ImGui::SliderInt("##Limit", &lim, 0, 500, "%d Hz"); ImGui::SameLine();
+        if (ImGui::Button("Limit"))
+            setFrameLimit(hertz(lim));
         ImGui::Text("%.3f FPS", ImGui::GetIO().Framerate);
         ImGui::End();
 
         auto [w,h] = getWindowSize();
         auto [x,y] = getMousePosition();
-        double t = time();
+        double t = time().as_seconds();
 
         drawEyes(vg, (w-150)/2, (h-100)/2, 150, 100, x, y, t);
         nvgBeginPath(vg);

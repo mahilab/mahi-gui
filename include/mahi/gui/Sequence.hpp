@@ -3,8 +3,8 @@
 #include <mahi/gui/Tween.hpp>
 #include <map>
 
-namespace mahi::gui
-{
+namespace mahi {
+namespace gui {
 
 /// Sequence class
 template <typename T>
@@ -76,4 +76,5 @@ void Sequence<T>::getKeys(std::vector<float>& stopsOut, std::vector<T>& valuesOu
     
 }
 
-} // namespace mahi::gui
+} // namespace gui
+} // namespace mahi

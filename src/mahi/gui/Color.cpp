@@ -1,5 +1,6 @@
 #include <mahi/gui/Color.hpp>
 #include <mahi/gui/Math.hpp>
+#include <Mahi/Util/Random.hpp>
 #include <cmath>
 #include <cstdio>
 #include <iostream>
@@ -54,6 +55,33 @@ Color withAlpha(Color color, float a) {
 
 float luminance(const Color& color) {
     return ( 0.299f * color.r + 0.587f * color.g + 0.114f * color.b);
+}
+
+Color random_color() {
+    Color color;
+    color.r = util::random_range(0.0f,1.0f);
+    color.g = util::random_range(0.0f,1.0f);
+    color.b = util::random_range(0.0f,1.0f);
+    return color;
+}
+
+Color random_color(const Color& color1, const Color& color2) {
+    Color color;
+    color.r = util::random_range(color1.r, color2.r);
+    color.g = util::random_range(color1.g, color2.g);
+    color.b = util::random_range(color1.b, color2.b);
+    color.a = util::random_range(color1.a, color2.a);
+    return color;
+}
+
+std::ostream & operator << (std::ostream &out, const Color& rgb) {
+    out << "(R:" << rgb.r << ",G:" << rgb.g << ",B:" << rgb.b << ",A:" << rgb.a << ")";
+    return out;
+}
+
+std::ostream & operator << (std::ostream &out, const HSV& hsv) {
+    out << "(H:" << hsv.h << ",S:" << hsv.s << ",V:" << hsv.v  << ",A:" << hsv.a << ")";
+    return out;
 }
 
 } // namespace mahi::gui

@@ -9,7 +9,6 @@ cmake_minimum_required(VERSION 3.13.0)
 #===============================================================================
 
 option(MAHI_GUI_EXAMPLES   "Turn ON to build mahi-gui example(s)"            ON)
-option(MAHI_GUI_COROUTINES "Turn ON to build experimental coroutine support" ON)
 
 #===============================================================================
 # FRONT MATTER
@@ -80,15 +79,20 @@ set(IMGUI_SRC
 )
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 
-# JSON
-set(JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/json/include)
-
 # NANOVG
 add_subdirectory(3rdparty/nanovg)
 install(TARGETS nanovg EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # NANOSVG
 set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
+
+#===============================================================================
+# MAHI UTIL
+#===============================================================================
+
+include(FetchContent) 
+FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/mahilab/mahi-util.git) 
+FetchContent_MakeAvailable(mahi-util)
 
 #===============================================================================
 # CREATE LIBRARY
@@ -102,16 +106,6 @@ target_compile_features(gui PUBLIC cxx_std_17)
 install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
-# set necessary coroutine options
-if(MAHI_GUI_COROUTINES)
-    target_compile_definitions(gui PUBLIC MAHI_GUI_COROUTINES)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        target_compile_options(gui PUBLIC "/await")
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(gui PUBLIC "-fcoroutines-ts")
-    endif()
-endif()
-
 # add source files
 add_subdirectory(src/mahi/gui)
 target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
@@ -124,20 +118,17 @@ target_include_directories(gui
 		$<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${IMGUI_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${JSON_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${NANOSVG_INCLUDE_DIR}>
 	PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # link libraries
+target_link_libraries(gui PUBLIC mahi::util)
 target_link_libraries(gui PUBLIC glfw)
 target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
 target_link_libraries(gui PUBLIC nativefiledialog)
-if (WIN32)
-    target_link_libraries(gui PUBLIC winmm Pdh Version)
-endif()
 
 #===============================================================================
 # EXAMPLE EXECUTABLES
@@ -163,7 +154,6 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}${MAHI_GUI_INSTALL_POSTFIX}")
 
 # install headers
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(DIRECTORY ${JSON_INCLUDE_DIR}/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(DIRECTORY 3rdparty/glad/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${IMGUI_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanovg/src/nanovg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

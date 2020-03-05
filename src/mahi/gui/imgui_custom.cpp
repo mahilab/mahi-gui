@@ -7,7 +7,6 @@
 #include <cmath>
 #include <iostream>
 #include <algorithm>
-#include <mahi/gui/Print.hpp>
 #include <mahi/gui/Icons/IconsFontAwesome5.hpp>
 #include <mahi/gui/Color.hpp>
 

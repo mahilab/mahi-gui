@@ -35,37 +35,4 @@ void openUrl(const std::string& url);
 /// Opens an external link to an email
 void openEmail(const std::string& address, const std::string& subject = "");
 
-/// Gets the CPU core usage as a percent [0 to 1] used by all processes
-double cpuUsageTotal();
-
-/// Gets the CPU core usage as a percent [0 to 1] used by this process
-double cpuUsageProcess();
-
-/// Gets the total virtual memory available in bytes
-std::size_t virtMemAvailable();
-
-/// Gets the virtual memory used by all processes in bytes
-std::size_t virtMemUseTotal();
-
-/// Gets the virtual memory used by this process in bytes
-std::size_t virtMemUsedProcess();
-
-/// Gets the total RAM available in bytes
-std::size_t ramAvailable();
-
-/// Gets the RAM used by all process in bytes
-std::size_t ramUsedTotal();
-
-/// Gets the RAM used by this process in bytes
-std::size_t ramUsedProcess();
-
-/// Gets string name of the OS
-const std::string& osName();
-
-/// Gets string representation of the OS version
-const std::string& osVersion();
-
-/// Sleeps the thread for a given amount of time as accurately as possible
-void sleep(double seconds);
-
 } // namespace mahi::gui::System

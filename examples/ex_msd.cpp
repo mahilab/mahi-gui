@@ -1,24 +1,8 @@
 #include <mahi/gui.hpp>
+#include <Mahi/Util.hpp>
 
 using namespace mahi::gui;
-
-class Integrator {
-public:
-    Integrator(double initial = 0.0) : integral(initial) { }
-    double update(double x, double t) {
-        if (step_count > 0)
-            integral += (t - last_t) * (0.5 * (last_x + x));
-        last_x = x;
-        last_t = t;
-        step_count++;
-        return integral;
-    }
-private:
-    double last_x   = 0; ///< Integrand at previous call to integrate()
-    double last_t   = 0; ///< Time at previous call to integrate()
-    double integral = 0; ///< The integral value
-    int step_count  = 0;
-};
+using namespace mahi::util;
 
 // Simulated system to control
 class MassSpringDamper {
@@ -28,7 +12,7 @@ public:
         x(x0), xd(xd0), xdd(0), xdd_xd(xd), xd_x(x)
     { }
     // Propogate MSD system
-    void update(double F, double t) {
+    void update(double F, Time t) {
         xdd = (F - b * xd - k * x) / m;
         xd  = xdd_xd.update(xdd, t); 
         x   = xd_x.update(xd, t);
@@ -76,15 +60,15 @@ public:
         xplot.data.clear();
         xplot.data.reserve(steps);
         double tstep = tmax / (steps - 1);
-        double t = 0;
-        double minx = Math::INF;
-        double maxx = -Math::INF;
+        Time t = Time::Zero;
+        double minx = INF;
+        double maxx = -INF;
         for (int i = 0 ; i < steps; ++i) {
             msd.update(0, t);
-            xplot.data.push_back(Vec2(t, msd.x));
+            xplot.data.push_back(Vec2(t.as_seconds(), msd.x));
             minx = std::min(minx, msd.x);
             maxx = std::max(maxx, msd.x);
-            t += tstep;
+            t += seconds(tstep);
         }
         plot.xAxis.minimum = 0;
         plot.xAxis.maximum = tmax;
