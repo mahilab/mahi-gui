@@ -210,6 +210,7 @@ void Application::run()
         }
         glfwSwapBuffers(window);
     }
+    onApplicationQuit.emit();
 }
 
 void Application::quit() {
