@@ -84,10 +84,13 @@ public:
     util::Event<void(int,int)> on_window_resized;
     /// Emitted right before the Window is closed; return false to cancel the close
     util::Event<bool(void), util::CollectorBooleanAnd> on_window_closed;
+    /// Emitted when the application quits
+    util::Event<void(void)> on_application_quit;
     /// Emitted when file(s) is dropped, passes list of filepaths
     util::Event<void(const std::vector<std::string>&)> on_file_drop;
     /// Emitted when there is an internal GLFW error (error code, description)
     static util::Event<void(int, const std::string&)> on_error;
+
 
 public:
     /// Window background color
