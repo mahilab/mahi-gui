@@ -33,7 +33,7 @@ public:
 
     /// Runs the application
     void run();
-    /// Quitd the application
+    /// Quits the application
     void quit();
     /// Called once per frame
     virtual void update();

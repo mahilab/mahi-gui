@@ -59,18 +59,18 @@ float luminance(const Color& color) {
 
 Color random_color() {
     Color color;
-    color.r = util::random_range(0.0f,1.0f);
-    color.g = util::random_range(0.0f,1.0f);
-    color.b = util::random_range(0.0f,1.0f);
+    color.r = static_cast<float>(util::random_range(0.0,1.0));
+    color.g = static_cast<float>(util::random_range(0.0,1.0));
+    color.b = static_cast<float>(util::random_range(0.0,1.0));
     return color;
 }
 
 Color random_color(const Color& color1, const Color& color2) {
     Color color;
-    color.r = util::random_range(color1.r, color2.r);
-    color.g = util::random_range(color1.g, color2.g);
-    color.b = util::random_range(color1.b, color2.b);
-    color.a = util::random_range(color1.a, color2.a);
+    color.r = static_cast<float>(util::random_range(static_cast<double>(color1.r), static_cast<double>(color2.r)));
+    color.g = static_cast<float>(util::random_range(static_cast<double>(color1.g), static_cast<double>(color2.g)));
+    color.b = static_cast<float>(util::random_range(static_cast<double>(color1.b), static_cast<double>(color2.b)));
+    color.a = static_cast<float>(util::random_range(static_cast<double>(color1.a), static_cast<double>(color2.a)));
     return color;
 }
 
