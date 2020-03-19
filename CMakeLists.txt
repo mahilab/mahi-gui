@@ -8,7 +8,11 @@ cmake_minimum_required(VERSION 3.13.0)
 # USER OPTIONS
 #===============================================================================
 
-option(MAHI_GUI_EXAMPLES   "Turn ON to build mahi-gui example(s)"            ON)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    option(MAHI_GUI_EXAMPLES   "Turn ON to build mahi-gui example(s)" ON)
+else()
+    option(MAHI_GUI_EXAMPLES   "Turn ON to build mahi-gui example(s)" OFF)
+endif()
 
 #===============================================================================
 # FRONT MATTER
