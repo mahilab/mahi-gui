@@ -53,7 +53,7 @@ static float getLineCrossing(Vec2 p0, Vec2 p1, Vec2 p2, Vec2 p3) {
 	return -(d.x * b.y - d.y * b.x) / m;
 }
 
-void svgDraw(NVGcontext* vg, NSVGimage* svg) {
+void svg_draw(NVGcontext* vg, NSVGimage* svg) {
 	int shapeIndex = 0;
 	// Iterate shape linked list
 	for (NSVGshape* shape = svg->shapes; shape; shape = shape->next, shapeIndex++) {

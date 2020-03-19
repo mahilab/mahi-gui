@@ -7,7 +7,7 @@ using namespace mahi::util;
 class NvgDemo : public Application {
 public:
     NvgDemo() : Application(250,250,"NVG Demo") { 
-        backgroundColor = Grays::Gray10;
+        background_color = Grays::Gray10;
     }
 
     void update() override { 
@@ -16,19 +16,19 @@ public:
         ImGui::Text("ImGui will always be drawn on top of NanoVG");
         ImGui::Text("even if it is called first in update()");
         if (ImGui::Button("VSync On"))
-            setVSync(true);
+            set_vsync(true);
         ImGui::SameLine();
         if (ImGui::Button("VSync Off"))
-            setVSync(false);
+            set_vsync(false);
         static int lim = 120;
         ImGui::SliderInt("##Limit", &lim, 0, 500, "%d Hz"); ImGui::SameLine();
         if (ImGui::Button("Limit"))
-            setFrameLimit(hertz(lim));
+            set_frame_limit(hertz(lim));
         ImGui::Text("%.3f FPS", ImGui::GetIO().Framerate);
         ImGui::End();
 
-        auto [w,h] = getWindowSize();
-        auto [x,y] = getMousePosition();
+        auto [w,h] = get_window_size();
+        auto [x,y] = get_mouse_pos();
         double t = time().as_seconds();
 
         drawEyes(vg, (w-150)/2, (h-100)/2, 150, 100, x, y, t);

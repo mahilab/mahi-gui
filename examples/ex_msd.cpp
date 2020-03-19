@@ -70,10 +70,10 @@ public:
             maxx = std::max(maxx, msd.x);
             t += seconds(tstep);
         }
-        plot.xAxis.minimum = 0;
-        plot.xAxis.maximum = tmax;
-        plot.yAxis.minimum = minx;
-        plot.yAxis.maximum = maxx;
+        plot.x_axis.minimum = 0;
+        plot.x_axis.maximum = tmax;
+        plot.y_axis.minimum = minx;
+        plot.y_axis.maximum = maxx;
     }
 
     void drawMsd() {

@@ -41,11 +41,11 @@ struct PlotAxis {
     /// Default
     PlotAxis();
     /// Should the axis grid lines be shown?
-    bool showGrid;
+    bool show_grid;
     /// Should the axis tick marks be shown?
-    bool showTickMarks;
+    bool show_tick_marks;
     /// Should the axis tick labels be shown?
-    bool showTickLabels;
+    bool show_tick_labels;
     /// Axis minimum value.
     float minimum;
     /// Axis maximum value.
@@ -53,15 +53,15 @@ struct PlotAxis {
     /// Number of grid divisions.
     int divisions;
     /// Number of grid subdivisions.
-    int subDivisions;
+    int subdivisions;
     /// Axis color (affects grid lines, ticks, and labels)
     ImVec4 color;
     /// The percentage of the axis range that each mouse scroll adds/subracts from view (default=0.1).
-    float zoomRate;
+    float zoom_rate;
     /// Is the minimum locked from zooming?
-    bool lockMin;
+    bool lock_min;
     /// Is the maximum locked from zooming?
-    bool lockMax;
+    bool lock_max;
     /// Should the axis be flipped?
     bool flip;
     /// The label of the axis (default="", i.e. no label displayed).
@@ -73,33 +73,33 @@ struct PlotInterface {
     /// Default constructor.
     PlotInterface();
     /// The X-Axis
-    PlotAxis xAxis;
+    PlotAxis x_axis;
     /// The Y-Axis
-    PlotAxis yAxis;
+    PlotAxis y_axis;
     /// Should crosshairs be shown when the plot is hovered?
-    bool showCrosshairs;
+    bool show_crosshairs;
     /// Should the x-y position of the hovered mouse be shown?
-    bool showMousePos;
+    bool show_mouse_pos;
     /// Should the plot items legend be shown?
-    bool showLegend;
+    bool show_legend;
     /// Is right-click selection allowed?
-    bool enableSelection;
+    bool enable_selection;
     /// Should middle-click open the controls pop-up?
-    bool enableControls;
+    bool enable_controls;
     /// The color of the plot frame (i.e. outer background)
-    ImVec4 frameColor;
+    ImVec4 frame_color;
     /// The color of the grid background (i.e. inner background)
-    ImVec4 backgroundColor;
+    ImVec4 background_color;
     /// The color of the grid border
-    ImVec4 borderColor;  
+    ImVec4 border_color;  
     /// The color of the selection box tool
-    ImVec4 selectionColor;
+    ImVec4 selection_color;
     /// The plot title (default="", i.e. no title displayed)
     std::string title;
     /// For internal use only.
     bool _dragging;
     bool _selecting;
-    ImVec2 _selectStart;
+    ImVec2 _select_start;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -107,7 +107,7 @@ struct PlotInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Renders a Plot and PlotItems
-void Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int nItems, const ImVec2& size = {-1,-1});
+void Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items, const ImVec2& size = {-1,-1});
 /// Renders a Plot and PlotItems (STL version)
 void Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items, const ImVec2& size = {-1,-1});
 
@@ -123,22 +123,22 @@ inline void PlotItemRollPoint(PlotItem& item, float x, float y, float span = 10)
     item.data.push_back(ImVec2(xmod, y));
 }
 
-/// Pushes a point into an item data set as if it were a circular buffer of #maxPoints size
-inline void PlotItemBufferPoint(PlotItem& item, float x, float y, int maxPoints) {
-    if (item.data.size() < maxPoints) 
+/// Pushes a point into an item data set as if it were a circular buffer of #max_points size
+inline void PlotItemBufferPoint(PlotItem& item, float x, float y, int max_points) {
+    if (item.data.size() < max_points) 
         item.data.push_back(ImVec2(x,y));
     else {
         item.data[item._begin] = ImVec2(x,y);
         item._begin++;
-        if (item._begin == maxPoints)
+        if (item._begin == max_points)
             item._begin = 0;
     }
 }
 
 /// Call before rendering a plot to scroll the axis in time, displaying #history seconds
-inline void PlotAxisScroll(PlotAxis& axis, float currentTime, float history) {
-    axis.maximum = currentTime;
-    axis.minimum = currentTime - history;
+inline void PlotAxisScroll(PlotAxis& axis, float current_time, float history) {
+    axis.maximum = current_time;
+    axis.minimum = current_time - history;
 }
 
 } // namespce ImGui

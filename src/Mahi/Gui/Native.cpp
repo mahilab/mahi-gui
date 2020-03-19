@@ -31,7 +31,7 @@ namespace fs = std::filesystem;
 namespace mahi {
 namespace gui {
 
-DialogResult saveDialog(const std::string &filterList, const std::string &defaultPath, std::string &outPath)
+DialogResult save_dialog(const std::string &filterList, const std::string &defaultPath, std::string &outPath)
 {
     nfdchar_t *savePath = NULL;
     nfdresult_t result = NFD_SaveDialog(filterList.c_str(), defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &savePath);
@@ -47,7 +47,7 @@ DialogResult saveDialog(const std::string &filterList, const std::string &defaul
         return DialogResult::DialogError;
 }
 
-DialogResult openDialog(const std::string &filterList, const std::string &defaultPath, std::string &outPath)
+DialogResult open_dialog(const std::string &filterList, const std::string &defaultPath, std::string &outPath)
 {
     nfdchar_t *openPath = NULL;
     nfdresult_t result = NFD_OpenDialog(filterList.c_str(), defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &openPath);
@@ -63,7 +63,7 @@ DialogResult openDialog(const std::string &filterList, const std::string &defaul
         return DialogResult::DialogError;
 }
 
-DialogResult openDialog(const std::string &filterList, const std::string &defaultPath, std::vector<std::string> &outPaths)
+DialogResult open_dialog(const std::string &filterList, const std::string &defaultPath, std::vector<std::string> &outPaths)
 {
     nfdpathset_t pathSet;
     nfdresult_t result = NFD_OpenDialogMultiple(filterList.c_str(), defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &pathSet);
@@ -82,7 +82,7 @@ DialogResult openDialog(const std::string &filterList, const std::string &defaul
         return DialogResult::DialogError;
 }
 
-DialogResult pickFolder(const std::string &defaultPath, std::string &outPath)
+DialogResult pick_folder(const std::string &defaultPath, std::string &outPath)
 {
     nfdchar_t *pickPath = NULL;
     nfdresult_t result = NFD_PickFolder(defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &pickPath);
@@ -103,7 +103,7 @@ DialogResult pickFolder(const std::string &defaultPath, std::string &outPath)
 ///////////////////////////////////////////////////////////////////////////////
 #ifdef _WIN32
 
-bool openFolder(const std::string &path)
+bool open_folder(const std::string &path)
 {
     fs::path p(path);
     if (fs::exists(p) && fs::is_directory(p))
@@ -114,7 +114,7 @@ bool openFolder(const std::string &path)
     return false;
 }
 
-bool openFile(const std::string &path)
+bool open_file(const std::string &path)
 {
     fs::path p(path);
     if (fs::exists(p) && fs::is_regular_file(p))
@@ -125,12 +125,12 @@ bool openFile(const std::string &path)
     return false;
 }
 
-void openUrl(const std::string &url)
+void open_url(const std::string &url)
 {
     ShellExecuteA(0, 0, url.c_str(), 0, 0, 5);
 }
 
-void openEmail(const std::string &address, const std::string &subject)
+void open_email(const std::string &address, const std::string &subject)
 {
     std::string str = "mailto:" + address;
     if (!subject.empty())
@@ -144,7 +144,7 @@ void openEmail(const std::string &address, const std::string &subject)
 // macOS
 ///////////////////////////////////////////////////////////////////////////////
 
-bool openFolder(const std::string &path)
+bool open_folder(const std::string &path)
 {
     fs::path p(path);
     if (fs::exists(p) && fs::is_regular_file(p))
@@ -156,7 +156,7 @@ bool openFolder(const std::string &path)
     return false;
 }
 
-bool openFile(const std::string &path)
+bool open_file(const std::string &path)
 {
     fs::path p(path);
     if (fs::exists(p) && fs::is_directory(p))
@@ -168,13 +168,13 @@ bool openFile(const std::string &path)
     return false;
 }
 
-void openUrl(const std::string &url)
+void open_url(const std::string &url)
 {
     std::string command = "open " + url;
     system(command.c_str());
 }
 
-void openEmail(const std::string &address, const std::string &subject)
+void open_email(const std::string &address, const std::string &subject)
 {
     std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
     std::string command = "open " + mailTo;

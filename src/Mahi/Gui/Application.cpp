@@ -41,9 +41,9 @@ static void configureImGui(GLFWwindow *window);
 // APPLICATION
 ///////////////////////////////////////////////////////////////////////////////
 
-util::Event<void(int, const std::string&)> Application::onError;
+util::Event<void(int, const std::string&)> Application::on_error;
 
-Application::Application() : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
+Application::Application() : window(nullptr), background_color({0.5,0.5,0.5,1})
 {
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -56,7 +56,7 @@ Application::Application() : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    setVSync(true);
+    set_vsync(true);
     // Setup GLFW Callbacks
     glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
@@ -70,7 +70,7 @@ Application::Application() : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
     configureImGui(window);
 }
 
-Application::Application(const std::string & title, int monitorIdx) : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
+Application::Application(const std::string & title, int monitorIdx) : window(nullptr), background_color({0.5,0.5,0.5,1})
 {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -102,7 +102,7 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    setVSync(true);
+    set_vsync(true);
     // Setup GLFW Callbacks
     glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
@@ -116,7 +116,7 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
     configureImGui(window);
 }
 
-Application::Application(int width, int height, const std::string& title, bool resizable, int monitor) : window(nullptr), backgroundColor({0.5,0.5,0.5,1})
+Application::Application(int width, int height, const std::string& title, bool resizable, int monitor) : window(nullptr), background_color({0.5,0.5,0.5,1})
 {
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -130,9 +130,9 @@ Application::Application(int width, int height, const std::string& title, bool r
         throw std::runtime_error("Failed to create Window!");
     // Setup OpenGL context
     glfwMakeContextCurrent(window);
-    setVSync(true);
+    set_vsync(true);
     // Center window
-    centerWindow(monitor);
+    center_window(monitor);
     // Setup GLFW Callbacks
     glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
@@ -171,7 +171,7 @@ void Application::run()
         int fbWidth, fbHeight;
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
         glViewport(0, 0, fbWidth, fbHeight);
-        glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
+        glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
         glClear(GL_COLOR_BUFFER_BIT);
         // nanovg
         int winWidth, winHeight;
@@ -203,9 +203,9 @@ void Application::run()
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
-        if (!m_vsync && m_frameTime != util::Time::Inf) {
+        if (!m_vsync && m_frame_time != util::Time::Inf) {
             
-            util::sleep(m_frameTime - clock.get_elapsed_time());       
+            util::sleep(m_frame_time - clock.get_elapsed_time());       
             clock.restart();     
         }
         glfwSwapBuffers(window);
@@ -220,35 +220,35 @@ util::Time Application::time() const {
     return util::seconds(glfwGetTime());
 }
 
-void Application::setWindowTitle(const std::string& title) {
+void Application::set_window_title(const std::string& title) {
     glfwSetWindowTitle(window, title.c_str());
 }
 
-void Application::setWindowPos(int xpos, int ypos) {
+void Application::set_window_pos(int xpos, int ypos) {
     glfwSetWindowPos(window, xpos, ypos);
 }
 
-std::pair<int,int> Application::getWindowPos() const {
+std::pair<int,int> Application::get_window_pos() const {
     int xpos, ypos;
     glfwGetWindowPos(window, &xpos, &ypos);
     return {xpos, ypos};
 }
 
-void Application::setWindowSize(int width, int height) {
+void Application::set_window_size(int width, int height) {
     glfwSetWindowSize(window, width, height);
 }
 
-std::pair<int,int> Application::getWindowSize() const {
+std::pair<int,int> Application::get_window_size() const {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
     return {width, height};
 }
 
-void Application::setWindowSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight) {
-    glfwSetWindowSizeLimits(window, minWidth, minHeight, maxWidth, maxHeight);
+void Application::set_window_size_limits(int min_width, int min_height, int max_width, int max_height) {
+    glfwSetWindowSizeLimits(window, min_width, min_height, max_width, max_height);
 }
 
-void Application::centerWindow(int monitorIdx) {
+void Application::center_window(int monitorIdx) {
     GLFWmonitor *monitor = nullptr;
     if (monitorIdx == 0) 
         monitor = glfwGetPrimaryMonitor();
@@ -273,35 +273,35 @@ void Application::centerWindow(int monitorIdx) {
     glfwSetWindowPos(window, monitorX + (mode->width - windowWidth) / 2, monitorY + (mode->height - windowHeight) / 2);
 }
 
-void Application::minimizeWindow() {
+void Application::minimize_window() {
     glfwIconifyWindow(window);
 }
 
-void Application::maximizeWindow() {
+void Application::maximize_window() {
     glfwMaximizeWindow(window);
 }
 
-void Application::restoreWindow() {
+void Application::restore_window() {
     glfwRestoreWindow(window);
 }
 
-void Application::hideWindow() {
+void Application::hide_window() {
     glfwHideWindow(window);
 }
 
-void Application::showWindow() {
+void Application::show_window() {
     glfwShowWindow(window);
 }
 
-void Application::focusWindow() {
+void Application::focus_window() {
     glfwFocusWindow(window);
 }
 
-void Application::requestWindowAttention() {
+void Application::request_window_attention() {
     glfwRequestWindowAttention(window);
 }
 
-void Application::setVSync(bool enabled) {
+void Application::set_vsync(bool enabled) {
     m_vsync = enabled;
     if (m_vsync)
         glfwSwapInterval(1); // Enable vsync
@@ -309,12 +309,12 @@ void Application::setVSync(bool enabled) {
         glfwSwapInterval(0); // Disable vsync
 }
 
-void Application::setFrameLimit(util::Frequency freq) {
-    setVSync(false);
-    m_frameTime = freq.to_time();
+void Application::set_frame_limit(util::Frequency freq) {
+    set_vsync(false);
+    m_frame_time = freq.to_time();
 }
 
-std::pair<float,float> Application::getMousePosition() const {
+std::pair<float,float> Application::get_mouse_pos() const {
     double x,y;
     glfwGetCursorPos(window, &x, &y);
     return {(float)x,(float)y};
@@ -389,22 +389,22 @@ void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer) {
 static void glfw_error_callback(int error, const char *description)
 {
     static std::string dsc = description;
-    Application::onError.emit(error, dsc);
+    Application::on_error.emit(error, dsc);
 }
 
 static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos) {
     Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-    app->onWindowMoved.emit(xpos, ypos);
+    app->on_window_moved.emit(xpos, ypos);
 }
 
 static void glfw_size_callback(GLFWwindow* window, int width, int height) {
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-    app->onWindowResized.emit(width, height);
+    app->on_window_resized.emit(width, height);
 }
 
 void glfw_close_callback(GLFWwindow* window) {
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-    auto close = app->onWindowClosed.emit();
+    auto close = app->on_window_closed.emit();
     if (!close) 
         glfwSetWindowShouldClose(window, GLFW_FALSE);
 }
@@ -416,7 +416,7 @@ static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths
     for (int i = 0; i < count; ++i)
         pathsVec[i] = paths[i];
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-    app->onFileDrop.emit(pathsVec);
+    app->on_file_drop.emit(pathsVec);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

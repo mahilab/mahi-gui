@@ -8,13 +8,13 @@
 namespace mahi {
 namespace gui {
 
-Color toRgb(const HSV& in) {
+Color to_rgb(const HSV& in) {
     Color out;
     ImGui::ColorConvertHSVtoRGB(in.h, in.s, in.v, out.r, out.g, out.b);
     return out;
 }
 
-Color toRgb(std::string hex) {
+Color to_rgb(std::string hex) {
     if (hex[0] == '#')
         hex.erase(0,1);
     unsigned int r, g, b, a;
@@ -38,17 +38,17 @@ Color toRgb(std::string hex) {
         return Color{1.0f,1.0f,1.0f,1.0f};
 }
 
-HSV toHsv(const Color& in) {
+HSV to_hsv(const Color& in) {
     HSV out;
     ImGui::ColorConvertRGBtoHSV(in.r, in.g, in.b, out.h, out.s, out.v);
     return out;
 }
 
-HSV toHsv(std::string hex) {
-    return toHsv(toRgb(hex));
+HSV to_hsv(std::string hex) {
+    return to_hsv(to_rgb(hex));
 }
 
-Color withAlpha(Color color, float a) {
+Color with_alpha(Color color, float a) {
     color.a = a;
     return color;
 }

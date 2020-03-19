@@ -6,7 +6,7 @@ struct NSVGimage;
 namespace mahi {
 namespace gui {
 
-void svgDraw(NVGcontext* vg, NSVGimage* svg);
+void svg_draw(NVGcontext* vg, NSVGimage* svg);
 
 } // namespace gui
 } // namespace mahi

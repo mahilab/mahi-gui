@@ -12,7 +12,7 @@ class Sequence {
 public:
 
     /// Default constructor
-    Sequence(T (*tweenFunc)(const T&, const T&, float) = Tween::Linear);
+    Sequence(T (*tween_func)(const T&, const T&, float) = Tween::Linear);
 
     /// Sets a keyframe value in the sequence
     T& operator[](float t);
@@ -21,15 +21,15 @@ public:
     T operator()(float t) const;
 
     /// Sets the tweening function to be used
-    void setTween(T (*tweenFunc)(const T&, const T&, float));
+    void set_tween(T (*tween_func)(const T&, const T&, float));
     
     /// Gets keyframe stops and values
-    void getKeys(std::vector<float>& stopsOut, std::vector<T>& valuesOut) const;
+    void get_keys(std::vector<float>& stops_out, std::vector<T>& values_out) const;
 
 private:
 
     std::map<float, T> m_keys;                    ///< keyframes
-    T (*m_tweenFunc)(const T&, const T&, float);  ///< tweening function
+    T (*m_tween_func)(const T&, const T&, float);  ///< tweening function
 };
 
 //==============================================================================
@@ -37,9 +37,9 @@ private:
 //==============================================================================
 
 template <typename T>
-Sequence<T>::Sequence(T (*tweenFunc)(const T&, const T&, float)) :
+Sequence<T>::Sequence(T (*tween_func)(const T&, const T&, float)) :
     m_keys(),
-    m_tweenFunc(tweenFunc)
+    m_tween_func(tween_func)
 {}
 
 template <typename T>
@@ -57,21 +57,21 @@ T Sequence<T>::operator()(float t) const {
         return b->second;
     auto a = std::prev(b);
     t = (t - a->first) / (b->first - a->first);
-    return m_tweenFunc(a->second, b->second, t);
+    return m_tween_func(a->second, b->second, t);
 }
 
 template <typename T>
-void Sequence<T>::setTween(T (*tweenFunc)(const T&, const T&, float)) {
-    m_tweenFunc = tweenFunc;
+void Sequence<T>::set_tween(T (*tween_func)(const T&, const T&, float)) {
+    m_tween_func = tween_func;
 }
 
 template <typename T>
-void Sequence<T>::getKeys(std::vector<float>& stopsOut, std::vector<T>& valuesOut) const {
-    stopsOut.clear(); stopsOut.reserve(m_keys.size());
-    valuesOut.clear(); valuesOut.reserve(m_keys.size());   
+void Sequence<T>::get_keys(std::vector<float>& stops_out, std::vector<T>& values_out) const {
+    stops_out.clear(); stops_out.reserve(m_keys.size());
+    values_out.clear(); values_out.reserve(m_keys.size());   
     for (auto it = m_keys.begin(); it != m_keys.end(); ++it) {
-        stopsOut.push_back(it->first);
-        valuesOut.push_back(it->second);
+        stops_out.push_back(it->first);
+        values_out.push_back(it->second);
     }
     
 }

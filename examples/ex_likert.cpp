@@ -132,9 +132,9 @@ public:
                 width = qWidth + 385;
                 height = 85 + rowHeight * questions.size();
                 responses = std::vector<Response>(questions.size(), NoResponse); 
-                setWindowTitle(title);
-                setWindowSize(width, height);
-                centerWindow();
+                set_window_title(title);
+                set_window_size(width, height);
+                center_window();
             }
             catch(...) {
                 return false;

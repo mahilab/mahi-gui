@@ -42,56 +42,56 @@ public:
     util::Time time() const;
 
     /// Set the window title
-    void setWindowTitle(const std::string& title);
+    void set_window_title(const std::string& title);
     /// Set the window top-left position
-    void setWindowPos(int xpos, int ypos);
-    /// Get the window top-left position: auto [x,y] = getWindowPos()
-    std::pair<int,int> getWindowPos() const;
+    void set_window_pos(int xpos, int ypos);
+    /// Get the window top-left position: auto [x,y] = get_window_pos()
+    std::pair<int,int> get_window_pos() const;
     /// Set the window size
-    void setWindowSize(int width, int height);
-    /// Get the window size: auto [w,h] = getWindowSize();
-    std::pair<int,int> getWindowSize() const;
+    void set_window_size(int width, int height);
+    /// Get the window size: auto [w,h] = get_window_size();
+    std::pair<int,int> get_window_size() const;
     /// Sets the limits that the user can size the window if resizable (pass -1 for no limit)
-    void setWindowSizeLimits(int minWidth, int minHeight, int maxWidth, int maxHeight);
+    void set_window_size_limits(int min_width, int min_height, int max_width, int max_height);
     /// Center the window on a monitor
-    void centerWindow(int monitor = 0);
+    void center_window(int monitor = 0);
     /// Minimizes the window
-    void minimizeWindow();
+    void minimize_window();
     /// Maximizes the window
-    void maximizeWindow();
+    void maximize_window();
     /// Restores a minimized/maximized window
-    void restoreWindow();
+    void restore_window();
     /// Hides the window
-    void hideWindow();
+    void hide_window();
     /// Shows the window
-    void showWindow();
+    void show_window();
     /// Force the window to be focused
-    void focusWindow();
+    void focus_window();
     /// Notify the user by requesting window attention
-    void requestWindowAttention();
+    void request_window_attention();
     /// Enable/disable VSync
-    void setVSync(bool enabled);
+    void set_vsync(bool enabled);
     /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit) 
-    void setFrameLimit(util::Frequency freq);
+    void set_frame_limit(util::Frequency freq);
 
     /// Get the mouse position 
-    std::pair<float,float> getMousePosition() const;
+    std::pair<float,float> get_mouse_pos() const;
 
 public:
     /// Emitted when the Window moves
-    util::Event<void(int,int)> onWindowMoved;
+    util::Event<void(int,int)> on_window_moved;
     /// Emitted when the Window is resized
-    util::Event<void(int,int)> onWindowResized;
+    util::Event<void(int,int)> on_window_resized;
     /// Emitted right before the Window is closed; return false to cancel the close
-    util::Event<bool(void), util::CollectorBooleanAnd> onWindowClosed;
+    util::Event<bool(void), util::CollectorBooleanAnd> on_window_closed;
     /// Emitted when file(s) is dropped, passes list of filepaths
-    util::Event<void(const std::vector<std::string>&)> onFileDrop;
+    util::Event<void(const std::vector<std::string>&)> on_file_drop;
     /// Emitted when there is an internal GLFW error (error code, description)
-    static util::Event<void(int, const std::string&)> onError;
+    static util::Event<void(int, const std::string&)> on_error;
 
 public:
     /// Window background color
-    Color backgroundColor;
+    Color background_color;
 
 protected:
     /// Internal GLFW window handle, you can use glfwXXX functions with this
@@ -101,7 +101,7 @@ protected:
 
 private:
     bool m_vsync;
-    util::Time m_frameTime;
+    util::Time m_frame_time;
 
 #ifdef MAHI_COROUTINES
 public:

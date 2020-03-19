@@ -12,12 +12,12 @@ public:
         // ImGui::DisableViewports();
         // setup
         plot.title = "My Plot";
-        plot.xAxis.minimum = 0;
-        plot.xAxis.maximum = 10;
-        plot.xAxis.label = "My X-Axis";
-        plot.yAxis.minimum = 0;
-        plot.yAxis.maximum = 1;
-        plot.yAxis.label = "My Y-Axis";
+        plot.x_axis.minimum = 0;
+        plot.x_axis.maximum = 10;
+        plot.x_axis.label = "My X-Axis";
+        plot.y_axis.minimum = 0;
+        plot.y_axis.maximum = 1;
+        plot.y_axis.label = "My Y-Axis";
         items.resize(4);
         // Line
         items[0].label = "Line";
@@ -46,7 +46,7 @@ public:
         // XBar
         items[2].label = "X-Bar";
         items[2].type = ImGui::PlotItem::XBar;
-        items[2].color = withAlpha(Reds::FireBrick, 0.5f);
+        items[2].color = with_alpha(Reds::FireBrick, 0.5f);
         items[2].size = 0.5f;
         items[2].data.resize(10);
         for (int i = 0; i < 10; ++i)
@@ -76,19 +76,19 @@ public:
         ImGui::HoverTooltip("Divisions", 0);
         ImGui::PopItemWidth();
         ImGui::SameLine();
-        ImGui::Checkbox("##Grid", &axis.showGrid);
+        ImGui::Checkbox("##Grid", &axis.show_grid);
         ImGui::HoverTooltip("Show Grid", 0);
         ImGui::SameLine();
-        ImGui::Checkbox("##Ticks", &axis.showTickMarks);
+        ImGui::Checkbox("##Ticks", &axis.show_tick_marks);
         ImGui::HoverTooltip("Show Ticks", 0);
         ImGui::SameLine();
-        ImGui::Checkbox("##Labels", &axis.showTickLabels);
+        ImGui::Checkbox("##Labels", &axis.show_tick_labels);
         ImGui::HoverTooltip("Show Labels", 0);
         ImGui::SameLine();
-        ImGui::Checkbox("##LockMin", &axis.lockMin);
+        ImGui::Checkbox("##LockMin", &axis.lock_min);
         ImGui::HoverTooltip("Lock Min", 0);
         ImGui::SameLine();
-        ImGui::Checkbox("##LockMax", &axis.lockMax);
+        ImGui::Checkbox("##LockMax", &axis.lock_max);
         ImGui::HoverTooltip("Lock Max", 0);
         ImGui::SameLine();
         ImGui::Checkbox("##Flip", &axis.flip);
@@ -107,25 +107,25 @@ public:
         Vec2 vpPos = ImGui::GetMainViewport()->Pos;
         Vec2 vpSize = ImGui::GetMainViewport()->Size;
         ImGui::BeginFixed("Plots", vpPos, vpSize, ImGuiWindowFlags_NoTitleBar);
-        DemoAxisControls("X-Axis", plot.xAxis);
-        DemoAxisControls("Y-Axis", plot.yAxis);
+        DemoAxisControls("X-Axis", plot.x_axis);
+        DemoAxisControls("Y-Axis", plot.y_axis);
         ImGui::Text("      ");
         ImGui::SameLine();
-        ImGui::Checkbox("Crosshairs", &plot.showCrosshairs);
+        ImGui::Checkbox("Crosshairs", &plot.show_crosshairs);
         ImGui::SameLine();
-        ImGui::Checkbox("Mouse Position", &plot.showMousePos);
+        ImGui::Checkbox("Mouse Position", &plot.show_mouse_pos);
         ImGui::SameLine();
-        ImGui::Checkbox("Selection", &plot.enableSelection);
+        ImGui::Checkbox("Selection", &plot.enable_selection);
         ImGui::SameLine();
-        ImGui::Checkbox("Controls", &plot.enableControls);
+        ImGui::Checkbox("Controls", &plot.enable_controls);
         ImGui::SameLine();
-        ImGui::ColorEdit4("Frame Color", (float *)&plot.frameColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::ColorEdit4("Frame Color", (float *)&plot.frame_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
-        ImGui::ColorEdit4("Background Color", (float *)&plot.backgroundColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::ColorEdit4("Background Color", (float *)&plot.background_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
-        ImGui::ColorEdit4("Border Color", (float *)&plot.borderColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::ColorEdit4("Border Color", (float *)&plot.border_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
-        ImGui::ColorEdit4("Selection Color", (float *)&plot.selectionColor, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::ColorEdit4("Selection Color", (float *)&plot.selection_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
         ImGui::PushItemWidth(-1);
         ImGui::InputText("##Plot Title", &plot.title);

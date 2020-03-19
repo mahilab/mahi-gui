@@ -19,13 +19,13 @@ class EventsDemo : public Application {
 public:
     EventsDemo() : Application(500,500,"Events Demo") {     
         // connect Event using a lambda:
-        onWindowMoved.connect( [](int x, int y) { print_var(x,y); } );
+        on_window_moved.connect( [](int x, int y) { print_var(x,y); } );
         // connect Event using non-static member function
-        onWindowResized.connect(this, &EventsDemo::windowResizeHandler); 
+        on_window_resized.connect(this, &EventsDemo::windowResizeHandler); 
         // connect Event usign a static member function
-        onFileDrop.connect(&EventsDemo::fileDropHandler);
+        on_file_drop.connect(&EventsDemo::fileDropHandler);
         // connect Event using a free function
-        onWindowClosed.connect(windowCloseHandler);
+        on_window_closed.connect(windowCloseHandler);
     }
 
     void windowResizeHandler(int width, int height) {

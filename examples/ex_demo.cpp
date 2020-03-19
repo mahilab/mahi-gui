@@ -17,7 +17,7 @@ public:
         // A custom Window
         ImGui::Begin("My ImGui Window");
         if (ImGui::Button(ICON_FA_HOME))
-            openUrl("https://mahilab.rice.edu/");
+            open_url("https://mahilab.rice.edu/");
         ImGui::SameLine();
         if (ImGui::Button("Quit Demo", ImVec2(-1,0)))
             quit();

@@ -13,28 +13,28 @@ enum DialogResult {
 };
 
 /// Opens a native file save dialog
-DialogResult saveDialog(const std::string& filterList, const std::string& defaultPath, std::string& outPath);
+DialogResult save_dialog(const std::string& filter_list, const std::string& default_path, std::string& out_path);
 
 /// Opens a native single file open dialog
-DialogResult openDialog(const std::string& filterList, const std::string& defaultPath, std::string& outPath);
+DialogResult open_dialog(const std::string& filter_list, const std::string& default_path, std::string& out_path);
 
 /// Opens a native multiple file open dialog
-DialogResult openDialog(const std::string& filterList, const std::string& defaultPath, std::vector<std::string>& outPaths);
+DialogResult open_dialog(const std::string& filter_list, const std::string& default_path, std::vector<std::string>& out_paths);
 
 /// Opens a native folder selection dialog
-DialogResult pickFolder(const std::string& defaultPath, std::string& outPath);
+DialogResult pick_folder(const std::string& default_path, std::string& out_path);
 
 /// Opens a folder in the native file explorer
-bool openFolder(const std::string& path);
+bool open_folder(const std::string& path);
 
 /// Opens a file with the default application
-bool openFile(const std::string& path);
+bool open_file(const std::string& path);
 
 /// Opens an external link to a URL
-void openUrl(const std::string& url);
+void open_url(const std::string& url);
 
 /// Opens an external link to an email
-void openEmail(const std::string& address, const std::string& subject = "");
+void open_email(const std::string& address, const std::string& subject = "");
 
 } // namespace gui
 } // namespace mahi

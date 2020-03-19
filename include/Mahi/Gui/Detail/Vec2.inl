@@ -100,7 +100,7 @@ inline bool insideLine(const Vec2& l1, const Vec2& l2,
     return true;
 }
 
-inline bool insideTriangle(const Vec2& A, const Vec2& B,
+inline bool inside_triangle(const Vec2& A, const Vec2& B,
                            const Vec2& C, const Vec2& P)
 {
     float s = A.y * C.x - A.x * C.y + (C.y - A.y) * P.x + (A.x - C.x) * P.y;
@@ -118,7 +118,7 @@ inline bool insideTriangle(const Vec2& A, const Vec2& B,
     return s > 0 && t > 0 && (s + t) <= area;
 }
 
-inline bool insidePolygon(const std::vector<Vec2>& poly,
+inline bool inside_polygon(const std::vector<Vec2>& poly,
                           const Vec2& point)
 {
     std::size_t i, j;
@@ -132,7 +132,7 @@ inline bool insidePolygon(const std::vector<Vec2>& poly,
     return c;
 }
 
-inline float polygonArea(const std::vector<Vec2>& polygon) {
+inline float polygon_area(const std::vector<Vec2>& polygon) {
     float area       = 0;
     std::size_t size = polygon.size();
     for (std::size_t i = 1; i < size - 1; ++i)
@@ -142,7 +142,7 @@ inline float polygonArea(const std::vector<Vec2>& polygon) {
     return area * 0.5f;
 }
 
-inline bool isConvex(const std::vector<Vec2>& polygon) {
+inline bool is_convex(const std::vector<Vec2>& polygon) {
     bool negative = false;
     bool positive = false;
     for (std::size_t a = 0; a < polygon.size(); ++a) {

@@ -10,13 +10,13 @@ public:
     { 
         // disable viewports
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
-        backgroundColor = Grays::Black;
+        background_color = Grays::Black;
         generateDots({250,250}, 50, 20000);
         generateDots({500,250}, 50, 20000);
         generateDots({750,250}, 50, 20000);
         generateDots({1000,250}, 50, 20000);
         generateDots({1250,250}, 50, 20000);
-        setVSync(false);
+        set_vsync(false);
     }
 
     virtual void update() override {
