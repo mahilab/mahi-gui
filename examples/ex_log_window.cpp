@@ -21,6 +21,8 @@ public:
     RingBuffer<std::pair<Severity, std::string>> logs;
 };
 
+static GuiLogWritter<TxtFormatter> writer;
+
 //=============================================================================
 // LOG WINDOW
 //============================================================================
@@ -30,7 +32,6 @@ class LogWindowDemo : public Application
 public:
 
     ImGuiTextFilter filter;
-    GuiLogWritter<TxtFormatter> writer;
     std::unordered_map<Severity, Color> colors = {
         {None    , Grays::Gray50},  
         {Fatal   , Reds::Crimson}, 
