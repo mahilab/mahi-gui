@@ -116,19 +116,19 @@ void Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& item
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Adds a point to an item data set, clearing it every #span seconds
-inline void PlotItemRollPoint(PlotItem& item, float x, float y, float span = 10) {
-    float xmod = fmodf(x, span);
+inline void PlotItemRollPoint(PlotItem& item, double x, double y, double span = 10) {
+    double xmod = fmod(x, span);
     if (!item.data.empty() && xmod < item.data.back().x)
         item.data.clear();
-    item.data.push_back(ImVec2(xmod, y));
+    item.data.push_back(ImVec2(static_cast<float>(xmod), static_cast<float>(y)));
 }
 
 /// Pushes a point into an item data set as if it were a circular buffer of #max_points size
-inline void PlotItemBufferPoint(PlotItem& item, float x, float y, int max_points) {
+inline void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_points) {
     if (item.data.size() < max_points) 
-        item.data.push_back(ImVec2(x,y));
+        item.data.push_back(ImVec2(static_cast<float>(x),static_cast<float>(y)));
     else {
-        item.data[item._begin] = ImVec2(x,y);
+        item.data[item._begin] = ImVec2(static_cast<float>(x),static_cast<float>(y));
         item._begin++;
         if (item._begin == max_points)
             item._begin = 0;

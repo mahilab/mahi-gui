@@ -133,7 +133,7 @@ public:
                 height = 85 + rowHeight * questions.size();
                 responses = std::vector<Response>(questions.size(), NoResponse); 
                 set_window_title(title);
-                set_window_size(width, height);
+                set_window_size((float)width, (float)height);
                 center_window();
             }
             catch(...) {

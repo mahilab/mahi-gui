@@ -84,6 +84,8 @@ public:
     util::Event<void(int,int)> on_window_resized;
     /// Emitted right before the Window is closed; return false to cancel the close
     util::Event<bool(void), util::CollectorBooleanAnd> on_window_closed;
+    /// Emitted when a key is pressed, repeated, or release.
+    util::Event<void(int,int,int,int)> on_keyboard;
     /// Emitted when the application quits
     util::Event<void(void)> on_application_quit;
     /// Emitted when file(s) is dropped, passes list of filepaths

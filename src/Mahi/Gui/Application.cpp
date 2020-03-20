@@ -32,6 +32,7 @@ static void glfw_error_callback(int error, const char *description);
 static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos);
 static void glfw_size_callback(GLFWwindow* window, int width, int height);
 static void glfw_close_callback(GLFWwindow* window);
+static void glfw_key_callback(GLFWwindow*,int key, int scancode, int action, int mods);
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths);
 // IMGUI
 static void configureImGui(GLFWwindow *window);
@@ -63,6 +64,7 @@ Application::Application() : window(nullptr), background_color({0.5,0.5,0.5,1})
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
         // initialize NanoVg
+    glEnable(GL_DEPTH_TEST);
     vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
     if (vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
@@ -108,6 +110,7 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader (GLAD)!");
+    glEnable(GL_DEPTH_TEST);
     // initialize NanoVg
     vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
     if (vg == NULL)
@@ -138,7 +141,8 @@ Application::Application(int width, int height, const std::string& title, bool r
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
-        // initialize NanoVg
+    glEnable(GL_DEPTH_TEST);
+    // initialize NanoVg
     vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
     if (vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
@@ -172,7 +176,7 @@ void Application::run()
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
         glViewport(0, 0, fbWidth, fbHeight);
         glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // nanovg
         int winWidth, winHeight;
         glfwGetWindowSize(window, &winWidth, &winHeight);
@@ -384,6 +388,7 @@ void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer) {
     glfwSetWindowPosCallback(window, glfw_pos_callback);
     glfwSetWindowSizeCallback(window, glfw_size_callback);
     glfwSetWindowCloseCallback(window, glfw_close_callback);
+    glfwSetKeyCallback(window, glfw_key_callback);
     glfwSetDropCallback(window, glfw_drop_callback);
 }
 
@@ -403,11 +408,16 @@ static void glfw_size_callback(GLFWwindow* window, int width, int height) {
     app->on_window_resized.emit(width, height);
 }
 
-void glfw_close_callback(GLFWwindow* window) {
+static void glfw_close_callback(GLFWwindow* window) {
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
     auto close = app->on_window_closed.emit();
     if (!close) 
         glfwSetWindowShouldClose(window, GLFW_FALSE);
+}
+
+static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
+    app->on_keyboard.emit(key,scancode,action,mods);
 }
 
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths)
@@ -434,7 +444,7 @@ static void configureImGui(GLFWwindow *window)
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
-    io.ConfigViewportsNoAutoMerge = true;
+    // io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
     
     // add fonts
