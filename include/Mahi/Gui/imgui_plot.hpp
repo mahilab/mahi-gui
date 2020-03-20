@@ -136,9 +136,9 @@ inline void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_poin
 }
 
 /// Call before rendering a plot to scroll the axis in time, displaying #history seconds
-inline void PlotAxisScroll(PlotAxis& axis, float current_time, float history) {
-    axis.maximum = current_time;
-    axis.minimum = current_time - history;
+inline void PlotAxisScroll(PlotAxis& axis, double current_time, double history) {
+    axis.maximum = static_cast<float>(current_time);
+    axis.minimum = static_cast<float>(current_time - history);
 }
 
 } // namespce ImGui
