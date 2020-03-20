@@ -479,6 +479,7 @@ static void ImGui_ImplGlfw_CreateWindow(ImGuiViewport* viewport)
 
     // GLFW 3.2 unfortunately always set focus on glfwCreateWindow() if GLFW_VISIBLE is set, regardless of GLFW_FOCUSED
     // With GLFW 3.3, the hint GLFW_FOCUS_ON_SHOW fixes this problem
+    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_VISIBLE, false);
     glfwWindowHint(GLFW_FOCUSED, false);
 #if GLFW_HAS_FOCUS_ON_SHOW

@@ -1,4 +1,4 @@
-// #define MAHI_GUI_NO_CONSOLE
+#define MAHI_GUI_NO_CONSOLE
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 #include <filesystem>

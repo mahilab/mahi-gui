@@ -41,7 +41,7 @@ public:
         item.data.reserve(1000);
         item.color = random_color();
         float y = (float)random_range(0.0,1.0);
-        for (int i = 0; i < 1000; ++i)
+        for (int i = 0; i < 500; ++i)
             item.data.push_back(ImVec2(i*0.001f, y + (float)random_range(-0.01,0.01)));
         items.emplace_back(std::move(item));
     }

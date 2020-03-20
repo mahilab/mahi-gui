@@ -52,6 +52,7 @@ Application::Application() : window(nullptr), background_color({0.5,0.5,0.5,1})
         throw std::runtime_error("Failed to initialize GLFW!");
     glfw_context_version();
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
     window = glfwCreateWindow(100, 100, "", NULL, NULL);
     if (window == NULL)
         throw std::runtime_error("Failed to create Window!");
@@ -63,8 +64,9 @@ Application::Application() : window(nullptr), background_color({0.5,0.5,0.5,1})
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
-        // initialize NanoVg
+    // initialize NanoVg
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);  
     vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
     if (vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
@@ -97,7 +99,8 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
     glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
     glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-   
+    glfwWindowHint(GLFW_SAMPLES, 4);
+
     glfw_context_version();
     window = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, NULL);
     if (window == NULL)
@@ -111,6 +114,7 @@ Application::Application(const std::string & title, int monitorIdx) : window(nul
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader (GLAD)!");
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);  
     // initialize NanoVg
     vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
     if (vg == NULL)
@@ -128,6 +132,7 @@ Application::Application(int width, int height, const std::string& title, bool r
     glfw_context_version();
     if (!resizable)
         glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
     window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (window == NULL)
         throw std::runtime_error("Failed to create Window!");
@@ -142,6 +147,7 @@ Application::Application(int width, int height, const std::string& title, bool r
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);  
     // initialize NanoVg
     vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
     if (vg == NULL)
@@ -446,6 +452,10 @@ static void configureImGui(GLFWwindow *window)
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
     // io.ConfigViewportsNoAutoMerge = true;
     //io.ConfigViewportsNoTaskBarIcon = true;
+
+    // we are doing 4X MSAA with GLFW
+    ImGui::GetStyle().AntiAliasedFill = false;
+    ImGui::GetStyle().AntiAliasedLines = false;
     
     // add fonts
     io.Fonts->Clear();

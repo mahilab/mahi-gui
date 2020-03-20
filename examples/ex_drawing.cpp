@@ -26,6 +26,8 @@ public:
             }
         }
         ImGui::Begin("My Window");
+        ImGui::Checkbox("Anit-Aliased Lines", &ImGui::GetStyle().AntiAliasedLines);
+        ImGui::Checkbox("Anit-Aliased Fill", &ImGui::GetStyle().AntiAliasedFill);
         ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
         ImGui::End();
     }    
