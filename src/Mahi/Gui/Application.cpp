@@ -454,8 +454,8 @@ static void configureImGui(GLFWwindow *window)
     //io.ConfigViewportsNoTaskBarIcon = true;
 
     // we are doing 4X MSAA with GLFW
-    ImGui::GetStyle().AntiAliasedFill = false;
-    ImGui::GetStyle().AntiAliasedLines = false;
+    // ImGui::GetStyle().AntiAliasedFill = false;
+    // ImGui::GetStyle().AntiAliasedLines = false;
     
     // add fonts
     io.Fonts->Clear();

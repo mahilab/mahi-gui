@@ -431,6 +431,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     {
         plot.m_selecting = false;
     }
+    // begin selection
     if (frame_hovered && grid_hovered && IO.MouseClicked[1] && plot.enable_selection)
     {
         plot.m_select_start = IO.MousePos;
@@ -591,6 +592,32 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         const ImVec2 yLabel_size = CalcTextSizeVertical(plot.y_axis.label.c_str());
         const ImVec2 yLabel_pos(canvas_bb.Min.x, grid_bb.GetCenter().y + yLabel_size.y * 0.5f);
         AddTextVertical(&DrawList, plot.y_axis.label.c_str(), yLabel_pos, color_ytxt);
+    }
+
+    // double click
+    if (grid_hovered && IO.MouseDoubleClicked[0] && nItems > 0) {
+        float new_x_min = INFINITY;
+        float new_x_max = -INFINITY;
+        float new_y_min = INFINITY;
+        float new_y_max = -INFINITY;
+        for (int i = 0; i < nItems; ++i) {
+            if (items[i].show) {
+                for (auto& d : items[i].data) {
+                    new_x_min = d.x < new_x_min ? d.x : new_x_min;
+                    new_x_max = d.x > new_x_max ? d.x : new_x_max;
+                    new_y_min = d.y < new_y_min ? d.y : new_y_min;
+                    new_y_max = d.y > new_y_max ? d.y : new_y_max;
+                }
+            }
+        }
+        if (!plot.x_axis.lock_min)
+            plot.x_axis.minimum = new_x_min;
+        if (!plot.x_axis.lock_max)
+            plot.x_axis.maximum = new_x_max;
+        if (!plot.y_axis.lock_min)
+            plot.y_axis.minimum = new_y_min;
+        if (!plot.y_axis.lock_max)
+            plot.y_axis.maximum = new_y_max;
     }
 
     // AddTextVertical(&DrawList, "Hello, World", frame_bb.Min, color_ytxt);
