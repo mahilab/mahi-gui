@@ -5,7 +5,7 @@ using namespace mahi::gui;
 using namespace mahi::util;
 
 /// you can prevent the Window from closing by returning false
-bool windowCloseHandler() {
+bool window_close_handler() {
     static bool firstAttempt = true;
     if (firstAttempt) {
         print("Not going to let you close the window that easily! Try again ...");
@@ -21,18 +21,18 @@ public:
         // connect Event using a lambda:
         on_window_moved.connect( [](int x, int y) { print_var(x,y); } );
         // connect Event using non-static member function
-        on_window_resized.connect(this, &EventsDemo::windowResizeHandler); 
+        on_window_resized.connect(this, &EventsDemo::window_resize_handler); 
         // connect Event usign a static member function
-        on_file_drop.connect(&EventsDemo::fileDropHandler);
+        on_file_drop.connect(&EventsDemo::file_drop_handler);
         // connect Event using a free function
-        on_window_closed.connect(windowCloseHandler);
+        on_window_closed.connect(window_close_handler);
     }
 
-    void windowResizeHandler(int width, int height) {
+    void window_resize_handler(int width, int height) {
         print_var(width, height);
     }
 
-    static void fileDropHandler(const std::vector<std::string>& paths) {
+    static void file_drop_handler(const std::vector<std::string>& paths) {
         for (auto& p : paths) 
             print_var(p);
     }

@@ -11,11 +11,11 @@ public:
         // disable viewports
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
         background_color = Grays::Black;
-        generateDots({250,250}, 50, 20000);
-        generateDots({500,250}, 50, 20000);
-        generateDots({750,250}, 50, 20000);
-        generateDots({1000,250}, 50, 20000);
-        generateDots({1250,250}, 50, 20000);
+        generate_dots({250,250}, 50, 20000);
+        generate_dots({500,250}, 50, 20000);
+        generate_dots({750,250}, 50, 20000);
+        generate_dots({1000,250}, 50, 20000);
+        generate_dots({1250,250}, 50, 20000);
         set_vsync(false);
     }
 
@@ -32,7 +32,7 @@ public:
         ImGui::End();
     }    
 
-    void generateDots(ImVec2 center, float radius, int n) {
+    void generate_dots(ImVec2 center, float radius, int n) {
         std::vector<ImVec2> dots;
         dots.reserve(n);
         for (int i = 0; i < n; ++i) {

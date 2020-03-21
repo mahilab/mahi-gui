@@ -60,7 +60,7 @@ public:
         for (int i = 0; i < 10; ++i)
             items[3].data[i] = {(float)random_range(0.0, 2.0), ((float)i + 0.5f) * 0.1f};
 
-        ImGui::DisableViewports();
+        // ImGui::DisableViewports();
     }
 
     void DemoAxisControls(const char *label, ImGui::PlotAxis &axis)
@@ -107,6 +107,10 @@ public:
         Vec2 vpPos = ImGui::GetMainViewport()->Pos;
         Vec2 vpSize = ImGui::GetMainViewport()->Size;
         ImGui::BeginFixed("Plots", vpPos, vpSize, ImGuiWindowFlags_NoTitleBar);
+        ImGui::Plot("My Plot", &plot, &items[0], items.size());
+        ImGui::End();
+
+        ImGui::Begin("Plot Options");
         DemoAxisControls("X-Axis", plot.x_axis);
         DemoAxisControls("Y-Axis", plot.y_axis);
         ImGui::Text("      ");
@@ -130,7 +134,6 @@ public:
         ImGui::PushItemWidth(-1);
         ImGui::InputText("##Plot Title", &plot.title);
         ImGui::PopItemWidth();
-
         ImGui::Separator();
         ImGui::Checkbox("Line", &items[0].show);
         ImGui::SameLine();
@@ -139,9 +142,6 @@ public:
         ImGui::Checkbox("X Bar", &items[2].show);
         ImGui::SameLine();
         ImGui::Checkbox("Y Bar", &items[3].show);
-
-        // plot (you want this)
-        ImGui::Plot("My Plot", &plot, &items[0], items.size());
         ImGui::End();
     }
     ImGui::PlotInterface plot;

@@ -54,6 +54,8 @@ struct PlotAxis {
     int divisions;
     /// Number of grid subdivisions.
     int subdivisions;
+    /// Adaptive divisions based on pixels
+    bool adaptive;
     /// Axis color (affects grid lines, ticks, and labels)
     ImVec4 color;
     /// The percentage of the axis range that each mouse scroll adds/subracts from view (default=0.1).

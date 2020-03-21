@@ -41,7 +41,7 @@ public:
         if (ImGui::Button("VSync Off"))
             set_vsync(false);
         ImGui::SameLine();
-        ImGui::Checkbox("Anit-Aliased", &ImGui::GetStyle().AntiAliasedLines);
+        ImGui::Checkbox("Anti-Aliased", &ImGui::GetStyle().AntiAliasedLines);
         ImGui::SameLine();
         ImGui::Checkbox("Render", &render);
         ImGui::SameLine();
@@ -56,7 +56,7 @@ public:
     ImGui::PlotInterface plot;
     std::vector<ImGui::PlotItem> items;
     bool render = true;
-    bool animate = true;
+    bool animate = false;
 };
 
 int main(int argc, char const *argv[])

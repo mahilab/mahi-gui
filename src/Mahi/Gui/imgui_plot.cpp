@@ -18,6 +18,7 @@ namespace
 {
 
 /// Utility function to that rounds x to powers of 2,5 and 10 for generating axis labels
+/// Graphics Gems 1 11.2, Nice Numbers for Graph Labels
 inline double NiceNum(double x, bool round)
 {
     double f;  /* fractional part of x */
@@ -92,7 +93,8 @@ inline void TransformTicks(std::vector<Tick> &ticks, float tMin, float tMax, flo
         tk.pixels = (pMin + m * (tk.plot - tMin)); // IM_ROUND used previoiusly, but causes distortion in moving plot
 }
 
-inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
+// First impl: AA: 145 , no AA: 230 FPS
+inline void RenderPlotItemLine1(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
     if (item.data.size() < 2)
         return;
     static std::vector<ImVec2> pointsPx(10000); // up front allocation
@@ -105,7 +107,8 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
         pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
         pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
     }
-    auto color = GetColorU32(item.color);
+    const ImU32 color = GetColorU32(item.color);
+
     int segments = (int)item.data.size() - 1;
     int i = item.data_begin;
     for (int s = 0; s < segments; ++s)
@@ -117,6 +120,52 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
         i = j;
     }
 }
+
+#define IM_NORMALIZE2F_OVER_ZERO(VX,VY)     { float d2 = VX*VX + VY*VY; if (d2 > 0.0f) { float inv_len = 1.0f / ImSqrt(d2); VX *= inv_len; VY *= inv_len; } }
+
+// Second impl: no AA: 410 FPS
+inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
+    if (item.data.size() < 2)
+        return;
+    const ImU32 col = GetColorU32(item.color);
+    const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
+    const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
+    const int points_count = (int)item.data.size();
+    const int segments = (int)item.data.size() - 1;
+    const int idx_count = segments*6;
+    const int vtx_count = segments*4;  
+    const float thickness = item.size;
+    const ImVec2 uv = DrawList._Data->TexUvWhitePixel;
+    DrawList.PrimReserve(idx_count, vtx_count);
+    int i1 = item.data_begin;
+    ImVec2 p1, p2;
+    for (int s = 0; s < segments; ++s) {
+        const int i2 = i1 + 1 == points_count ? 0 : i1 + 1;
+        p1.x = pix.Min.x + mx * (item.data[i1].x - plot.x_axis.minimum);
+        p1.y = pix.Min.y + my * (item.data[i1].y - plot.y_axis.minimum);
+        p2.x = pix.Min.x + mx * (item.data[i2].x - plot.x_axis.minimum);
+        p2.y = pix.Min.y + my * (item.data[i2].y - plot.y_axis.minimum);
+        i1 = i2;
+
+        float dx = p2.x - p1.x;
+        float dy = p2.y - p1.y;
+        IM_NORMALIZE2F_OVER_ZERO(dx, dy);
+        dx *= (thickness * 0.5f);
+        dy *= (thickness * 0.5f);
+
+        DrawList._VtxWritePtr[0].pos.x = p1.x + dy; DrawList._VtxWritePtr[0].pos.y = p1.y - dx; DrawList._VtxWritePtr[0].uv = uv; DrawList._VtxWritePtr[0].col = col;
+        DrawList._VtxWritePtr[1].pos.x = p2.x + dy; DrawList._VtxWritePtr[1].pos.y = p2.y - dx; DrawList._VtxWritePtr[1].uv = uv; DrawList._VtxWritePtr[1].col = col;
+        DrawList._VtxWritePtr[2].pos.x = p2.x - dy; DrawList._VtxWritePtr[2].pos.y = p2.y + dx; DrawList._VtxWritePtr[2].uv = uv; DrawList._VtxWritePtr[2].col = col;
+        DrawList._VtxWritePtr[3].pos.x = p1.x - dy; DrawList._VtxWritePtr[3].pos.y = p1.y + dx; DrawList._VtxWritePtr[3].uv = uv; DrawList._VtxWritePtr[3].col = col;
+        DrawList._VtxWritePtr += 4;
+
+        DrawList._IdxWritePtr[0] = (ImDrawIdx)(DrawList._VtxCurrentIdx); DrawList._IdxWritePtr[1] = (ImDrawIdx)(DrawList._VtxCurrentIdx+1); DrawList._IdxWritePtr[2] = (ImDrawIdx)(DrawList._VtxCurrentIdx+2);
+        DrawList._IdxWritePtr[3] = (ImDrawIdx)(DrawList._VtxCurrentIdx); DrawList._IdxWritePtr[4] = (ImDrawIdx)(DrawList._VtxCurrentIdx+2); DrawList._IdxWritePtr[5] = (ImDrawIdx)(DrawList._VtxCurrentIdx+3);
+        DrawList._IdxWritePtr += 6;
+        DrawList._VtxCurrentIdx += 4;
+    }
+}
+
 
 inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plot, const ImRect &pix, ImDrawList &DrawList)
 {
@@ -192,9 +241,8 @@ PlotItem::PlotItem() : show(true), type(PlotItem::Line), data(), size(1), data_b
     label = "item" + std::to_string(itemNumber++);
 }
 
-PlotAxis::PlotAxis() : show_grid(true), show_tick_marks(true), show_tick_labels(true), minimum(0), maximum(1), divisions(4), subdivisions(5),
-                       color(0,0,0,-1),
-                       zoom_rate(0.1f), lock_min(false), lock_max(false), flip(false), label("")
+PlotAxis::PlotAxis() : show_grid(true), show_tick_marks(true), show_tick_labels(true), minimum(0), maximum(1), divisions(3), subdivisions(10),
+                       adaptive(true), color(0,0,0,-1), zoom_rate(0.1f), lock_min(false), lock_max(false), flip(false), label("")
 {
 }
 
@@ -245,11 +293,35 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     const ImU32 color_slctBg = GetColorU32(plot.selection_color);
     const ImU32 color_slctBd = GetColorU32({plot.selection_color.x, plot.selection_color.y, plot.selection_color.z, 1});
 
+    // frame
+    const ImVec2 frame_size = CalcItemSize(size, 100, 100);
+    const ImRect frame_bb(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
+    ItemSize(frame_bb);
+    if (!ItemAdd(frame_bb, 0, &frame_bb))
+        return;
+    const bool frame_hovered = ItemHoverable(frame_bb, id);
+    RenderFrame(frame_bb.Min, frame_bb.Max, color_frame, true, Style.FrameRounding);
+
+    // canvas bb
+    const ImRect canvas_bb(frame_bb.Min + Style.WindowPadding, frame_bb.Max - Style.WindowPadding);
+
     // constrain axes
     if (plot.x_axis.maximum <= plot.x_axis.minimum)
         plot.x_axis.maximum = plot.x_axis.minimum + std::numeric_limits<float>::epsilon();
     if (plot.y_axis.maximum <= plot.y_axis.minimum)
         plot.y_axis.maximum = plot.y_axis.minimum + std::numeric_limits<float>::epsilon();
+
+    // adaptive divisions
+    if (plot.x_axis.adaptive) {
+        plot.x_axis.divisions = std::round(0.003 * canvas_bb.GetWidth());
+        if (plot.x_axis.divisions < 2)
+            plot.x_axis.divisions = 2;
+    }
+    if (plot.y_axis.adaptive) {
+        plot.y_axis.divisions = std::round(0.003 * canvas_bb.GetHeight());
+        if (plot.y_axis.divisions < 2)
+            plot.y_axis.divisions = 2;
+    }
 
     // get ticks
     static std::vector<Tick> xTicks(100), yTicks(100);
@@ -267,17 +339,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     if (plot.y_axis.show_tick_labels)
         LabelTicks(yTicks);
 
-    // frame
-    const ImVec2 frame_size = CalcItemSize(size, 100, 100);
-    const ImRect frame_bb(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
-    ItemSize(frame_bb);
-    if (!ItemAdd(frame_bb, 0, &frame_bb))
-        return;
-    const bool frame_hovered = ItemHoverable(frame_bb, id);
-    RenderFrame(frame_bb.Min, frame_bb.Max, color_frame, true, Style.FrameRounding);
 
-    // canvas bb
-    const ImRect canvas_bb(frame_bb.Min + Style.WindowPadding, frame_bb.Max - Style.WindowPadding);
 
     // get max y-tick width
     float maxLabelWidth = 0;
@@ -412,7 +474,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     if (plot.m_selecting && (IO.MouseReleased[1] || !IO.MouseDown[1]))
     {
         ImVec2 slcSize = plot.m_select_start - IO.MousePos;
-        if (std::abs(slcSize.x) > 5 && std::abs(slcSize.y) > 5)
+        if (std::abs(slcSize.x) > 2 && std::abs(slcSize.y) > 2)
         {
             ImVec2 p1, p2;
             p1.x = Remap(plot.m_select_start.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
@@ -482,8 +544,11 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     // render selection
     if (plot.m_selecting)
     {
-        DrawList.AddRectFilled(ImMin(IO.MousePos, plot.m_select_start), ImMax(IO.MousePos, plot.m_select_start), color_slctBg);
-        DrawList.AddRect(ImMin(IO.MousePos, plot.m_select_start), ImMax(IO.MousePos, plot.m_select_start), color_slctBd);
+        ImRect select_bb(ImMin(IO.MousePos, plot.m_select_start), ImMax(IO.MousePos, plot.m_select_start));
+        if (select_bb.GetWidth() > 2 && select_bb.GetHeight() > 2) {
+            DrawList.AddRectFilled(select_bb.Min, select_bb.Max, color_slctBg);
+            DrawList.AddRect(select_bb.Min, select_bb.Max, color_slctBd);
+        }
     }
 
     // render ticks
@@ -623,7 +688,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     // AddTextVertical(&DrawList, "Hello, World", frame_bb.Min, color_ytxt);
 
     PushID(id);
-    if (frame_hovered && grid_hovered && IO.MouseClicked[2] && plot.enable_controls && !legend_hovered)
+    if (frame_hovered && grid_hovered && IO.MouseDoubleClicked[1] && plot.enable_controls && !legend_hovered)
         ImGui::OpenPopup("##Context");
     if (ImGui::BeginPopup("##Context"))
     {
