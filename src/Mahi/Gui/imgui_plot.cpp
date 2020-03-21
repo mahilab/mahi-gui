@@ -2,15 +2,14 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
+#include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
 #include <Mahi/Gui/imgui_plot.hpp>
 #include <Mahi/Gui/imgui_custom.hpp>
 #include <imgui_internal.h>
+#include <sstream>
 #include <cmath>
 #include <iostream>
 #include <algorithm>
-#include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
-#include <Mahi/Gui/Color.hpp>
-#include <sstream>
 
 namespace ImGui {
 
@@ -108,7 +107,7 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
     }
     auto color = GetColorU32(item.color);
     int segments = (int)item.data.size() - 1;
-    int i = item._begin;
+    int i = item.data_begin;
     for (int s = 0; s < segments; ++s)
     {
         int j = i + 1;
@@ -171,14 +170,25 @@ inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, 
 
 } // namespace
 
-PlotItem::PlotItem() : show(true), type(PlotItem::Line), data(), size(1), _begin(0)
+PlotItem::PlotItem() : show(true), type(PlotItem::Line), data(), size(1), data_begin(0)
 {
     using namespace mahi::gui;
-    static std::vector<ImVec4> colors = {Blues::DeepSkyBlue, Reds::Red, Greens::Chartreuse, Yellows::Yellow, Cyans::Cyan, Oranges::Orange, Purples::Magenta, Purples::BlueViolet, Cyans::LightCyan, Browns::Tan};
+    static std::vector<ImVec4> default_colors = {
+        {(0.0F), (0.7490196228F), (1.0F), (1.0F)},                    // Blues::DeepSkyBlue,
+        {(1.0F), (0.0F), (0.0F), (1.0F)},                             // Reds::Red,
+        {(0.4980392158F), (1.0F), (0.0F), (1.0F)},                    // Greens::Chartreuse,
+        {(1.0F), (1.0F), (0.0F), (1.0F)},                             // Yellows::Yellow,
+        {(0.0F), (1.0F), (1.0F), (1.0F)},                             // Cyans::Cyan,
+        {(1.0F), (0.6470588446F), (0.0F), (1.0F)},                    // Oranges::Orange,
+        {(1.0F), (0.0F), (1.0F), (1.0F)},                             // Purples::Magenta,
+        {(0.5411764979F), (0.1686274558F), (0.8862745166F), (1.0F)},  // Purples::BlueViolet,
+        {(0.8784313798F), (1.0F), (1.0F), (1.0F)},                    // Cyans::LightCyan,
+        {(0.8235294223F), (0.7058823705F), (0.5490196347F), (1.0F)}   // Browns::Tan
+    };
     static int nextColor = 0;
     static int itemNumber = 0;
-    color = colors[nextColor];
-    nextColor = (nextColor + 1) % colors.size();
+    color = default_colors[nextColor];
+    nextColor = (nextColor + 1) % default_colors.size();
     label = "item" + std::to_string(itemNumber++);
 }
 
@@ -189,7 +199,7 @@ PlotAxis::PlotAxis() : show_grid(true), show_tick_marks(true), show_tick_labels(
 }
 
 PlotInterface::PlotInterface() : show_crosshairs(false), show_mouse_pos(true), show_legend(true), enable_selection(true), enable_controls(true), title(""),
-                                 _dragging(false), _selecting(false)
+                                 m_dragging_x(false), m_dragging_y(false), m_selecting(false)
 {
     frame_color = ImVec4(0,0,0,-1);
     background_color = ImVec4(0,0,0,-1);
@@ -312,44 +322,49 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         legend_hovered = frame_hovered && legend_bb.Contains(IO.MousePos);
     }
 
-    // end drag
-    if (plot._dragging && (IO.MouseReleased[0] || !IO.MouseDown[0]))
+    // end drags
+    if (plot.m_dragging_x && (IO.MouseReleased[0] || !IO.MouseDown[0]))
+        plot.m_dragging_x = false;
+    if (plot.m_dragging_y && (IO.MouseReleased[0] || !IO.MouseDown[0]))
+        plot.m_dragging_y = false;    
+    // do drag
+    if (plot.m_dragging_x || plot.m_dragging_y)
     {
-        plot._dragging = false;
-    }
-    // drag
-    if (plot._dragging)
-    {
-        bool xLocked = plot.x_axis.lock_min || plot.x_axis.lock_max;
-        if (!xLocked)
+        bool xLocked = plot.x_axis.lock_min && plot.x_axis.lock_max;
+        if (!xLocked && plot.m_dragging_x)
         {
             float dir = plot.x_axis.flip ? -1.0f : 1.0f;
             float delX = dir * IO.MouseDelta.x * (plot.x_axis.maximum - plot.x_axis.minimum) / (grid_bb.Max.x - grid_bb.Min.x);
-            plot.x_axis.minimum -= delX;
-            plot.x_axis.maximum -= delX;
+            if (!plot.x_axis.lock_min)
+                plot.x_axis.minimum -= delX;
+            if (!plot.x_axis.lock_max)
+                plot.x_axis.maximum -= delX;
         }
-        bool yLocked = plot.y_axis.lock_min || plot.y_axis.lock_max;
-        if (!yLocked)
+        bool yLocked = plot.y_axis.lock_min && plot.y_axis.lock_max;
+        if (!yLocked && plot.m_dragging_y)
         {
             float dir = plot.y_axis.flip ? -1.0f : 1.0f;
             float delY = dir * IO.MouseDelta.y * (plot.y_axis.maximum - plot.y_axis.minimum) / (grid_bb.Max.y - grid_bb.Min.y);
-            plot.y_axis.minimum += delY;
-            plot.y_axis.maximum += delY;
+            if (!plot.y_axis.lock_min)
+                plot.y_axis.minimum += delY;
+            if (!plot.y_axis.lock_max)
+                plot.y_axis.maximum += delY;
         }
-        if (xLocked && yLocked)
+        if (xLocked && yLocked || (xLocked && plot.m_dragging_x && !plot.m_dragging_y) || (yLocked && plot.m_dragging_y && !plot.m_dragging_x))
             ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
-        else if (xLocked)
+        else if (xLocked || (!plot.m_dragging_x && plot.m_dragging_y))
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-        else if (yLocked)
+        else if (yLocked || (!plot.m_dragging_y && plot.m_dragging_x))
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
         else
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
     }
     // start drag
-    if (frame_hovered && grid_hovered && IO.MouseClicked[0] && !plot._selecting &&!legend_hovered)
-    {
-        plot._dragging = true;
-    }
+    if (frame_hovered && xAxisRegion_hovered && IO.MouseClicked[0] && !plot.m_selecting &&!legend_hovered)
+        plot.m_dragging_x = true;
+    if (frame_hovered && yAxisRegion_hovered && IO.MouseClicked[0] && !plot.m_selecting &&!legend_hovered)
+        plot.m_dragging_y = true;
+    
     // scroll zoom
     if (frame_hovered && (xAxisRegion_hovered || yAxisRegion_hovered))
     {
@@ -394,14 +409,14 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                      plot.y_axis.flip ? grid_bb.Max.y : grid_bb.Min.y);
 
     // confirm selection
-    if (plot._selecting && (IO.MouseReleased[1] || !IO.MouseDown[1]))
+    if (plot.m_selecting && (IO.MouseReleased[1] || !IO.MouseDown[1]))
     {
-        ImVec2 slcSize = plot._select_start - IO.MousePos;
+        ImVec2 slcSize = plot.m_select_start - IO.MousePos;
         if (std::abs(slcSize.x) > 5 && std::abs(slcSize.y) > 5)
         {
             ImVec2 p1, p2;
-            p1.x = Remap(plot._select_start.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
-            p1.y = Remap(plot._select_start.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
+            p1.x = Remap(plot.m_select_start.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
+            p1.y = Remap(plot.m_select_start.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
             p2.x = Remap(IO.MousePos.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
             p2.y = Remap(IO.MousePos.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
             plot.x_axis.minimum = ImMin(p1.x, p2.x);
@@ -409,17 +424,17 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             plot.y_axis.minimum = ImMin(p1.y, p2.y);
             plot.y_axis.maximum = ImMax(p1.y, p2.y);
         }
-        plot._selecting = false;
+        plot.m_selecting = false;
     }
     // cancel selection
-    if (plot._selecting && (IO.MouseClicked[0] || IO.MouseDown[0]))
+    if (plot.m_selecting && (IO.MouseClicked[0] || IO.MouseDown[0]))
     {
-        plot._selecting = false;
+        plot.m_selecting = false;
     }
     if (frame_hovered && grid_hovered && IO.MouseClicked[1] && plot.enable_selection)
     {
-        plot._select_start = IO.MousePos;
-        plot._selecting = true;
+        plot.m_select_start = IO.MousePos;
+        plot.m_selecting = true;
     }
 
     // RENDER
@@ -464,10 +479,10 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render selection
-    if (plot._selecting)
+    if (plot.m_selecting)
     {
-        DrawList.AddRectFilled(ImMin(IO.MousePos, plot._select_start), ImMax(IO.MousePos, plot._select_start), color_slctBg);
-        DrawList.AddRect(ImMin(IO.MousePos, plot._select_start), ImMax(IO.MousePos, plot._select_start), color_slctBd);
+        DrawList.AddRectFilled(ImMin(IO.MousePos, plot.m_select_start), ImMax(IO.MousePos, plot.m_select_start), color_slctBg);
+        DrawList.AddRect(ImMin(IO.MousePos, plot.m_select_start), ImMax(IO.MousePos, plot.m_select_start), color_slctBd);
     }
 
     // render ticks
@@ -483,7 +498,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render crosshairs
-    if (plot.show_crosshairs && grid_hovered && frame_hovered && !plot._dragging && !plot._selecting && !legend_hovered)
+    if (plot.show_crosshairs && grid_hovered && frame_hovered && !(plot.m_dragging_x || plot.m_dragging_y) && !plot.m_selecting && !legend_hovered)
     {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
         ImVec2 xy = IO.MousePos;

@@ -32,8 +32,8 @@ struct PlotItem {
     float size;
     /// The label to be displayed in any legends.
     std::string label; 
-    /// For internal usage only.
-    int _begin;
+    /// The "first" data element index, can be used for ring-buffering Line type
+    int data_begin;
 };
 
 /// A plot axis (X or Y)
@@ -96,10 +96,12 @@ struct PlotInterface {
     ImVec4 selection_color;
     /// The plot title (default="", i.e. no title displayed)
     std::string title;
-    /// For internal use only.
-    bool _dragging;
-    bool _selecting;
-    ImVec2 _select_start;
+private:
+    friend void Plot(const char*, PlotInterface*, PlotItem*, int, const ImVec2&);
+    bool m_dragging_x;
+    bool m_dragging_y;
+    bool m_selecting;
+    ImVec2 m_select_start;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,10 +130,10 @@ inline void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_poin
     if (item.data.size() < max_points) 
         item.data.push_back(ImVec2(static_cast<float>(x),static_cast<float>(y)));
     else {
-        item.data[item._begin] = ImVec2(static_cast<float>(x),static_cast<float>(y));
-        item._begin++;
-        if (item._begin == max_points)
-            item._begin = 0;
+        item.data[item.data_begin] = ImVec2(static_cast<float>(x),static_cast<float>(y));
+        item.data_begin++;
+        if (item.data_begin == max_points)
+            item.data_begin = 0;
     }
 }
 

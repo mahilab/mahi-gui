@@ -11,9 +11,11 @@ public:
         items1.resize(1);
         plot1.x_axis.maximum = 10;
         plot1.x_axis.lock_min = true;  plot1.x_axis.lock_max = true;
+        plot1.title = "ImGui::PlotItemRollPoint(...)";
         items2.resize(3);
         plot2.x_axis.maximum = 10;
         plot2.x_axis.lock_min = true;  plot2.x_axis.lock_max = true;
+        plot2.title = "ImGui::PlotItemBufferPoint(...)";
     }
 
     void update() override {
