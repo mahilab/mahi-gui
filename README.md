@@ -57,7 +57,7 @@ Run and consult the examples for other features. Pay particular attention to [de
 
 - C++17 compiler (MSVC or Clang)
 
-### Building Examples on Windows
+### Building for Windows
 
 On Windows, we recommend using to MSVC 2019:
 
@@ -68,14 +68,14 @@ On Windows, we recommend using to MSVC 2019:
 > cmake --build . --config Release
 ```
 
-### Building Examples on macOS
+### Building for macOS
 
 On macOS, we will use `LLVM clang` to build `mahi-gui`. While `Xcode` uses an Apple flavored version of  the `clang` compiler by default, the version you have installed my not be [up to date](https://en.wikipedia.org/wiki/Xcode#Version_comparison_table) with the required version of LLVM (> 8.0.0). Therefore, for this tutorial download the pre-built binaries for the latest version of LLVM from [here](http://releases.llvm.org/download.html).
 
 ```shell
 > cd mahi-gui
 > mkdir build
-> cmake .. -DCMAKE_C_COMPILER="/path/to/clang/bin/clang" -DCMAKE_CXX_COMPILER="/path/to/clang/bin/clang++"
+> cmake .. -DCMAKE_C_COMPILER="/path/to/clang/bin/clang" -DCMAKE_CXX_COMPILER="/path/to/clang/bin/clang++" -DCMAKE_BUILD_TYPE="Release"
 > cmake --build . --config Release
 ```
 
