@@ -4,29 +4,22 @@
 
 ## mahi-gui
 
-This library provides an all-in-one package for making GUIs and 2D visualizations in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) for all your GUI needs, [NanoVG](https://github.com/memononen/nanovg) for drawing vector graphics, and a few custom utility classes such as Coroutines and Events to spice things up. 
+This library provides an lightweight, all-in-one package for making GUIs and 2D visualizations in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) with several custom extension classes and methods for all your GUI needs, [NanoVG](https://github.com/memononen/nanovg) and [NanoSVG](https://github.com/memononen/nanosvg) for drawing vector graphics, [NFD](https://github.com/mlabbe/nativefiledialog) for native file/folder dialogs, and a few custom utility classes such as Coroutines and Events to spice things up. 
 
 ### Integration
 
-The library is small and intended to be copied to your build tree, or better yet, added as a `git` [submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules).
-
-Suppose you already have a CMake project under `git` source control:
-
-```shell
-> cd my_project
-my_project> git submodule add https://github.com/mahilab/mahi-gui
-```
-
-The `mahi-gui` directory will be cloned to the top level of `my_project`. Now, just add the following to your `CMakeLists.txt`:
+The library is small and intended to be used with CMake's `FetchContent`:
 
 ```cmake
-set(MAHI_GUI_EXAMPLES OFF CACHE BOOL "" FORCE) # optional, ON by default
-add_subdirectory(mahi-gui)
+include(FetchContent) 
+FetchContent_Declare(mahi-gui GIT_REPOSITORY https://github.com/mahilab/mahi-gui.git) 
+FetchContent_MakeAvailable(mahi-gui)
+
 add_executable(my_app "my_app.cpp")
 target_link_libraries(my_app mahi::gui)
 ```
 
-That's it!
+That's it! You should also be able to install or use the library as a git-submodule + CMake subdirectory if you prefer.
 
 ### Example Usage
 
@@ -45,8 +38,8 @@ public:
     void update() override {
         // App logic and/or ImGui code goes here
         ImGui::Begin("Example");
-        if (ImGui::Button("Herp"))
-          print("Derp"); 
+        if (ImGui::Button("Press Me!"))
+          print("Hello, World!"); 
         ImGui::End();
     }
 };
@@ -66,7 +59,7 @@ Run and consult the examples for other features. Pay particular attention to [de
 
 ### Building Examples on Windows
 
-On Windows, we recommend using to MSVC 2017 or 2019:
+On Windows, we recommend using to MSVC 2019:
 
 ```shell
 > cd mahi-gui
