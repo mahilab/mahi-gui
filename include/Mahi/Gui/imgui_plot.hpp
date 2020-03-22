@@ -3,9 +3,6 @@
 #include <vector>
 #include <string>
 
-// uncomment this to use AA on Line plots (considerably slower)
-// #define IMGUI_PLOT_LINE_USE_AA
-
 namespace ImGui {
 
 ///////////////////////////////////////////////////////////////////////////////

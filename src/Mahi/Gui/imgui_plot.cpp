@@ -9,6 +9,9 @@
 #include <iostream>
 #include <algorithm>
 
+// uncomment this to use AA on Line plots (considerably slower)
+// #define IMGUI_PLOT_LINE_USE_AA
+
 #define IM_NORMALIZE2F_OVER_ZERO(VX,VY)     { float d2 = VX*VX + VY*VY; if (d2 > 0.0f) { float inv_len = 1.0f / ImSqrt(d2); VX *= inv_len; VY *= inv_len; } }
 
 namespace ImGui {
