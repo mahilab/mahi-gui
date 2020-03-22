@@ -6,10 +6,12 @@ using namespace mahi::util;
 
 class PlotDraw : public Application {
 public:
-    PlotDraw() : Application(500,500,"Plots Benchmark") { 
+    PlotDraw() : Application(500,500,"Plots Drawing") { 
         ImGui::DisableViewports();
         item1.type = ImGui::PlotItem::Line;
+        item1.size = 3;
         item2.type = ImGui::PlotItem::Scatter;
+        item2.size = 5;
     };
 
     void update() override {
