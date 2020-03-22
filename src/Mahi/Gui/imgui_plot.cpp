@@ -715,6 +715,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         float new_x_max = -INFINITY;
         float new_y_min = INFINITY;
         float new_y_max = -INFINITY;
+        bool fit = false;
         for (int i = 0; i < nItems; ++i) {
             if (items[i].show) {
                 for (auto& d : items[i].data) {
@@ -723,16 +724,19 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                     new_y_min = d.y < new_y_min ? d.y : new_y_min;
                     new_y_max = d.y > new_y_max ? d.y : new_y_max;
                 }
+                fit = true;
             }
         }
-        if (!plot.x_axis.lock_min)
-            plot.x_axis.minimum = new_x_min;
-        if (!plot.x_axis.lock_max)
-            plot.x_axis.maximum = new_x_max;
-        if (!plot.y_axis.lock_min)
-            plot.y_axis.minimum = new_y_min;
-        if (!plot.y_axis.lock_max)
-            plot.y_axis.maximum = new_y_max;
+        if (fit) {
+            if (!plot.x_axis.lock_min)
+                plot.x_axis.minimum = new_x_min;
+            if (!plot.x_axis.lock_max)
+                plot.x_axis.maximum = new_x_max;
+            if (!plot.y_axis.lock_min)
+                plot.y_axis.minimum = new_y_min;
+            if (!plot.y_axis.lock_max)
+                plot.y_axis.maximum = new_y_max;
+        }
     }
 
     // AddTextVertical(&DrawList, "Hello, World", frame_bb.Min, color_ytxt);
