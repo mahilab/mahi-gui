@@ -397,8 +397,6 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     const ImRect grid_bb(canvas_bb.Min + ImVec2(lPadding, tPadding), canvas_bb.Max - ImVec2(0, bPadding));
     const bool grid_hovered = grid_bb.Contains(IO.MousePos);
 
-    g_plot_area_hovered = grid_hovered;
-
     // axis region bb
     const ImRect xAxisRegion_bb(grid_bb.Min + ImVec2(10,0), {grid_bb.Max.x, frame_bb.Max.y});
     const bool xAxisRegion_hovered = xAxisRegion_bb.Contains(IO.MousePos);
@@ -424,6 +422,8 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         legend_bb = ImRect(legend_content_bb.Min, legend_content_bb.Max + legend_padding * 2 + ImVec2(legend_icon_size, 0));
         legend_hovered = frame_hovered && legend_bb.Contains(IO.MousePos);
     }
+
+    g_plot_area_hovered = frame_hovered && grid_hovered && !legend_hovered;
 
     // end drags
     if (plot._dragging_x && (IO.MouseReleased[0] || !IO.MouseDown[0]))
