@@ -20,6 +20,10 @@ namespace ImGui {
 namespace
 {
 
+/// Global state vars
+ImVec2 g_plot_mouse_pos = {0,0};
+bool   g_plot_area_hovered   = false;
+
 /// Linearly remaps float x from [x0 x1] to [y0 y1].
 inline float Remap(float x, float x0, float x1, float y0, float y1) {
     return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
@@ -393,6 +397,8 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     const ImRect grid_bb(canvas_bb.Min + ImVec2(lPadding, tPadding), canvas_bb.Max - ImVec2(0, bPadding));
     const bool grid_hovered = grid_bb.Contains(IO.MousePos);
 
+    g_plot_area_hovered = grid_hovered;
+
     // axis region bb
     const ImRect xAxisRegion_bb(grid_bb.Min + ImVec2(10,0), {grid_bb.Max.x, frame_bb.Max.y});
     const bool xAxisRegion_hovered = xAxisRegion_bb.Contains(IO.MousePos);
@@ -504,6 +510,10 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                      plot.y_axis.flip ? grid_bb.Min.y : grid_bb.Max.y,
                      plot.x_axis.flip ? grid_bb.Min.x : grid_bb.Max.x,
                      plot.y_axis.flip ? grid_bb.Max.y : grid_bb.Min.y);
+
+    // set mouse position
+    g_plot_mouse_pos.x = Remap(IO.MousePos.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
+    g_plot_mouse_pos.y = Remap(IO.MousePos.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
 
     // confirm selection
     if (plot._selecting && (IO.MouseReleased[1] || !IO.MouseDown[1]))
@@ -652,10 +662,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     if (plot.show_mouse_pos && grid_hovered)
     {
         static char buffer[32];
-        ImVec2 posPlt;
-        posPlt.x = Remap(IO.MousePos.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
-        posPlt.y = Remap(IO.MousePos.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
-        sprintf(buffer, "%.2f,%.2f", posPlt.x, posPlt.y);
+        sprintf(buffer, "%.2f,%.2f", g_plot_mouse_pos.x, g_plot_mouse_pos.y);
         ImVec2 size = CalcTextSize(buffer);
         ImVec2 pos = grid_bb.Max - size - ImVec2(textOffset, textOffset);
         DrawList.AddText(pos, color_txt, buffer);
@@ -783,6 +790,14 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     DrawList.AddRect(xAxisRegion_bb.Min, xAxisRegion_bb.Max, GetColorU32({1,0,1,1}));
     DrawList.AddRect(yAxisRegion_bb.Min, yAxisRegion_bb.Max, GetColorU32({1,1,0,1}));
 #endif
+}
+
+bool IsPlotHovered() {
+    return g_plot_area_hovered;
+}
+
+ImVec2 PlotMousePos() {
+    return g_plot_mouse_pos;
 }
 
 }
