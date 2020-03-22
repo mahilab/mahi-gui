@@ -426,10 +426,14 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     g_plot_area_hovered = frame_hovered && grid_hovered && !legend_hovered;
 
     // end drags
-    if (plot._dragging_x && (IO.MouseReleased[0] || !IO.MouseDown[0]))
+    if (plot._dragging_x && (IO.MouseReleased[0] || !IO.MouseDown[0])) {
         plot._dragging_x = false;
-    if (plot._dragging_y && (IO.MouseReleased[0] || !IO.MouseDown[0]))
-        plot._dragging_y = false;    
+        G.IO.MouseDragMaxDistanceSqr[0] = 0;
+    }
+    if (plot._dragging_y && (IO.MouseReleased[0] || !IO.MouseDown[0])) {
+        plot._dragging_y = false;   
+        G.IO.MouseDragMaxDistanceSqr[0] = 0; 
+    }
     // do drag
     if (plot._dragging_x || plot._dragging_y)
     {
@@ -463,9 +467,9 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
     }
     // start drag
-    if (frame_hovered && xAxisRegion_hovered && IO.MouseClicked[0] && !plot._selecting &&!legend_hovered)
+    if (frame_hovered && xAxisRegion_hovered && IO.MouseDragMaxDistanceSqr[0] > 5 && !plot._selecting &&!legend_hovered)
         plot._dragging_x = true;
-    if (frame_hovered && yAxisRegion_hovered && IO.MouseClicked[0] && !plot._selecting &&!legend_hovered)
+    if (frame_hovered && yAxisRegion_hovered && IO.MouseDragMaxDistanceSqr[0] > 5 && !plot._selecting &&!legend_hovered)
         plot._dragging_y = true;
     
     // scroll zoom
