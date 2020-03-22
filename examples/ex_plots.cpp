@@ -142,6 +142,21 @@ public:
         ImGui::Checkbox("X Bar", &items[2].show);
         ImGui::SameLine();
         ImGui::Checkbox("Y Bar", &items[3].show);
+        ImGui::SameLine();
+        if (ImGui::Button("Theme")) {
+            static int theme = -1;
+            theme = (theme + 1) % 7;
+            switch(theme) {
+                case 0: ImGui::StyleColorsDark(); break;
+                case 1: ImGui::StyleColorsLight(); break;
+                case 2: ImGui::StyleColorsClassic(); break;
+                case 3: ImGui::StyleColorsMahiDark1(); break;
+                case 4: ImGui::StyleColorsMahiDark2(); break;
+                case 5: ImGui::StyleColorsMahiDark3(); break;
+                case 6: ImGui::StyleColorsMahiDark4(); break;
+                default: break;
+            }            
+        }
         ImGui::End();
     }
     ImGui::PlotInterface plot;

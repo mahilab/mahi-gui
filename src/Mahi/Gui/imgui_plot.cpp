@@ -1,15 +1,15 @@
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
-#define IMGUI_DEFINE_MATH_OPERATORS
+    #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
-#include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
 #include <Mahi/Gui/imgui_plot.hpp>
-#include <Mahi/Gui/imgui_custom.hpp>
 #include <imgui_internal.h>
 #include <sstream>
 #include <cmath>
 #include <iostream>
 #include <algorithm>
+
+#define IM_NORMALIZE2F_OVER_ZERO(VX,VY)     { float d2 = VX*VX + VY*VY; if (d2 > 0.0f) { float inv_len = 1.0f / ImSqrt(d2); VX *= inv_len; VY *= inv_len; } }
 
 namespace ImGui {
 
@@ -17,8 +17,13 @@ namespace ImGui {
 namespace
 {
 
+/// Linearly remaps float x from [x0 x1] to [y0 y1].
+inline float Remap(float x, float x0, float x1, float y0, float y1) {
+    return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
+}
+
 /// Utility function to that rounds x to powers of 2,5 and 10 for generating axis labels
-/// Graphics Gems 1 11.2, Nice Numbers for Graph Labels
+/// Taken from Graphics Gems 1 Chapter 11.2, "Nice Numbers for Graph Labels"
 inline double NiceNum(double x, bool round)
 {
     double f;  /* fractional part of x */
@@ -44,9 +49,43 @@ inline double NiceNum(double x, bool round)
         nf = 10;
     return nf * std::pow(10., expv);
 }
+/// Draws vertical text. The position is the bottom left of the text rect.
+inline void AddTextVertical(ImDrawList* DrawList, const char *text, ImVec2 pos, ImU32 text_color) {
+    pos.x = IM_ROUND(pos.x);
+    pos.y = IM_ROUND(pos.y);
+    ImFont *font = GImGui->Font;
+    const ImFontGlyph *glyph;
+    char c;
+    ImGuiContext& g = *GImGui;
+    ImVec2 text_size = CalcTextSize(text);
+    while ((c = *text++)) {
+        glyph = font->FindGlyph(c);
+        if (!glyph) continue;
 
-struct Tick
-{
+        DrawList->PrimReserve(6, 4);
+        DrawList->PrimQuadUV(
+                pos + ImVec2(glyph->Y0, -glyph->X0),
+                pos + ImVec2(glyph->Y0, -glyph->X1),
+                pos + ImVec2(glyph->Y1, -glyph->X1),
+                pos + ImVec2(glyph->Y1, -glyph->X0),
+
+                ImVec2(glyph->U0, glyph->V0),
+                ImVec2(glyph->U1, glyph->V0),
+                ImVec2(glyph->U1, glyph->V1),
+                ImVec2(glyph->U0, glyph->V1),
+                    text_color);
+        pos.y -= glyph->AdvanceX;
+    }
+}
+
+/// Calculates the size of vertical text
+inline ImVec2 CalcTextSizeVertical(const char* text) {
+    ImVec2 sz = CalcTextSize(text);
+    return ImVec2(sz.y, sz.x);
+}
+
+/// Tick mark info
+struct Tick {
     double plot;
     float pixels;
     bool major;
@@ -90,11 +129,10 @@ inline void TransformTicks(std::vector<Tick> &ticks, float tMin, float tMax, flo
 {
     const float m = (pMax - pMin) / (tMax - tMin);
     for (auto &tk : ticks)
-        tk.pixels = (pMin + m * (tk.plot - tMin)); // IM_ROUND used previoiusly, but causes distortion in moving plot
+        tk.pixels = (pMin + m * ((float)tk.plot - tMin)); // IM_ROUND used previoiusly, but causes distortion in moving plot
 }
 
-// First impl: AA: 145 , no AA: 230 FPS
-inline void RenderPlotItemLine1(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
+inline void RenderPlotItemLineAA(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
     if (item.data.size() < 2)
         return;
     static std::vector<ImVec2> pointsPx(10000); // up front allocation
@@ -108,11 +146,9 @@ inline void RenderPlotItemLine1(const PlotItem& item, const PlotInterface& plot,
         pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
     }
     const ImU32 color = GetColorU32(item.color);
-
     int segments = (int)item.data.size() - 1;
     int i = item.data_begin;
-    for (int s = 0; s < segments; ++s)
-    {
+    for (int s = 0; s < segments; ++s) {
         int j = i + 1;
         if (j == item.data.size())
             j = 0;
@@ -121,9 +157,6 @@ inline void RenderPlotItemLine1(const PlotItem& item, const PlotInterface& plot,
     }
 }
 
-#define IM_NORMALIZE2F_OVER_ZERO(VX,VY)     { float d2 = VX*VX + VY*VY; if (d2 > 0.0f) { float inv_len = 1.0f / ImSqrt(d2); VX *= inv_len; VY *= inv_len; } }
-
-// Second impl: no AA: 410 FPS
 inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, const ImRect& pix, ImDrawList& DrawList) {
     if (item.data.size() < 2)
         return;
@@ -165,7 +198,6 @@ inline void RenderPlotItemLine(const PlotItem& item, const PlotInterface& plot, 
         DrawList._VtxCurrentIdx += 4;
     }
 }
-
 
 inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plot, const ImRect &pix, ImDrawList &DrawList)
 {
@@ -247,7 +279,7 @@ PlotAxis::PlotAxis() : show_grid(true), show_tick_marks(true), show_tick_labels(
 }
 
 PlotInterface::PlotInterface() : show_crosshairs(false), show_mouse_pos(true), show_legend(true), enable_selection(true), enable_controls(true), title(""),
-                                 m_dragging_x(false), m_dragging_y(false), m_selecting(false)
+                                 _dragging_x(false), _dragging_y(false), _selecting(false)
 {
     frame_color = ImVec4(0,0,0,-1);
     background_color = ImVec4(0,0,0,-1);
@@ -257,7 +289,7 @@ PlotInterface::PlotInterface() : show_crosshairs(false), show_mouse_pos(true), s
 
 void Plot(const char *label_id, PlotInterface &plot, std::vector<PlotItem> &items, const ImVec2 &size)
 {
-    Plot(label_id, &plot, &items[0], items.size(), size);
+    Plot(label_id, &plot, &items[0], (int)items.size(), size);
 }
 
 void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nItems, const ImVec2 &size)
@@ -313,12 +345,12 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
 
     // adaptive divisions
     if (plot.x_axis.adaptive) {
-        plot.x_axis.divisions = std::round(0.003 * canvas_bb.GetWidth());
+        plot.x_axis.divisions = (int)std::round(0.003 * canvas_bb.GetWidth());
         if (plot.x_axis.divisions < 2)
             plot.x_axis.divisions = 2;
     }
     if (plot.y_axis.adaptive) {
-        plot.y_axis.divisions = std::round(0.003 * canvas_bb.GetHeight());
+        plot.y_axis.divisions = (int)std::round(0.003 * canvas_bb.GetHeight());
         if (plot.y_axis.divisions < 2)
             plot.y_axis.divisions = 2;
     }
@@ -385,15 +417,15 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // end drags
-    if (plot.m_dragging_x && (IO.MouseReleased[0] || !IO.MouseDown[0]))
-        plot.m_dragging_x = false;
-    if (plot.m_dragging_y && (IO.MouseReleased[0] || !IO.MouseDown[0]))
-        plot.m_dragging_y = false;    
+    if (plot._dragging_x && (IO.MouseReleased[0] || !IO.MouseDown[0]))
+        plot._dragging_x = false;
+    if (plot._dragging_y && (IO.MouseReleased[0] || !IO.MouseDown[0]))
+        plot._dragging_y = false;    
     // do drag
-    if (plot.m_dragging_x || plot.m_dragging_y)
+    if (plot._dragging_x || plot._dragging_y)
     {
         bool xLocked = plot.x_axis.lock_min && plot.x_axis.lock_max;
-        if (!xLocked && plot.m_dragging_x)
+        if (!xLocked && plot._dragging_x)
         {
             float dir = plot.x_axis.flip ? -1.0f : 1.0f;
             float delX = dir * IO.MouseDelta.x * (plot.x_axis.maximum - plot.x_axis.minimum) / (grid_bb.Max.x - grid_bb.Min.x);
@@ -403,7 +435,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                 plot.x_axis.maximum -= delX;
         }
         bool yLocked = plot.y_axis.lock_min && plot.y_axis.lock_max;
-        if (!yLocked && plot.m_dragging_y)
+        if (!yLocked && plot._dragging_y)
         {
             float dir = plot.y_axis.flip ? -1.0f : 1.0f;
             float delY = dir * IO.MouseDelta.y * (plot.y_axis.maximum - plot.y_axis.minimum) / (grid_bb.Max.y - grid_bb.Min.y);
@@ -412,20 +444,20 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             if (!plot.y_axis.lock_max)
                 plot.y_axis.maximum += delY;
         }
-        if (xLocked && yLocked || (xLocked && plot.m_dragging_x && !plot.m_dragging_y) || (yLocked && plot.m_dragging_y && !plot.m_dragging_x))
+        if (xLocked && yLocked || (xLocked && plot._dragging_x && !plot._dragging_y) || (yLocked && plot._dragging_y && !plot._dragging_x))
             ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
-        else if (xLocked || (!plot.m_dragging_x && plot.m_dragging_y))
+        else if (xLocked || (!plot._dragging_x && plot._dragging_y))
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
-        else if (yLocked || (!plot.m_dragging_y && plot.m_dragging_x))
+        else if (yLocked || (!plot._dragging_y && plot._dragging_x))
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
         else
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
     }
     // start drag
-    if (frame_hovered && xAxisRegion_hovered && IO.MouseClicked[0] && !plot.m_selecting &&!legend_hovered)
-        plot.m_dragging_x = true;
-    if (frame_hovered && yAxisRegion_hovered && IO.MouseClicked[0] && !plot.m_selecting &&!legend_hovered)
-        plot.m_dragging_y = true;
+    if (frame_hovered && xAxisRegion_hovered && IO.MouseClicked[0] && !plot._selecting &&!legend_hovered)
+        plot._dragging_x = true;
+    if (frame_hovered && yAxisRegion_hovered && IO.MouseClicked[0] && !plot._selecting &&!legend_hovered)
+        plot._dragging_y = true;
     
     // scroll zoom
     if (frame_hovered && (xAxisRegion_hovered || yAxisRegion_hovered))
@@ -471,14 +503,14 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                      plot.y_axis.flip ? grid_bb.Max.y : grid_bb.Min.y);
 
     // confirm selection
-    if (plot.m_selecting && (IO.MouseReleased[1] || !IO.MouseDown[1]))
+    if (plot._selecting && (IO.MouseReleased[1] || !IO.MouseDown[1]))
     {
-        ImVec2 slcSize = plot.m_select_start - IO.MousePos;
+        ImVec2 slcSize = plot._select_start - IO.MousePos;
         if (std::abs(slcSize.x) > 2 && std::abs(slcSize.y) > 2)
         {
             ImVec2 p1, p2;
-            p1.x = Remap(plot.m_select_start.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
-            p1.y = Remap(plot.m_select_start.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
+            p1.x = Remap(plot._select_start.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
+            p1.y = Remap(plot._select_start.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
             p2.x = Remap(IO.MousePos.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
             p2.y = Remap(IO.MousePos.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
             plot.x_axis.minimum = ImMin(p1.x, p2.x);
@@ -486,18 +518,18 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             plot.y_axis.minimum = ImMin(p1.y, p2.y);
             plot.y_axis.maximum = ImMax(p1.y, p2.y);
         }
-        plot.m_selecting = false;
+        plot._selecting = false;
     }
     // cancel selection
-    if (plot.m_selecting && (IO.MouseClicked[0] || IO.MouseDown[0]))
+    if (plot._selecting && (IO.MouseClicked[0] || IO.MouseDown[0]))
     {
-        plot.m_selecting = false;
+        plot._selecting = false;
     }
     // begin selection
     if (frame_hovered && grid_hovered && IO.MouseClicked[1] && plot.enable_selection)
     {
-        plot.m_select_start = IO.MousePos;
-        plot.m_selecting = true;
+        plot._select_start = IO.MousePos;
+        plot._selecting = true;
     }
 
     // RENDER
@@ -530,8 +562,12 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     // render plot items
     for (int i = 0; i < nItems; ++i) {
         if (items[i].show && items[i].data.size() > 0) {
-            if (items[i].type == PlotItem::Line)
+            if (items[i].type == PlotItem::Line) 
+#ifdef IMGUI_PLOT_LINE_USE_AA
+                RenderPlotItemLineAA(items[i], plot, pix, DrawList);
+#else
                 RenderPlotItemLine(items[i], plot, pix, DrawList);
+#endif
             else if (items[i].type == PlotItem::Scatter)
                 RenderPlotItemScatter(items[i], plot, pix, DrawList);
             else if (items[i].type == PlotItem::XBar)
@@ -542,9 +578,9 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render selection
-    if (plot.m_selecting)
+    if (plot._selecting)
     {
-        ImRect select_bb(ImMin(IO.MousePos, plot.m_select_start), ImMax(IO.MousePos, plot.m_select_start));
+        ImRect select_bb(ImMin(IO.MousePos, plot._select_start), ImMax(IO.MousePos, plot._select_start));
         if (select_bb.GetWidth() > 2 && select_bb.GetHeight() > 2) {
             DrawList.AddRectFilled(select_bb.Min, select_bb.Max, color_slctBg);
             DrawList.AddRect(select_bb.Min, select_bb.Max, color_slctBd);
@@ -564,7 +600,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render crosshairs
-    if (plot.show_crosshairs && grid_hovered && frame_hovered && !(plot.m_dragging_x || plot.m_dragging_y) && !plot.m_selecting && !legend_hovered)
+    if (plot.show_crosshairs && grid_hovered && frame_hovered && !(plot._dragging_x || plot._dragging_y) && !plot._selecting && !legend_hovered)
     {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
         ImVec2 xy = IO.MousePos;
@@ -660,7 +696,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // double click
-    if (grid_hovered && IO.MouseDoubleClicked[0] && nItems > 0) {
+    if (frame_hovered && grid_hovered && IO.MouseDoubleClicked[0] && nItems > 0) {
         float new_x_min = INFINITY;
         float new_x_max = -INFINITY;
         float new_y_min = INFINITY;
@@ -692,58 +728,49 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         ImGui::OpenPopup("##Context");
     if (ImGui::BeginPopup("##Context"))
     {
-        ImGui::PushItemWidth(100);
-        ImGui::BeginGroup();
-        ImGui::LabelText("##X-Axis", "X-Axis");
+        ImGui::PushItemWidth(75);
+
+        if (plot.x_axis.lock_min) { ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true); ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f); }
         ImGui::DragFloat("##Xmin", &plot.x_axis.minimum, 0.01f + 0.01f * (plot.x_axis.maximum - plot.x_axis.minimum), -INFINITY, plot.x_axis.maximum - FLT_EPSILON);
+        if (plot.x_axis.lock_min) { ImGui::PopItemFlag(); ImGui::PopStyleVar(); }
         ImGui::SameLine();
-        ImGui::ToggleButton((plot.x_axis.lock_min ? ICON_FA_LOCK "##Xmin" : ICON_FA_LOCK_OPEN "##Xmin"), &plot.x_axis.lock_min, {20, 0});
+        ImGui::Checkbox("##LockXMin",&plot.x_axis.lock_min);
+        ImGui::SameLine();
+
+        if (plot.x_axis.lock_max) { ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true); ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f); }
         ImGui::DragFloat("##Xmax", &plot.x_axis.maximum, 0.01f + 0.01f * (plot.x_axis.maximum - plot.x_axis.minimum), plot.x_axis.minimum + FLT_EPSILON, INFINITY);
+        if (plot.x_axis.lock_max) { ImGui::PopItemFlag(); ImGui::PopStyleVar(); }
         ImGui::SameLine();
-        ImGui::ToggleButton((plot.x_axis.lock_max ? ICON_FA_LOCK "##Xmax" : ICON_FA_LOCK_OPEN "##Xmax"), &plot.x_axis.lock_max, {20, 0});
-        ImGui::ToggleButton(ICON_FA_ARROWS_ALT_H, &plot.x_axis.flip, ImVec2(20, 0));
+        ImGui::Checkbox("X-Axis",&plot.x_axis.lock_max);
+        ImGui::Checkbox("Grid##X", &plot.x_axis.show_grid);
         ImGui::SameLine();
-        ImGui::ToggleButton("01##X", &plot.x_axis.show_tick_labels, ImVec2(23, 0));
-        ImGui::SameLine();
-        ImGui::ToggleButton(ICON_FA_GRIP_LINES_VERTICAL, &plot.x_axis.show_grid, ImVec2(23, 0));
-        ImGui::SameLine();
-        ImGui::ToggleButton(ICON_FA_ELLIPSIS_H, &plot.x_axis.show_tick_marks, ImVec2(23, 0));
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        ImGui::BeginGroup();
-        ImGui::LabelText("##Y-Axis", "Y-Axis");
-        ImGui::DragFloat("##Ymin", &plot.y_axis.minimum, 0.01f + 0.01f * (plot.y_axis.maximum - plot.y_axis.minimum), -INFINITY, plot.y_axis.maximum - FLT_EPSILON);
-        ImGui::SameLine();
-        ImGui::ToggleButton((plot.y_axis.lock_min ? ICON_FA_LOCK "##Ymin" : ICON_FA_LOCK_OPEN "##Ymin"), &plot.y_axis.lock_min, {20, 0});
-        ImGui::DragFloat("##Ymax", &plot.y_axis.maximum, 0.01f + 0.01f * (plot.y_axis.maximum - plot.y_axis.minimum), plot.y_axis.minimum + FLT_EPSILON, INFINITY);
-        ImGui::SameLine();
-        ImGui::ToggleButton((plot.y_axis.lock_max ? ICON_FA_LOCK "##Ymax" : ICON_FA_LOCK_OPEN "##Ymax"), &plot.y_axis.lock_max, {20, 0});
-        ImGui::ToggleButton(ICON_FA_ARROWS_ALT_V, &plot.y_axis.flip, ImVec2(20, 0));
-        ImGui::SameLine();
-        ImGui::ToggleButton("01##Y", &plot.y_axis.show_tick_labels, ImVec2(23, 0));
-        ImGui::SameLine();
-        ImGui::ToggleButton(ICON_FA_GRIP_LINES, &plot.y_axis.show_grid, ImVec2(23, 0));
-        ImGui::SameLine();
-        ImGui::ToggleButton(ICON_FA_ELLIPSIS_V, &plot.y_axis.show_tick_marks, ImVec2(23, 0));
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        ImGui::BeginGroup();
-        ImGui::PopItemWidth();
-        ImGui::PushItemWidth(25);
-        ImGui::LabelText("##", "");
-        ImGui::LabelText("##Min", "Min");
-        ImGui::LabelText("##Max", "Max");
-        ImGui::PopItemWidth();
-        ImGui::EndGroup();
+        ImGui::Checkbox("Flip##X", &plot.x_axis.flip);
+
         ImGui::Separator();
-        ImGui::ToggleButton(ICON_FA_CROSSHAIRS, &plot.show_crosshairs, {30, 0});
+
+        if (plot.y_axis.lock_min) { ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true); ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f); }
+        ImGui::DragFloat("##Ymin", &plot.y_axis.minimum, 0.01f + 0.01f * (plot.y_axis.maximum - plot.y_axis.minimum), -INFINITY, plot.y_axis.maximum - FLT_EPSILON);
+        if (plot.y_axis.lock_min) { ImGui::PopItemFlag(); ImGui::PopStyleVar(); }
         ImGui::SameLine();
-        ImGui::ToggleButton("X,Y", &plot.show_mouse_pos, {30, 0});
+        ImGui::Checkbox("##LockYMin",&plot.y_axis.lock_min);
         ImGui::SameLine();
-        ImGui::ToggleButton(ICON_FA_VECTOR_SQUARE, &plot.enable_selection, {30, 0});
+
+        if (plot.y_axis.lock_max) { ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true); ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f); }
+        ImGui::DragFloat("##Ymax", &plot.y_axis.maximum, 0.01f + 0.01f * (plot.y_axis.maximum - plot.y_axis.minimum), plot.y_axis.minimum + FLT_EPSILON, INFINITY);
+        if (plot.y_axis.lock_max) { ImGui::PopItemFlag(); ImGui::PopStyleVar(); }
         ImGui::SameLine();
-        ImGui::ToggleButton(ICON_FA_LIST, &plot.show_legend, {30, 0});
-        ImGui::EndPopup();
+        ImGui::Checkbox("Y-Axis",&plot.y_axis.lock_max);
+        ImGui::Checkbox("Grid##Y", &plot.y_axis.show_grid);
+        ImGui::SameLine();
+        ImGui::Checkbox("Flip##Y", &plot.y_axis.flip);
+
+        ImGui::PopItemWidth();  
+
+        ImGui::Separator();
+        ImGui::Checkbox("Legend", &plot.show_legend);
+        ImGui::SameLine();
+        ImGui::Checkbox("Crosshairs", &plot.show_crosshairs);
+
     }
     PopID();
 

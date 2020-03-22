@@ -39,27 +39,6 @@ bool ButtonColored(const char* label, const ImVec4& color, const ImVec2& size = 
 /// A series of mutually exclusive RadioButtons. Useful for mode selection.
 bool ModeSelector(int* currentMode, const std::vector<std::string>& modes, bool horizontal = true);
 
-/// Linearly remaps float x from [x0 x1] to [y0 y1].
-inline float Remap(float x, float x0, float x1, float y0, float y1) {
-    return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
-}
-
-/// Linearly remaps ImVec2 x from [x0 x1] to [y0 y1].
-inline ImVec2 Remap(const ImVec2& x, const ImVec2& x0, const ImVec2& x1, const ImVec2& y0, const ImVec2& y1) {
-    ImVec2 out;
-    out.x = Remap(x.x, x0.x, x1.x, y0.x, y1.x);
-    out.y = Remap(x.y, x0.y, x1.y, y0.y, y1.y);
-    return out;
-}
-
-/// Draws vertical text. The position is the bottom left of the text rect.
-void AddTextVertical(ImDrawList* DrawList, const char *text, ImVec2 pos, ImU32 text_color);
-
-/// Calculates the size of vertical text
-inline ImVec2 CalcTextSizeVertical(const char* text) {
-    ImVec2 sz = CalcTextSize(text);
-    return ImVec2(sz.y, sz.x);
-}
 
 bool DragDouble(const char* label, double* v, float v_speed = 1.0f, double v_min = 0.0, double v_max = 0.0, const char* format = "%.3f", float power = 1.0f);     // If v_min >= v_max we have no bound
 bool DragDouble2(const char* label, double v[2], float v_speed = 1.0f, double v_min = 0.0, double v_max = 0.0, const char* format = "%.3f", float power = 1.0f);

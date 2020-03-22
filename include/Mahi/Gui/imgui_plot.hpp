@@ -1,19 +1,22 @@
 #pragma once
 #include <imgui.h>
-#include <imgui_stdlib.h>
 #include <vector>
+#include <string>
+
+// uncomment this to use AA on Line plots (considerably slower)
+// #define IMGUI_PLOT_LINE_USE_AA
 
 namespace ImGui {
 
 ///////////////////////////////////////////////////////////////////////////////
-// PLOT STRUCTURES
+// STRUCTS
 ///////////////////////////////////////////////////////////////////////////////
 
 /// An item to be plotted (e.g line, scatter, or bar plot).
 struct PlotItem {
     /// Supported plot types.
     enum Type {
-        Line,    // Data plotted as a olid line.
+        Line,    // Data plotted as a solid line.
         Scatter, // Data plotted as discontinuous circles.
         XBar,    // Data plotted as centered bars plot emanating from X-axis.
         YBar     // Data plotted as centered bars plot emanating from Y axis.
@@ -32,7 +35,7 @@ struct PlotItem {
     float size;
     /// The label to be displayed in any legends.
     std::string label; 
-    /// The "first" data element index, can be used for ring-buffering Line type
+    /// The "first" data element index, can be used for ring-buffering Line and Scatter types
     int data_begin;
 };
 
@@ -98,12 +101,11 @@ struct PlotInterface {
     ImVec4 selection_color;
     /// The plot title (default="", i.e. no title displayed)
     std::string title;
-private:
-    friend void Plot(const char*, PlotInterface*, PlotItem*, int, const ImVec2&);
-    bool m_dragging_x;
-    bool m_dragging_y;
-    bool m_selecting;
-    ImVec2 m_select_start;
+    /// [Internal]
+    bool _dragging_x;
+    bool _dragging_y;
+    bool _selecting;
+    ImVec2 _select_start;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,7 +128,6 @@ inline void PlotItemRollPoint(PlotItem& item, double x, double y, double span = 
         item.data.clear();
     item.data.push_back(ImVec2(static_cast<float>(xmod), static_cast<float>(y)));
 }
-
 /// Pushes a point into an item data set as if it were a circular buffer of #max_points size
 inline void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_points) {
     if (item.data.size() < max_points) 
@@ -138,7 +139,6 @@ inline void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_poin
             item.data_begin = 0;
     }
 }
-
 /// Call before rendering a plot to scroll the axis in time, displaying #history seconds
 inline void PlotAxisScroll(PlotAxis& axis, double current_time, double history) {
     axis.maximum = static_cast<float>(current_time);
