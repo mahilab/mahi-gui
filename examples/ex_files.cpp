@@ -19,17 +19,17 @@ public:
         ImGui::SetNextWindowSize({150,150}, ImGuiCond_Always);
         ImGui::Begin("Save Dialog", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
         if (ImGui::Button(ICON_FA_SAVE)) {
-            if (save_dialog("png,jpeg;pdf", "", out) == DialogResult::DialogOkay)
+            if (save_dialog(out, { { "Source code", "c,cpp,cc" },{ "Headers", "h,hpp" } }) == DialogResult::DialogOkay)
                 print("Path: {}",out);
         }           
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FILE)) {
-            if (open_dialog("png,jpeg;pdf", "", out) == DialogResult::DialogOkay)
+            if (open_dialog(out, { { "Source code", "c,cpp,cc" },{ "Headers", "h,hpp" } }) == DialogResult::DialogOkay)
                 print("Path: {}",out);
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_COPY)) {
-            if (open_dialog("png,jpeg;pdf", "", outs) == DialogResult::DialogOkay)
+            if (open_dialog(outs, { { "Source code", "c,cpp,cc" },{ "Headers", "h,hpp" } }) == DialogResult::DialogOkay)
             {
                 for (auto& o : outs)
                     print("Path: {}", o);
@@ -37,7 +37,7 @@ public:
         }
         ImGui::SameLine();
         if (ImGui::Button(ICON_FA_FOLDER_OPEN)) {
-            if (pick_folder("", out) == DialogResult::DialogOkay)
+            if (pick_folder(out) == DialogResult::DialogOkay)
                 print("Path: {}",out); 
         }
         ImGui::End();

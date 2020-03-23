@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <nfd.hpp>
 
 namespace mahi {
 namespace gui {
@@ -12,17 +13,19 @@ enum DialogResult {
     DialogCancel
 };
 
+typedef nfdu8filteritem_t DialogFilter;
+
 /// Opens a native file save dialog
-DialogResult save_dialog(const std::string& filter_list, const std::string& default_path, std::string& out_path);
+DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters = {});
 
 /// Opens a native single file open dialog
-DialogResult open_dialog(const std::string& filter_list, const std::string& default_path, std::string& out_path);
+DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>& filters = {});
 
 /// Opens a native multiple file open dialog
-DialogResult open_dialog(const std::string& filter_list, const std::string& default_path, std::vector<std::string>& out_paths);
+DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<DialogFilter>& filters = {});
 
 /// Opens a native folder selection dialog
-DialogResult pick_folder(const std::string& default_path, std::string& out_path);
+DialogResult pick_folder(std::string& out_path);
 
 /// Opens a folder in the native file explorer
 bool open_folder(const std::string& path);

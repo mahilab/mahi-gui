@@ -56,9 +56,6 @@ add_subdirectory(3rdparty/glad)
 install(TARGETS glad EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # NATIVE FILE DIALOG
-add_subdirectory(3rdparty/nativefiledialog)
-install(TARGETS nativefiledialog EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
 add_subdirectory(3rdparty/nativefiledialog-extended)
 install(TARGETS nfd EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
@@ -138,7 +135,7 @@ target_link_libraries(gui PUBLIC mahi::util)
 target_link_libraries(gui PUBLIC glfw)
 target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
-target_link_libraries(gui PUBLIC nativefiledialog)
+target_link_libraries(gui PUBLIC nfd)
 
 #===============================================================================
 # EXAMPLE EXECUTABLES

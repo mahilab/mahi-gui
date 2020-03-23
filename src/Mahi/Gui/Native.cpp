@@ -1,5 +1,4 @@
 #include <Mahi/Gui/Native.hpp>
-#include <nfd.h>
 #include <cstring>
 #include <ctime>
 #include <iomanip>
@@ -31,14 +30,49 @@ namespace fs = std::filesystem;
 namespace mahi {
 namespace gui {
 
-DialogResult save_dialog(const std::string &filterList, const std::string &defaultPath, std::string &outPath)
-{
-    nfdchar_t *savePath = NULL;
-    nfdresult_t result = NFD_SaveDialog(filterList.c_str(), defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &savePath);
-    if (result == NFD_OKAY)
-    {
-        outPath = savePath;
-        free(savePath);
+
+
+DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters) {
+    NFD::Guard nfdGuard;
+    NFD::UniquePathU8 savePath;
+    nfdresult_t result = NFD::SaveDialog(savePath, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size());
+    if (result == NFD_OKAY) {
+        out_path = savePath.get();
+        return DialogOkay;
+    }
+    else if (result == NFD_CANCEL)
+        return DialogResult::DialogCancel;
+    else
+        return DialogResult::DialogError;
+}
+
+DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>& filters) {
+    NFD::Guard nfdGuard;
+    NFD::UniquePathU8 openPath;
+    nfdresult_t result = NFD::OpenDialog(openPath, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size());
+    if (result == NFD_OKAY) {
+        out_path = openPath.get();
+        return DialogOkay;
+    }
+    else if (result == NFD_CANCEL)
+        return DialogResult::DialogCancel;
+    else
+        return DialogResult::DialogError;
+}
+
+DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<DialogFilter>& filters) {
+    NFD::Guard nfdGuard;
+    NFD::UniquePathSet openPaths;   
+    nfdresult_t result = NFD::OpenDialogMultiple(openPaths, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size());
+    if (result == NFD_OKAY) {
+        nfdpathsetsize_t numPaths;
+        NFD::PathSet::Count(openPaths, numPaths);
+        out_paths.resize(numPaths);
+        for (nfdpathsetsize_t i = 0; i < numPaths; ++i) {
+            NFD::UniquePathSetPath path;
+            NFD::PathSet::GetPath(openPaths, i, path);
+            out_paths[i] = path.get();
+        }
         return DialogResult::DialogOkay;
     }
     else if (result == NFD_CANCEL)
@@ -47,50 +81,14 @@ DialogResult save_dialog(const std::string &filterList, const std::string &defau
         return DialogResult::DialogError;
 }
 
-DialogResult open_dialog(const std::string &filterList, const std::string &defaultPath, std::string &outPath)
+DialogResult pick_folder(std::string &out_path)
 {
-    nfdchar_t *openPath = NULL;
-    nfdresult_t result = NFD_OpenDialog(filterList.c_str(), defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &openPath);
-    if (result == NFD_OKAY)
-    {
-        outPath = openPath;
-        free(openPath);
-        return DialogResult::DialogOkay;
-    }
-    else if (result == NFD_CANCEL)
-        return DialogResult::DialogCancel;
-    else
-        return DialogResult::DialogError;
-}
-
-DialogResult open_dialog(const std::string &filterList, const std::string &defaultPath, std::vector<std::string> &outPaths)
-{
-    nfdpathset_t pathSet;
-    nfdresult_t result = NFD_OpenDialogMultiple(filterList.c_str(), defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &pathSet);
-    if (result == NFD_OKAY)
-    {
-        std::size_t n = NFD_PathSet_GetCount(&pathSet);
-        outPaths.resize(n);
-        for (std::size_t i = 0; i < n; ++i)
-            outPaths[i] = NFD_PathSet_GetPath(&pathSet, i);
-        NFD_PathSet_Free(&pathSet);
-        return DialogResult::DialogOkay;
-    }
-    else if (result == NFD_CANCEL)
-        return DialogResult::DialogCancel;
-    else
-        return DialogResult::DialogError;
-}
-
-DialogResult pick_folder(const std::string &defaultPath, std::string &outPath)
-{
-    nfdchar_t *pickPath = NULL;
-    nfdresult_t result = NFD_PickFolder(defaultPath.length() > 0 ? defaultPath.c_str() : NULL, &pickPath);
-    if (result == NFD_OKAY)
-    {
-        outPath = pickPath;
-        free(pickPath);
-        return DialogResult::DialogOkay;
+    NFD::Guard nfdGuard;
+    NFD::UniquePathU8 openPath;
+    nfdresult_t result = NFD::PickFolder(openPath);
+    if (result == NFD_OKAY) {
+        out_path = openPath.get();
+        return DialogOkay;
     }
     else if (result == NFD_CANCEL)
         return DialogResult::DialogCancel;
