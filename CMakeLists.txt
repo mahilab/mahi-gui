@@ -59,6 +59,9 @@ install(TARGETS glad EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL
 add_subdirectory(3rdparty/nativefiledialog)
 install(TARGETS nativefiledialog EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
+add_subdirectory(3rdparty/nativefiledialog-extended)
+install(TARGETS nfd EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 # IMGUI
 set(IMGUI_HEADERS
     3rdparty/imgui/imconfig.h
