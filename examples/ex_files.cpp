@@ -1,6 +1,7 @@
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 #include <thread>
+#include <mutex>
 
 using namespace mahi::gui;
 using namespace mahi::util;
@@ -18,28 +19,71 @@ public:
         ImGui::SetNextWindowPos({0,0}, ImGuiCond_Always);
         ImGui::SetNextWindowSize({150,150}, ImGuiCond_Always);
         ImGui::Begin("Save Dialog", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
-        if (ImGui::Button(ICON_FA_SAVE)) {
-            if (save_dialog(out, { { "Source code", "c,cpp,cc" },{ "Headers", "h,hpp" } }) == DialogResult::DialogOkay)
+        ImGui::Text("Non-threaded:");
+        if (ImGui::Button(ICON_FA_SAVE"##1")) {
+            if (save_dialog(out, {{"Headers", "hpp,h,inl"}, {"Source code", "cpp,c,cc"}}, "", "my_file") == DialogResult::DialogOkay)
                 print("Path: {}",out);
         }           
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_FILE)) {
-            if (open_dialog(out, { { "Source code", "c,cpp,cc" },{ "Headers", "h,hpp" } }) == DialogResult::DialogOkay)
+        if (ImGui::Button(ICON_FA_FILE"##1")) {
+            if (open_dialog(out, {{"Headers", "hpp,h,inl"}, {"Source code", "cpp,c,cc"}}) == DialogResult::DialogOkay)
                 print("Path: {}",out);
         }
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_COPY)) {
-            if (open_dialog(outs, { { "Source code", "c,cpp,cc" },{ "Headers", "h,hpp" } }) == DialogResult::DialogOkay)
-            {
+        if (ImGui::Button(ICON_FA_COPY"##1")) {
+            if (open_dialog(outs, {{"Headers", "hpp,h,inl"}, {"Source code", "cpp,c,cc"}}) == DialogResult::DialogOkay) {
                 for (auto& o : outs)
                     print("Path: {}", o);
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button(ICON_FA_FOLDER_OPEN)) {
-            if (pick_folder(out) == DialogResult::DialogOkay)
+        if (ImGui::Button(ICON_FA_FOLDER_OPEN"##1")) {
+            if (pick_dialog(out) == DialogResult::DialogOkay)
                 print("Path: {}",out); 
         }
+
+        ImGui::Text("Threaded:");
+        if (ImGui::Button(ICON_FA_SAVE"##2")) {
+            auto func = [this]() {
+                std::lock_guard<std::mutex> lock(mtx);
+                if (save_dialog(out, {{"Headers", "hpp,h,inl"}, {"Source code", "cpp,c,cc"}}, "", "my_file") == DialogResult::DialogOkay)
+                    print("Path: {}",out);
+            };
+            std::thread thrd(func); thrd.detach();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_FILE"##2")) {
+            auto func = [this]() {
+                std::lock_guard<std::mutex> lock(mtx);
+                if (open_dialog(out, {{"Headers", "hpp,h,inl"}, {"Source code", "cpp,c,cc"}}) == DialogResult::DialogOkay)
+                    print("Path: {}",out);
+            };
+            std::thread thrd(func); thrd.detach();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_COPY"##2")) {
+            auto func = [this]() {
+                std::lock_guard<std::mutex> lock(mtx);
+                if (open_dialog(outs, {{"Headers", "hpp,h,inl"}, {"Source code", "cpp,c,cc"}}) == DialogResult::DialogOkay) {
+                    for (auto& o : outs)
+                        print("Path: {}", o);
+                }
+            };
+            std::thread thrd(func); thrd.detach();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ICON_FA_FOLDER_OPEN"##2")) {
+            auto func = [this]() {
+                std::lock_guard<std::mutex> lock(mtx);
+                if (pick_dialog(out) == DialogResult::DialogOkay)
+                    print("Path: {}",out); 
+            };
+            std::thread thrd(func); thrd.detach();
+        }
+
+        // You should notice that the non-threaded buttons freeze the GUI, while
+        // threaded buttons do not. Be careful with threads and always mutex data.
+        ImGui::Text("%.3f",time().as_seconds());
         ImGui::End();
     }
 
@@ -48,6 +92,7 @@ public:
             std::cout << p  << std::endl;
     }
     
+    std::mutex mtx;
     std::string out;
     std::vector<std::string> outs;    
 };

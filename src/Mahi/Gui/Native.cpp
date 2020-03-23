@@ -32,10 +32,16 @@ namespace gui {
 
 
 
-DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters) {
+DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters, const std::string& default_path, const std::string& default_name) {
+    fs::path defpath(default_path);
+    defpath.make_preferred();
     NFD::Guard nfdGuard;
     NFD::UniquePathU8 savePath;
-    nfdresult_t result = NFD::SaveDialog(savePath, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size());
+    nfdresult_t result = NFD::SaveDialog(savePath, 
+                                         filters.empty() ? nullptr : &filters[0], 
+                                         (nfdfiltersize_t)filters.size(),
+                                         default_path.empty() ? nullptr : defpath.string().c_str(),
+                                         default_name.c_str());
     if (result == NFD_OKAY) {
         out_path = savePath.get();
         return DialogOkay;
@@ -46,10 +52,15 @@ DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>&
         return DialogResult::DialogError;
 }
 
-DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>& filters) {
+DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>& filters, const std::string& default_path) {
+    fs::path defpath(default_path);
+    defpath.make_preferred();
     NFD::Guard nfdGuard;
     NFD::UniquePathU8 openPath;
-    nfdresult_t result = NFD::OpenDialog(openPath, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size());
+    nfdresult_t result = NFD::OpenDialog(openPath, 
+                                         filters.empty() ? nullptr : &filters[0], 
+                                         (nfdfiltersize_t)filters.size(), 
+                                         default_path.empty() ? nullptr : defpath.string().c_str());
     if (result == NFD_OKAY) {
         out_path = openPath.get();
         return DialogOkay;
@@ -60,10 +71,15 @@ DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>&
         return DialogResult::DialogError;
 }
 
-DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<DialogFilter>& filters) {
+DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<DialogFilter>& filters, const std::string& default_path) {
+    fs::path defpath(default_path);
+    defpath.make_preferred();
     NFD::Guard nfdGuard;
     NFD::UniquePathSet openPaths;   
-    nfdresult_t result = NFD::OpenDialogMultiple(openPaths, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size());
+    nfdresult_t result = NFD::OpenDialogMultiple(openPaths, 
+                                                 filters.empty() ? nullptr : &filters[0], 
+                                                 (nfdfiltersize_t)filters.size(),
+                                                 default_path.empty() ? nullptr : defpath.string().c_str());
     if (result == NFD_OKAY) {
         nfdpathsetsize_t numPaths;
         NFD::PathSet::Count(openPaths, numPaths);
@@ -81,11 +97,13 @@ DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<
         return DialogResult::DialogError;
 }
 
-DialogResult pick_folder(std::string &out_path)
+DialogResult pick_dialog(std::string &out_path, const std::string& default_path)
 {
+    fs::path defpath(default_path);
+    defpath.make_preferred();
     NFD::Guard nfdGuard;
     NFD::UniquePathU8 openPath;
-    nfdresult_t result = NFD::PickFolder(openPath);
+    nfdresult_t result = NFD::PickFolder(openPath, default_path.empty() ? nullptr : defpath.string().c_str());
     if (result == NFD_OKAY) {
         out_path = openPath.get();
         return DialogOkay;
