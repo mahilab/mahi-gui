@@ -1,0 +1,67 @@
+#pragma once
+
+#include <Mahi/Gui/Vec2.hpp>
+#include <algorithm>
+
+namespace mahi {
+namespace gui {
+
+/// 2D Axis-aligned Rectangle
+struct Rect {
+
+    /// Constructor
+    Rect() : 
+        left(0), top(0), width(0), height(0) 
+    { }
+
+    /// Constructor
+    Rect(float left, float top, float width, float height) : 
+        left(left), top(top), width(width), height(height) 
+    { }
+
+    /// Constructor
+    Rect(const Vec2& position, const Vec2& size) :
+        left  (position.x),
+        top   (position.y),
+        width (size.x),
+        height(size.y)
+    { }
+
+    /// Returns the Rect position (left,top)
+    inline Vec2 position() const {
+        return Vec2(left, top);
+    }
+
+    /// Returns the REct size (width,height)
+    inline Vec2 size() const {
+        return Vec2(width, height);
+    }
+
+    /// Returns true if the Rect contains the point p
+    bool contains(const Vec2& p) const {
+        float min_x = std::min(left, left + width);
+        float max_x = std::max(left, left + width);
+        float min_y = std::min(top, top + height);
+        float max_y = std::max(top, top + height);
+        return (p.x >= min_x) && (p.x < max_x) && (p.y >= min_y) && (p.y < max_y);
+    }
+
+    float left;
+    float top;
+    float width;
+    float height;
+};
+
+/// Compares if two Rects are the same
+inline bool operator ==(const Rect& left, const Rect& right) {
+    return (left.left == right.left) && (left.width == right.width) &&
+        (left.top == right.top) && (left.height == right.height);
+}
+
+/// Compares if two Rects are not the same
+inline bool operator !=(const Rect& left, const Rect& right) {
+    return !(left == right);
+}
+
+}  // namespace gui
+}  // namespace mahi

@@ -1,3 +1,19 @@
+// MIT License
+//
+// Copyright (c) 2020 Mechatronics and Haptic Interfaces Lab - Rice University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// Author(s): Evan Pezent (epezent@rice.edu)
+
 #pragma once
 
 #include <Mahi/Gui/Vec2.hpp>
@@ -10,12 +26,9 @@
 namespace mahi {
 namespace gui {
 
-class Vec2 {
-public:
+struct Vec2 {
     Vec2();
     Vec2(float X, float Y);
-
-public:
     float x;
     float y;
 };
@@ -50,23 +63,23 @@ inline float cross(const Vec2 &lhs, const Vec2 &rhs);
 //=============================================================================
 
 /// Returns true if two lines A and B are parallel
-inline bool parallel(const Vec2 a1, const Vec2 a2, const Vec2 b1, const Vec2 b2);
+inline bool parallel(const Vec2& a1, const Vec2& a2, const Vec2& b1, const Vec2& b2);
 
 /// Returns true if two lines A and B are perpendicular
-inline bool perpendicular(const Vec2 a1, const Vec2 a2, const Vec2 b1, const Vec2 b2);
+inline bool perpendicular(const Vec2& a1, const Vec2& a2, const Vec2& b1, const Vec2& b2);
 
 /// Returns true if two finite line segments intersect
-inline bool intersect(const Vec2 a1, const Vec2 a2, const Vec2 b1, const Vec2 b2);
+inline bool intersect(const Vec2& a1, const Vec2& a2, const Vec2& b1, const Vec2& b2);
 
 /// Finds the intersection point of infinite lines A and B.
 /// If A and B are parallel, returns Vec2(INF,INF).
-inline Vec2 intersection(const Vec2 a1, const Vec2 a2, const Vec2 b1, const Vec2 b2);
+inline Vec2 intersection(const Vec2& a1, const Vec2& a2, const Vec2& b1, const Vec2& b2);
 
 /// Determines if a point P lies on and within the endpoints of a line L
-inline bool insideLine(const Vec2 l1, const Vec2 l2, const Vec2 p);
+inline bool inside_line(const Vec2& l1, const Vec2& l2, const Vec2& p);
 
 /// Determiens if a point P lies inside triangle ABC
-inline bool inside_triangle(const Vec2 a, const Vec2 b, const Vec2 c, const Vec2 p);
+inline bool inside_triangle(const Vec2& a, const Vec2& b, const Vec2& c, const Vec2& p);
 
 /// Returns true if a point is inside a set of polygon points
 inline bool inside_polygon(const std::vector<Vec2> &polygon, const Vec2 &p);
@@ -86,7 +99,7 @@ inline float angle(const Vec2 &V1, const Vec2 V2);
 /// Returns winding of two vectors
 inline int winding(const Vec2 &a, const Vec2 b);
 
-/// Returns 1 if three conesecutive points are in clockwise order,
+/// Returns 1 if three consecutive points are in clockwise order,
 /// -1 if counter-clockwise, and 0 if colinear
 inline int winding(const Vec2 &a, const Vec2 &b, const Vec2 &c);
 

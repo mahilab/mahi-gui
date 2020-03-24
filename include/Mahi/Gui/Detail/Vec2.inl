@@ -72,8 +72,7 @@ inline bool intersect(const Vec2& a1, const Vec2& a2,
 }
 
 
-inline Vec2 intersection(const Vec2& a1, const Vec2& a2,
-                                 const Vec2& b1, const Vec2& b2)
+inline Vec2 intersection(const Vec2& a1, const Vec2& a2, const Vec2& b1, const Vec2& b2)
 {
     float v1 = (a1.x * a2.y - a1.y * a2.x);
     float v2 = (b1.x * b2.y - b1.y * b2.x);
@@ -86,7 +85,7 @@ inline Vec2 intersection(const Vec2& a1, const Vec2& a2,
                             (v1 * (b1.y - b2.y) - v2 * (a1.y - a2.y)) / v3);
 }
 
-inline bool insideLine(const Vec2& l1, const Vec2& l2,
+inline bool inside_line(const Vec2& l1, const Vec2& l2,
                        const Vec2& p) {
     float crossproduct = cross(l2 - l1, p - l1);
     if (abs(crossproduct) > 0.1)

@@ -90,6 +90,10 @@ install(TARGETS nanovg EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTA
 # NANOSVG
 set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
 
+# CLIPPER
+add_subdirectory(3rdparty/clipper)
+install(TARGETS clipper EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 #===============================================================================
 # MAHI UTIL
 #===============================================================================
@@ -135,6 +139,7 @@ target_link_libraries(gui PUBLIC mahi::util)
 target_link_libraries(gui PUBLIC glfw)
 target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
+target_link_libraries(gui PUBLIC clipper)
 target_link_libraries(gui PUBLIC nfd)
 
 #===============================================================================
@@ -165,6 +170,7 @@ install(DIRECTORY 3rdparty/glad/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 install(FILES ${IMGUI_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanovg/src/nanovg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanosvg/src/nanosvg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES 3rdparty/clipper/clipper.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # set where we want to install our config
 set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/mahi-gui)
