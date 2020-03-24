@@ -19,13 +19,13 @@ public:
         ImGui::BeginFixed("Click the Plot Area##1",{0,0},{500,250});
         ImGui::Plot("draw",&plot1,&item1,1);
         if (ImGui::IsPlotHovered() && ImGui::GetIO().MouseClicked[0]) 
-            item1.data.push_back(ImGui::PlotMousePos());        
+            item1.data.push_back(ImGui::GetPlotMousePos());        
         ImGui::End();
 
         ImGui::BeginFixed("Click the Plot Area##2",{0,250},{500,250});
         ImGui::Plot("draw",&plot2,&item2,1);
         if (ImGui::IsPlotHovered() && ImGui::GetIO().MouseClicked[0]) 
-            item2.data.push_back(ImGui::PlotMousePos());        
+            item2.data.push_back(ImGui::GetPlotMousePos());        
         ImGui::End();
 
     }

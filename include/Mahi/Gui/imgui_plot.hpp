@@ -165,6 +165,6 @@ inline void PlotAxisScroll(PlotAxis& axis, double current_time, double history) 
 /// Returns true if the plot in the last call to ImGui::Plot is hovered
 bool IsPlotHovered();
 /// Returns the mouse position in x,y coordinates of the last ImGui::Plot
-ImVec2 PlotMousePos();
+ImVec2 GetPlotMousePos();
 
 } // namespce ImGui

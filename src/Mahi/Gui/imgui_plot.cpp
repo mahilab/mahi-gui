@@ -804,7 +804,7 @@ bool IsPlotHovered() {
     return g_plot_area_hovered;
 }
 
-ImVec2 PlotMousePos() {
+ImVec2 GetPlotMousePos() {
     return g_plot_mouse_pos;
 }
 

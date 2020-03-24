@@ -44,7 +44,7 @@ public:
             if (ImGui::AcceptDragDropPayload("DND_PLOT")) {
                 items.emplace_back();
                 items.back().label = fmt::format("data_{}", payload);
-                items.back().data.push_back({t, (float)random_range(0.0, 1.0)});
+                items.back().data.push_back({t, (float)random_range(0.25, 0.75)});
             }
             ImGui::EndDragDropTarget();
         }
