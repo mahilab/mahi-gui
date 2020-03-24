@@ -27,6 +27,7 @@ mahi_gui_example(plots)
 mahi_gui_example(plots_realtime)
 mahi_gui_example(plots_draw)
 mahi_gui_example(plots_benchmark)
+mahi_gui_example(plots_dnd)
 mahi_gui_example(shapes)
 
 if (MAHI_UTIL_COROUTINES)
