@@ -31,9 +31,7 @@ public:
         ImGui::PlotItemBufferPoint(items2[0], t, x*0.0005f + random_range(0.49f,0.51f), 1000);
         ImGui::PlotItemBufferPoint(items2[1], t, y*0.0005f + random_range(0.49f,0.51f), 1000);
         ImGui::PlotItemBufferPoint(items2[2], t, (x+y)*0.00025f + random_range(0.49f,0.51f), 1000);
-
-        plot2.x_axis.minimum = t - 10;
-        plot2.x_axis.maximum = t;
+        ImGui::PlotAxisScroll(plot2.x_axis, t, 10);
         ImGui::Plot("My Buffering Plot", plot2, items2, ImVec2(-1,-1));
         ImGui::End();
     }
