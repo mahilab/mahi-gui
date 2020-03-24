@@ -8,7 +8,7 @@ using namespace mahi::util;
 
 class FileDemo : public Application {
 public:
-    FileDemo() : Application(150,150,"File Demo", false) {
+    FileDemo() : Application(300,400,"File Demo", false) {
         // disable viewports
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
         // connect to the file drop event
@@ -17,7 +17,7 @@ public:
     
     void update() override {
         ImGui::SetNextWindowPos({0,0}, ImGuiCond_Always);
-        ImGui::SetNextWindowSize({150,150}, ImGuiCond_Always);
+        ImGui::SetNextWindowSize({300,400}, ImGuiCond_Always);
         ImGui::Begin("Save Dialog", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
         ImGui::Text("Non-threaded:");
         if (ImGui::Button(ICON_FA_SAVE"##1")) {
@@ -84,6 +84,30 @@ public:
         // You should notice that the non-threaded buttons freeze the GUI, while
         // threaded buttons do not. Be careful with threads and always mutex data.
         ImGui::Text("%.3f",time().as_seconds());
+        ImGui::Separator();
+        ImGui::Text("System Folders:");
+
+        static auto sys_dir_but = [](SysDir dir) {
+            if (ImGui::Button(sys_dir(dir).c_str()))
+                open_folder(sys_dir(dir));
+        };
+
+        sys_dir_but(UserProfile);
+        sys_dir_but(AppDataRoaming);
+        sys_dir_but(AppDataLocal);
+        sys_dir_but(AppDataTemp);
+        sys_dir_but(ProgramData);
+        sys_dir_but(ProgramFiles);
+        sys_dir_but(ProgramFilesX86);
+
+        ImGui::Separator();
+
+        ImGui::Text("Misc:");
+        if (ImGui::Button("github.com/mahilab"))
+            open_url("https://github.com/mahilab");
+        if (ImGui::Button("epezent@rice.edu"))
+            open_email("epezent@rice.edu", "I love mahi-gui!");
+
         ImGui::End();
     }
 

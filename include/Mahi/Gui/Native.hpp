@@ -33,6 +33,19 @@ DialogResult open_dialog(std::vector<std::string>&        out_paths,
 DialogResult pick_dialog(std::string&       out_path, 
                          const std::string& default_path = "");
 
+enum SysDir {
+    UserProfile,
+    AppDataRoaming,
+    AppDataLocal,
+    AppDataTemp,
+    ProgramData,
+    ProgramFiles,
+    ProgramFilesX86,
+};
+
+/// Returns the common application data directory
+const std::string& sys_dir(SysDir dir);
+
 /// Opens a folder in the native file explorer
 bool open_folder(const std::string& path);
 
