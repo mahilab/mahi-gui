@@ -382,7 +382,7 @@ void Shape::update_bounds() const {
 // PUBLIC STATIC FUNCTIONS
 //==============================================================================
 
-Shape Shape::offset_shape(const Shape &shape, float offset, Shape::OffsetType type) {
+Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
     ClipperLib::Path subj = toClipper(shape.vertices());
     ClipperLib::ClipperOffset co;
     switch (type) {
@@ -402,7 +402,7 @@ Shape Shape::offset_shape(const Shape &shape, float offset, Shape::OffsetType ty
         offset_shape.set_points(fromClipper(solution[0]));
     for (std::size_t i = 0; i < shape.hole_count(); ++i) {
         co.Clear();
-        ClipperLib::Path holeSubj = toClipper(shape.m_holes[i].vertices());
+        ClipperLib::Path holeSubj = toClipper(shape.hole(i).vertices());
         switch (type) {
             case Miter:
                 co.AddPath(holeSubj, ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
@@ -425,7 +425,7 @@ Shape Shape::offset_shape(const Shape &shape, float offset, Shape::OffsetType ty
     return offset_shape;
 }
 
-std::vector<Shape> Shape::clip_shapes(const Shape &subject, const Shape &clip, ClipType type) {
+std::vector<Shape> clip_shapes(const Shape &subject, const Shape &clip, ClipType type) {
 
     ClipperLib::Paths subj;
     ClipperLib::Paths clp;
@@ -433,10 +433,10 @@ std::vector<Shape> Shape::clip_shapes(const Shape &subject, const Shape &clip, C
     subj << toClipper(subject.vertices());
     clp  << toClipper(clip.vertices());
 
-    for (std::size_t i = 0; i < subject.m_holes.size(); ++i)
-        subj << toClipper(subject.m_holes[i].vertices());
-    for (std::size_t i = 0; i < clip.m_holes.size(); ++i)
-        clp << toClipper(clip.m_holes[i].vertices());
+    for (std::size_t i = 0; i < subject.hole_count(); ++i)
+        subj << toClipper(subject.hole(i).vertices());
+    for (std::size_t i = 0; i < clip.hole_count(); ++i)
+        clp << toClipper(clip.hole(i).vertices());
 
     ClipperLib::Clipper clpr;
     clpr.AddPaths(subj, ClipperLib::ptSubject, true);

@@ -4,7 +4,7 @@ target_sources(gui
     Color.cpp
     Native.cpp
     Shape.cpp
-    Svg.cpp
+    Draw.cpp
     Transform.cpp
     imgui_custom.cpp
     imgui_plot.cpp

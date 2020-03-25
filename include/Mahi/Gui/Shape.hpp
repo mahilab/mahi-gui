@@ -104,27 +104,6 @@ public:
     float area(QueryMode mode = Points) const;
     /// Returns true if the Shape is convex, false if concave
     bool is_convex() const;
-
-public:
-
-    /// Offset type options
-    enum OffsetType {
-        Miter,
-        Round,
-        Square
-    };
-
-    /// Clipping type options
-    enum ClipType {
-        Intersection, ///< region where subject and clip are filled
-        Union,        ///< region where either subject or clip are filled
-        Difference,   ///< region where subject is filled except where clip is filled
-        Exclusion     ///< region where either subject or clip is filled, but not where both are filled
-    };
-
-    static Shape offset_shape(const Shape& shape, float offset, OffsetType type = Miter);
-    static std::vector<Shape> clip_shapes(const Shape& subject, const Shape& clip, ClipType type);
-
 private:
 
     void update_if_stale() const;
@@ -141,6 +120,82 @@ private:
     mutable Rect m_verticesBounds;
     mutable bool m_stale;
 };
+
+//============================================================================
+// SHAPE MAKERS
+//============================================================================
+
+/// Offset type options
+enum OffsetType {
+    Miter, 
+    Round, 
+    Square
+};
+
+/// Creates a new Shape that is offset (positive or negative) from another Shape
+Shape offset_shape(const Shape& shape, float offset, OffsetType type = Miter);
+
+/// Clipping type options
+enum ClipType {
+    Intersection, ///< region where subject and clip are both filled
+    Union,        ///< region where either subject or clip are filled
+    Difference,   ///< region where subject is filled except where clip is filled
+    Exclusion     ///< region where either subject or clip is filled, but not where both are filled
+};
+
+/// Returns a new shape that is the combination of subject and clip according to ClipType type 
+std::vector<Shape> clip_shapes(const Shape& subject, const Shape& clip, ClipType type);
+
+enum PolyParam { 
+    CircumscribedRadius,  /// value interpreted as radius of circle that intsects vertices
+    InscribedRadius,      /// value interpreted as radius of circle that is tangent to sides
+    SideLength            /// value interpreted as side length
+};
+
+/// Makes a regular normal polyon shape
+inline Shape make_polygon_shape(std::size_t sides, float value, PolyParam param = CircumscribedRadius) {
+    float r = value;
+    if (param == InscribedRadius)
+        r = value / std::cos((float)util::PI / sides);
+    else if (param == SideLength)
+        r = value / (2 * std::sin((float)util::PI / sides));
+    Shape shape(sides);
+    float angleIncrement = 2.0f * (float)util::PI / sides;
+    for (std::size_t i = 0; i < sides; i++) {
+        float angle = i * angleIncrement - 0.5f * (float)util::PI;
+        shape.set_point(i, std::cos(angle) * r, std::sin(angle) * r);
+    }
+    return shape;
+}
+
+/// Makes a centered rectangel shape
+inline Shape make_rectangle_shape(float width, float height) {
+    Shape shape(4);
+    float halfWidth = 0.5f * width;
+    float halfHeight = 0.5f * height;
+    shape.set_point(0, -halfWidth, -halfHeight);
+    shape.set_point(1,  halfWidth, -halfHeight);
+    shape.set_point(2,  halfWidth,  halfHeight);
+    shape.set_point(3, -halfWidth,  halfHeight);
+    return shape;
+}
+
+/// Makes a normal star shape
+inline Shape make_star_shape(std::size_t points, float r1, float r2) {
+    Shape shape(points * 2);
+    float angleIncrement =  (float)util::PI / points;
+    float offset = (float)util::PI * 0.5f;
+    for (std::size_t i = 0; i < points; i++)
+    {
+        float angleA = 2 * i * angleIncrement + offset;
+        float angleB = (2 * i + 1) * angleIncrement + offset;
+        shape.set_point(2 * i, r1 * std::cos(angleA), r1 * std::sin(angleA));
+        shape.set_point(2 * i + 1, r2 * std::cos(angleB), r2 * std::sin(angleB));
+    }
+    return shape;
+}
+
+
 
 } // namespace gui
 } // namespace mahi
