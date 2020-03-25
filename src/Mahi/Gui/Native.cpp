@@ -30,8 +30,6 @@ namespace fs = std::filesystem;
 namespace mahi {
 namespace gui {
 
-
-
 DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters, const std::string& default_path, const std::string& default_name) {
     fs::path defpath(default_path);
     defpath.make_preferred();

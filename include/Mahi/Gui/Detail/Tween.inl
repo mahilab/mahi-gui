@@ -195,19 +195,19 @@ inline T InOut(const T& a, const T& b, float t) {
 namespace Sinusoidal {
 template <typename T>
 inline T In(const T& a, const T& b, float t) {
-    t = 1.0f - std::cos(t * Math::HALFPI);
+    t = 1.0f - std::cos(t * mahi::util::HALFPI);
     return Linear(a, b, t);
 }
 
 template <typename T>
 inline T Out(const T& a, const T& b, float t) {
-    t = std::sin(t * Math::HALFPI);
+    t = std::sin(t * mahi::util::HALFPI);
     return Linear(a, b, t);
 }
 
 template <typename T>
 inline T InOut(const T& a, const T& b, float t) {
-    t = -0.5f * (std::cos(Math::PI * t) - 1.0f);
+    t = -0.5f * (std::cos(mahi::util::PI * t) - 1.0f);
     return Linear(a, b, t);
 }
 
@@ -282,7 +282,7 @@ inline T In(const T& a, const T& b, float t) {
         return b;
     }
     t -= 1.0f;
-    t = (-std::pow(2.0f, 10.0f * t) * std::sin((t - 0.1f) * (2.0f * Math::PI) * 2.5f));
+    t = (-std::pow(2.0f, 10.0f * t) * std::sin((t - 0.1f) * (2.0f * mahi::util::PI) * 2.5f));
     return Linear(a, b, t);
 }
 
@@ -294,7 +294,7 @@ inline T Out(const T& a, const T& b, float t) {
     if (t == 1.0f) {
         return b;
     }
-    t =  (std::pow(2.0f, -10.0f * t) * std::sin((t - 0.1f) * (2.0f * Math::PI) * 2.5f) + 1.0f);
+    t =  (std::pow(2.0f, -10.0f * t) * std::sin((t - 0.1f) * (2.0f * mahi::util::PI) * 2.5f) + 1.0f);
     return Linear(a, b, t);
 }
 
@@ -303,11 +303,11 @@ inline T InOut(const T& a, const T& b, float t) {
     t *= 2.0f;
     if (t < 1.0f) {
         t -= 1.0f;
-        t = (-0.5f * std::pow(2.0f, 10.0f * t) * std::sin((t - 0.1f) * (2.0f * Math::PI) * 2.5f));
+        t = (-0.5f * std::pow(2.0f, 10.0f * t) * std::sin((t - 0.1f) * (2.0f * mahi::util::PI) * 2.5f));
     }
     else {
         t -= 1.0f;
-        t = (std::pow(2.0f, -10.0f * t) * std::sin((t - 0.1f) * (2.0f * Math::PI) * 2.5f) * 0.5f + 1.0f);
+        t = (std::pow(2.0f, -10.0f * t) * std::sin((t - 0.1f) * (2.0f * mahi::util::PI) * 2.5f) * 0.5f + 1.0f);
     }
     return Linear(a, b, t);
 }
