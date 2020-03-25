@@ -28,6 +28,7 @@ That's it! You should also be able to install or use the library as a git-submod
 
 #include <Mahi/Gui.hpp>
 using namespace mahi::gui;
+using namespace mahi::util;
 
 // Inherit from Application
 class MyApp : public Application {
