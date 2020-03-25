@@ -79,3 +79,5 @@ On macOS, we will use `LLVM clang` to build `mahi-gui`. While `Xcode` uses an Ap
 > cmake --build . --config Release
 ```
 
+## See Also
+- [ImGui::Plot Discussion](https://github.com/ocornut/imgui/issues/3067)
