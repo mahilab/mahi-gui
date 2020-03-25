@@ -25,8 +25,9 @@ That's it! You should also be able to install or use the library as a git-submod
 
 ```cpp
 // my_app.cpp
-
 #include <Mahi/Gui.hpp>
+#include <Mahi/Util.hpp>
+
 using namespace mahi::gui;
 using namespace mahi::util;
 
