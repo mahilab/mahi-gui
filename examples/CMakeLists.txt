@@ -31,5 +31,5 @@ mahi_gui_example(plots_dnd)
 mahi_gui_example(shapes)
 
 if (MAHI_UTIL_COROUTINES)
-# mahi_gui_example(coroutines)
+mahi_gui_example(coroutines)
 endif()
