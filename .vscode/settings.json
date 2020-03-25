@@ -78,5 +78,6 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
-    }
+    },
+    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
 }

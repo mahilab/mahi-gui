@@ -13,4 +13,4 @@ endif()
 message("nfd Platform: ${nfd_PLATFORM}")
 
 add_subdirectory(src)
-add_subdirectory(test)
+# add_subdirectory(test)
