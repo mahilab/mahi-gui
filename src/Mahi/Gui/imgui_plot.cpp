@@ -63,8 +63,6 @@ inline void AddTextVertical(ImDrawList* DrawList, const char *text, ImVec2 pos, 
     ImFont *font = GImGui->Font;
     const ImFontGlyph *glyph;
     char c;
-    ImGuiContext& g = *GImGui;
-    ImVec2 text_size = CalcTextSize(text);
     while ((c = *text++)) {
         glyph = font->FindGlyph(c);
         if (!glyph) continue;
@@ -107,7 +105,7 @@ inline void GetTicks(float tMin, float tMax, int nMajor, int nMinor, std::vector
     const double interval = NiceNum(range / (nMajor - 1), 1);
     const double graphmin = floor(tMin / interval) * interval;
     const double graphmax = ceil(tMax / interval) * interval;
-    const int nfrac = std::max((int)-floor(log10(interval)), 0);
+    // const int nfrac = std::max((int)-floor(log10(interval)), 0);
     for (double major = graphmin; major < graphmax + 0.5 * interval; major += interval)
     {
         if (major >= tMin && major <= tMax)
@@ -147,16 +145,16 @@ inline void RenderPlotItemLineAA(const PlotItem& item, const PlotInterface& plot
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     // transform data
-    for (int i = 0; i < item.data.size(); ++i)
+    for (std::size_t i = 0; i < item.data.size(); ++i)
     {
         pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
         pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
     }
     const ImU32 color = GetColorU32(item.color);
-    int segments = (int)item.data.size() - 1;
-    int i = item.data_begin;
-    for (int s = 0; s < segments; ++s) {
-        int j = i + 1;
+    std::size_t segments = item.data.size() - 1;
+    std::size_t i = (std::size_t)item.data_begin;
+    for (std::size_t s = 0; s < segments; ++s) {
+        std::size_t j = i + 1;
         if (j == item.data.size())
             j = 0;
         DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size);
@@ -211,7 +209,7 @@ inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plo
     const ImU32 col = GetColorU32(item.color);
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
-    for (int i = 0; i < item.data.size(); ++i)
+    for (std::size_t i = 0; i < item.data.size(); ++i)
     {
         ImVec2 c;
         c.x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
@@ -226,7 +224,7 @@ inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, 
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
-    for (int i = 0; i < item.data.size(); ++i)
+    for (std::size_t i = 0; i < item.data.size(); ++i)
     {
         if (item.data[i].y == 0)
             continue;
@@ -244,7 +242,7 @@ inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, 
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
-    for (int i = 0; i < item.data.size(); ++i)
+    for (std::size_t i = 0; i < item.data.size(); ++i)
     {
         if (item.data[i].x == 0)
             continue;
@@ -260,7 +258,6 @@ inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, 
 
 PlotItem::PlotItem() : show(true), type(PlotItem::Line), data(), size(1), data_begin(0)
 {
-    using namespace mahi::gui;
     static std::vector<ImVec4> default_colors = {
         {(0.0F), (0.7490196228F), (1.0F), (1.0F)},                    // Blues::DeepSkyBlue,
         {(1.0F), (0.0F), (0.0F), (1.0F)},                             // Reds::Red,
@@ -457,7 +454,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             if (!plot.y_axis.lock_max)
                 plot.y_axis.maximum += delY;
         }
-        if (xLocked && yLocked || (xLocked && plot._dragging_x && !plot._dragging_y) || (yLocked && plot._dragging_y && !plot._dragging_x))
+        if ((xLocked && yLocked) || (xLocked && plot._dragging_x && !plot._dragging_y) || (yLocked && plot._dragging_y && !plot._dragging_x))
             ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
         else if (xLocked || (!plot._dragging_x && plot._dragging_y))
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
