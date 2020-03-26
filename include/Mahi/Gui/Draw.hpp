@@ -25,6 +25,8 @@ namespace gui {
 
 /// Creates an NVG path from a Shape
 inline void path_shape(NVGcontext* vg, const Shape& shape) {
+    if (shape.vertex_count() < 3)
+        return;
     const auto& vertices = shape.vertices();
     nvgMoveTo(vg, vertices[0].x, vertices[0].y);
     for (int i = 1; i < vertices.size(); ++i) {

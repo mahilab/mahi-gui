@@ -1,5 +1,5 @@
 #include <Mahi/Gui.hpp>
-#include <mahi/Util.hpp>
+#include <Mahi/Util.hpp>
 
 using namespace mahi::gui;
 using namespace mahi::util;
