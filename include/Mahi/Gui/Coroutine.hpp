@@ -24,7 +24,7 @@ namespace gui {
 
 /// Yield instruction which waits a certain duration in seconds
 struct WaitForKeyPress : public util::YieldInstruction {
-    WaitForKeyPress(int key);
+    WaitForKeyPress(int key) : m_key(key) { }
     bool isOver() override {
         return ImGui::IsKeyPressed(m_key);
     }
