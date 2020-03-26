@@ -25,9 +25,11 @@ That's it! You should also be able to install or use the library as a git-submod
 
 ```cpp
 // my_app.cpp
-
 #include <Mahi/Gui.hpp>
+#include <Mahi/Util.hpp>
+
 using namespace mahi::gui;
+using namespace mahi::util;
 
 // Inherit from Application
 class MyApp : public Application {
@@ -70,13 +72,22 @@ On Windows, we recommend using to MSVC 2019:
 
 ### Building for macOS
 
-On macOS, we will use `LLVM clang` to build `mahi-gui`. While `Xcode` uses an Apple flavored version of  the `clang` compiler by default, the version you have installed my not be [up to date](https://en.wikipedia.org/wiki/Xcode#Version_comparison_table) with the required version of LLVM (> 8.0.0). Therefore, for this tutorial download the pre-built binaries for the latest version of LLVM from [here](http://releases.llvm.org/download.html).
+If you're on a relatively new version of macOS, you should be able to use the defeault Apple Clang compiler:
 
 ```shell
 > cd mahi-gui
-> mkdir build
+> mkdir build && cd build
+> cmake .. -DCMAKE_BUILD_TYPE="Release"
+> cmake --build .
+```
+
+If your Apple Clang compiler is too [old](https://en.wikipedia.org/wiki/Xcode#Version_comparison_table), you can use `LLVM Clang` to build `mahi-gui`. For example, using Clang 9.0.0 downloaded from [here](http://releases.llvm.org/download.html):
+
+```shell
+> cd mahi-gui
+> mkdir build && cd build
 > cmake .. -DCMAKE_C_COMPILER="/path/to/clang/bin/clang" -DCMAKE_CXX_COMPILER="/path/to/clang/bin/clang++" -DCMAKE_BUILD_TYPE="Release"
-> cmake --build . --config Release
+> cmake --build .
 ```
 
 ### See Also
