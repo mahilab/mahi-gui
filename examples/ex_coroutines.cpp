@@ -15,17 +15,17 @@ public:
         ImGui::SetNextWindowPos({10,10});
         ImGui::Begin("Coro Demo", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
         if (ImGui::Button("Move X")) 
-            startCoroutine(move(0));
+            start_coroutine(move(0));
         ImGui::SameLine();
         if (ImGui::Button("Move Y"))
-            startCoroutine(move(1));
+            start_coroutine(move(1));
         ImGui::SameLine();
         if (ImGui::Button("Blink"))
-            startCoroutine(blink());
+            start_coroutine(blink());
         ImGui::SameLine();
         if (ImGui::Button("Go Crazy"))
-            startCoroutine(goCrazy());
-        ImGui::Text("Coroutine Count: %d", coroutineCount());
+            start_coroutine(goCrazy());
+        ImGui::Text("Coroutine Count: %d", coroutine_count());
         ImGui::End();
         // draw
         ImGui::GetBackgroundDrawList()->AddCircleFilled(pos, 50, col, 100);
@@ -52,9 +52,9 @@ public:
     }
 
     Enumerator goCrazy() {
-        startCoroutine(blink());
-        startCoroutine(move(0));
-        co_yield startCoroutine(move(1));
+        start_coroutine(blink());
+        start_coroutine(move(0));
+        co_yield start_coroutine(move(1));
     }
 
     ImVec2 pos = {125,175};

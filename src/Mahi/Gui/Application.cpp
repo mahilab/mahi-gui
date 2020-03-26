@@ -339,25 +339,25 @@ void Application::update()
 
 #ifdef MAHI_COROUTINES
 
-std::shared_ptr<util::Coroutine> Application::startCoroutine(util::Enumerator &&e)
+std::shared_ptr<util::Coroutine> Application::start_coroutine(util::Enumerator &&e)
 {
     auto h = e.getCoroutine();
     m_coroutines.push_back(std::move(e));
     return h;
 }
 
-void Application::stopCoroutine(std::shared_ptr<util::Coroutine> routine)
+void Application::stop_coroutine(std::shared_ptr<util::Coroutine> routine)
 {
     if (routine)
         routine->stop();
 }
 
-void Application::stopCoroutines()
+void Application::stop_coroutines()
 {
     m_coroutines.clear();
 }
 
-int Application::coroutineCount() const
+int Application::coroutine_count() const
 {
     return static_cast<int>(m_coroutines.size());
 }

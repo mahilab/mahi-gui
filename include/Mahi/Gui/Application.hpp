@@ -27,7 +27,7 @@
 #include <Mahi/Util/Timing/Frequency.hpp>
 
 #ifdef MAHI_COROUTINES
-#include <Mahi/Util/Coroutine.hpp>
+#include <Mahi/Gui/Coroutine.hpp>
 #endif
 
 namespace mahi {
@@ -127,13 +127,13 @@ private:
 #ifdef MAHI_COROUTINES
 public:
     /// Starts a coroutine
-    std::shared_ptr<util::Coroutine> startCoroutine(util::Enumerator &&coro);
+    std::shared_ptr<util::Coroutine> start_coroutine(util::Enumerator &&coro);
     /// Stops an already running coroutine
-    void stopCoroutine(std::shared_ptr<util::Coroutine> coro);
+    void stop_coroutine(std::shared_ptr<util::Coroutine> coro);
     /// Stops all running coroutines
-    void stopCoroutines();
+    void stop_coroutines();
     /// Returns the number of coroutines running
-    int coroutineCount() const;
+    int coroutine_count() const;
 private:
     /// Vector of running coroutines
     std::vector<util::Enumerator> m_coroutines;
