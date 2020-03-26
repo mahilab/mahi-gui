@@ -135,28 +135,11 @@ void Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& item
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Adds a point to an item data set, clearing it every #span seconds
-inline void PlotItemRollPoint(PlotItem& item, double x, double y, double span = 10) {
-    double xmod = fmod(x, span);
-    if (!item.data.empty() && xmod < item.data.back().x)
-        item.data.clear();
-    item.data.push_back(ImVec2(static_cast<float>(xmod), static_cast<float>(y)));
-}
+void PlotItemRollPoint(PlotItem& item, double x, double y, double span = 10);
 /// Pushes a point into an item data set as if it were a circular buffer of #max_points size
-inline void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_points) {
-    if (item.data.size() < static_cast<std::size_t>(max_points)) 
-        item.data.push_back(ImVec2(static_cast<float>(x),static_cast<float>(y)));
-    else {
-        item.data[item.data_begin] = ImVec2(static_cast<float>(x),static_cast<float>(y));
-        item.data_begin++;
-        if (item.data_begin == max_points)
-            item.data_begin = 0;
-    }
-}
+void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_points);
 /// Call before rendering a plot to scroll the axis in time, displaying #history seconds
-inline void PlotAxisScroll(PlotAxis& axis, double current_time, double history) {
-    axis.maximum = static_cast<float>(current_time);
-    axis.minimum = static_cast<float>(current_time - history);
-}
+void PlotAxisScroll(PlotAxis& axis, double current_time, double history);
 
 ////////////////////////////////////////////////////////////////////////////////
 // MISC UTIL

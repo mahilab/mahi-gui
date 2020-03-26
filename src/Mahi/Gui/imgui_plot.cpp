@@ -797,6 +797,31 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
 #endif
 }
 
+
+void PlotItemRollPoint(PlotItem& item, double x, double y, double span) {
+    double xmod = ImFmod(x, span);
+    if (!item.data.empty() && xmod < item.data.back().x)
+        item.data.clear();
+    item.data.push_back(ImVec2(static_cast<float>(xmod), static_cast<float>(y)));
+}
+
+void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_points) {
+    if (item.data.size() < static_cast<std::size_t>(max_points)) 
+        item.data.push_back(ImVec2(static_cast<float>(x),static_cast<float>(y)));
+    else {
+        item.data[item.data_begin] = ImVec2(static_cast<float>(x),static_cast<float>(y));
+        item.data_begin++;
+        if (item.data_begin == max_points)
+            item.data_begin = 0;
+    }
+}
+
+void PlotAxisScroll(PlotAxis& axis, double current_time, double history) {
+    axis.maximum = static_cast<float>(current_time);
+    axis.minimum = static_cast<float>(current_time - history);
+}
+
+
 bool IsPlotHovered() {
     return g_plot_area_hovered;
 }
