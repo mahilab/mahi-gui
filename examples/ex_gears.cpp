@@ -130,7 +130,7 @@ static void gear(float inner_radius, float outer_radius, float width, int teeth,
 
 class GearsDemo : public Application {
 public:
-    GearsDemo(AppConfig conf) : Application(conf) {
+    GearsDemo(Application::Config conf) : Application(conf) {
 
 
         static float pos[4] = {5.f, 5.f, 10.f, 0.f};
@@ -252,7 +252,7 @@ public:
 
 int main(int argc, char const* argv[]) {\
 
-    AppConfig conf;
+    Application::Config conf;
     conf.transparent = true;
     conf.decorated = false;
     conf.msaa = 4;

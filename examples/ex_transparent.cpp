@@ -20,7 +20,7 @@ public:
 };
 
 int main(int argc, char const* argv[]) {
-    AppConfig conf;
+    Application::Config conf;
     conf.transparent = true;
     conf.decorated = false;
     conf.resizable = false;

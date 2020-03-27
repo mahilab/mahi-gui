@@ -46,7 +46,7 @@ static void configureImGui(GLFWwindow *window);
 
 util::Event<void(int, const std::string&)> Application::on_error;
 
-Application::Application(const AppConfig& conf) : 
+Application::Application(const Config& conf) : 
     window(nullptr), m_conf(conf), m_nvg(nullptr), m_frame_time(Time::Zero)
 {
     // setup GLFW error callback
@@ -117,15 +117,15 @@ Application::Application(const AppConfig& conf) :
 }
 
 Application::Application() :
-    Application(AppConfig({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, Grays::Black})) 
+    Application(Config({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, Grays::Black})) 
 {}
 
 Application::Application(const std::string &title, int monitor) :
-    Application(AppConfig({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true, Grays::Black})) 
+    Application(Config({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true, Grays::Black})) 
 {}
 
 Application::Application(int width, int height, const std::string &title, bool resizable, int monitor) :
-    Application(AppConfig({title, width, height, monitor, false, resizable, true, true, false, true, 4, true, true, Grays::Black})) 
+    Application(Config({title, width, height, monitor, false, resizable, true, true, false, true, 4, true, true, Grays::Black})) 
 {}
 
 Application::~Application()

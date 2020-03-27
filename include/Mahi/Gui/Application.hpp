@@ -33,28 +33,27 @@
 namespace mahi {
 namespace gui {
 
-/// Application Configuration options (for advanced Application construction)
-struct AppConfig {
-    std::string title  = "mahi-gui"; ///< window title
-    int width          = 640;        ///< window width in pixels
-    int height         = 480;        ///< window height in pixels
-    int monitor        = 0;          ///< monitor the window will be on
-    bool fullscreen    = false;      ///< should the window be fullscreen?
-    bool resizable     = true;       ///< should the window be resizable?
-    bool visible       = true;       ///< should the window be visible?
-    bool decorated     = true;       ///< should the window have a title bar, close button, etc.?
-    bool transparent   = false;      ///< should the window area be transparent?
-    bool center        = true;       ///< should the window be centered to the monitor?
-    int msaa           = 4;          ///< multisample anti-aliasing level (0 = none, 2, 4, 8, etc.)
-    bool nvg_aa        = true;       ///< should NanoVG use anti-aliasing?
-    bool vsync         = true;       ///< should VSync be enabled?
-    Color background   = {0,0,0,1};  ///< OpenGL clear color, i.e. background color
-};
-
 /// A Windowed Application
 class Application
 {
 public:
+    /// Application Configuration options (for advanced Application construction)
+    struct Config {
+        std::string title  = "mahi-gui"; ///< window title
+        int width          = 640;        ///< window width in pixels
+        int height         = 480;        ///< window height in pixels
+        int monitor        = 0;          ///< monitor the window will be on
+        bool fullscreen    = false;      ///< should the window be fullscreen?
+        bool resizable     = true;       ///< should the window be resizable?
+        bool visible       = true;       ///< should the window be visible?
+        bool decorated     = true;       ///< should the window have a title bar, close button, etc.?
+        bool transparent   = false;      ///< should the window area be transparent?
+        bool center        = true;       ///< should the window be centered to the monitor?
+        int msaa           = 4;          ///< multisample anti-aliasing level (0 = none, 2, 4, 8, etc.)
+        bool nvg_aa        = true;       ///< should NanoVG use anti-aliasing?
+        bool vsync         = true;       ///< should VSync be enabled?
+        Color background   = {0,0,0,1};  ///< OpenGL clear color, i.e. background color
+    };
 
     /// Hidden Main Window Constructor (for using ImGui windows exclusively)
     Application();
@@ -62,8 +61,8 @@ public:
     Application(const std::string& title, int monitor = 0);
     /// Windowed Main Window Constructor
     Application(int width, int height, const std::string& title, bool resizable = true, int monitor = 0);
-    /// Advanced Construct from AppConfig instance
-    Application(const AppConfig& conf);
+    /// Advanced Construct from Application::Config instance
+    Application(const Config& conf);
     /// Destructor
     ~Application();
 
@@ -137,7 +136,7 @@ protected:
     GLFWwindow *window;
 
 private:
-    AppConfig m_conf;
+    Config m_conf;
     NVGcontext* m_nvg;
     util::Time m_frame_time;
 
