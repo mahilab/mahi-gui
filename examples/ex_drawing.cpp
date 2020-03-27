@@ -10,7 +10,6 @@ public:
     { 
         // disable viewports
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
-        background_color = Grays::Black;
         generate_dots({250,250}, 50, 20000);
         generate_dots({500,250}, 50, 20000);
         generate_dots({750,250}, 50, 20000);

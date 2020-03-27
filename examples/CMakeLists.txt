@@ -29,6 +29,7 @@ mahi_gui_example(plots_draw)
 mahi_gui_example(plots_benchmark)
 mahi_gui_example(plots_dnd)
 mahi_gui_example(shapes)
+mahi_gui_example(transparent)
 
 if (MAHI_UTIL_COROUTINES)
 mahi_gui_example(coroutines)

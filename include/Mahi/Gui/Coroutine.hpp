@@ -22,6 +22,9 @@
 namespace mahi {
 namespace gui {
 
+/// mahi-gui specific coroutine yield instructions to supplement those already in
+/// <Mahi/Util/Coroutine.hpp>
+
 /// Yield instruction which waits until a key is pressed (use GLFW enums)
 struct WaitForKeyPress : public util::YieldInstruction {
     WaitForKeyPress(int key) : m_key(key) { }

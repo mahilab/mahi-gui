@@ -33,6 +33,24 @@
 namespace mahi {
 namespace gui {
 
+/// Application Configuration options (for advanced Application construction)
+struct AppConfig {
+    std::string title  = "mahi-gui"; ///< window title
+    int width          = 640;        ///< window width in pixels
+    int height         = 480;        ///< window height in pixels
+    int monitor        = 0;          ///< monitor the window will be on
+    bool fullscreen    = false;      ///< should the window be fullscreen?
+    bool resizable     = true;       ///< should the window be resizable?
+    bool visible       = true;       ///< should the window be visible?
+    bool decorated     = true;       ///< should the window have a title bar, close button, etc.?
+    bool transparent   = false;      ///< should the window area be transparent?
+    bool center        = true;       ///< should the window be centered to the monitor?
+    int msaa           = 4;          ///< multisample anti-aliasing level (0 = none, 2, 4, 8, etc.)
+    bool nvg_aa        = true;       ///< should NanoVG use anti-aliasing?
+    bool vsync         = true;       ///< should VSync be enabled?
+    Color background   = {0,0,0,1};  ///< OpenGL clear color, i.e. background color
+};
+
 /// A Windowed Application
 class Application
 {
@@ -44,6 +62,8 @@ public:
     Application(const std::string& title, int monitor = 0);
     /// Windowed Main Window Constructor
     Application(int width, int height, const std::string& title, bool resizable = true, int monitor = 0);
+    /// Advanced Construct from AppConfig instance
+    Application(const AppConfig& conf);
     /// Destructor
     ~Application();
 
@@ -52,11 +72,14 @@ public:
     /// Quits the application
     void quit();
     /// Called once per frame
-    virtual void update();
-
+    virtual void update() { /* nothing by default */ }
+    /// NanoVG drawing context, called immediately after update()
+    virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
     /// Get the current time
     util::Time time() const;
 
+    /// Set the window background (i.e. clear) color (no effect if transparent)
+    void set_background(const Color& color);
     /// Set the window title
     void set_window_title(const std::string& title);
     /// Set the window top-left position
@@ -109,19 +132,13 @@ public:
     /// Emitted when there is an internal GLFW error (error code, description)
     static util::Event<void(int, const std::string&)> on_error;
 
-
-public:
-    /// Window background color
-    Color background_color;
-
 protected:
     /// Internal GLFW window handle, you can use glfwXXX functions with this
     GLFWwindow *window;
-    /// Internal NanoVG context pointer
-    NVGcontext* vg;
 
 private:
-    bool m_vsync;
+    AppConfig m_conf;
+    NVGcontext* m_nvg;
     util::Time m_frame_time;
 
 #ifdef MAHI_COROUTINES

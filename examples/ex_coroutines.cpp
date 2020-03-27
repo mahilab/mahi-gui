@@ -6,7 +6,6 @@ using namespace mahi::util;
 class CoroDemo : public Application {
 public:
     CoroDemo() : Application(250,250, "Coroutine Demo", false) { 
-        background_color = Grays::Black;
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
     }
 

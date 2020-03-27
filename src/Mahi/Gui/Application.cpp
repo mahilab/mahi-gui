@@ -16,6 +16,8 @@
 #include <stdexcept>
 #include <thread>
 
+using namespace mahi::util;
+
 ///////////////////////////////////////////////////////////////////////////////
 // FORWARDS
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,124 +46,94 @@ static void configureImGui(GLFWwindow *window);
 
 util::Event<void(int, const std::string&)> Application::on_error;
 
-Application::Application() : window(nullptr), background_color({0.5,0.5,0.5,1})
+Application::Application(const AppConfig& conf) : 
+    window(nullptr), m_conf(conf), m_nvg(nullptr), m_frame_time(Time::Zero)
 {
-    // Setup window
+    // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
+    // initialize GLFW
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW!");
+    // setup GLFW context version
     glfw_context_version();
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    window = glfwCreateWindow(100, 100, "", NULL, NULL);
-    if (window == NULL)
-        throw std::runtime_error("Failed to create Window!");
-    // Setup OpenGL context
-    glfwMakeContextCurrent(window);
-    set_vsync(true);
-    // Setup GLFW Callbacks
-    glfw_setup_window_callbacks(window, this);
-    // Initialize OpenGL loader
-    if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
-        throw std::runtime_error("Failed to initialize OpenGL loader!");
-    // initialize NanoVg
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);  
-    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
-    if (vg == NULL)
-        throw std::runtime_error("Failed to create NanoVG context!");
-    // Setup ImGui
-    configureImGui(window);
-}
-
-Application::Application(const std::string & title, int monitorIdx) : window(nullptr), background_color({0.5,0.5,0.5,1})
-{
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        throw std::runtime_error("Failed to initialize GLFW!");
-    GLFWmonitor *monitor = nullptr;
-    if (monitorIdx == 0) 
-        monitor = glfwGetPrimaryMonitor();
-    else
-    {
-        int count;
-        auto monitors = glfwGetMonitors(&count);
-        if (monitorIdx < count)
-            monitor = monitors[monitorIdx];
-        else
+    // GLFW window hints
+    glfwWindowHint(GLFW_RESIZABLE, conf.resizable);
+    glfwWindowHint(GLFW_VISIBLE, conf.visible);
+    glfwWindowHint(GLFW_DECORATED, conf.decorated);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, conf.transparent);
+    glfwWindowHint(GLFW_SAMPLES, conf.msaa);
+    // create GLFW window
+    if (conf.fullscreen) {
+        GLFWmonitor *monitor = nullptr;
+        if (conf.monitor == 0) 
             monitor = glfwGetPrimaryMonitor();
+        else
+        {
+            int count;
+            auto monitors = glfwGetMonitors(&count);
+            if (conf.monitor < count)
+                monitor = monitors[conf.monitor];
+            else
+                monitor = glfwGetPrimaryMonitor();
+        }
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        if (!mode)
+            throw std::runtime_error("Failed to get Video Mode!");    
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        window = glfwCreateWindow(mode->width, mode->height, conf.title.c_str(), monitor, NULL);
     }
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-    if (!mode)
-        throw std::runtime_error("Failed to get Video Mode!");
-   
-    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
-    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
-    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
-    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-
-    glfw_context_version();
-    window = glfwCreateWindow(mode->width, mode->height, title.c_str(), monitor, NULL);
+    else {
+        window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
+    }
     if (window == NULL)
         throw std::runtime_error("Failed to create Window!");
-    // Setup OpenGL context
+    // Make OpenGL context current
     glfwMakeContextCurrent(window);
+    // Enabel VSync
     set_vsync(true);
-    // Setup GLFW Callbacks
-    glfw_setup_window_callbacks(window, this);
-    // Initialize OpenGL loader
-    if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
-        throw std::runtime_error("Failed to initialize OpenGL loader (GLAD)!");
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);  
-    // initialize NanoVg
-    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
-    if (vg == NULL)
-        throw std::runtime_error("Failed to create NanoVG context!");
-    // Setup ImGui
-    configureImGui(window);
-}
-
-Application::Application(int width, int height, const std::string& title, bool resizable, int monitor) : window(nullptr), background_color({0.5,0.5,0.5,1})
-{
-    // Setup window
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        throw std::runtime_error("Failed to initialize GLFW!");
-    glfw_context_version();
-    if (!resizable)
-        glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
-    if (window == NULL)
-        throw std::runtime_error("Failed to create Window!");
-    // Setup OpenGL context
-    glfwMakeContextCurrent(window);
-    set_vsync(true);
-    // Center window
-    center_window(monitor);
-    // Setup GLFW Callbacks
+    // center window
+    if (conf.center && !conf.fullscreen)
+        center_window(conf.monitor);
+    // Setup GLFW callbacks
     glfw_setup_window_callbacks(window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
+    // enable MSAA and depth testing in OpenGL
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);  
-    // initialize NanoVg
-    vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES); // | NVG_DEBUG
-    if (vg == NULL)
+    // initialize NanoVG
+    if (conf.nvg_aa)
+        m_nvg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    else
+        m_nvg = nvgCreateGL3(NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (m_nvg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
-    // Setup ImGui
+    // configure ImGui
     configureImGui(window);
 }
+
+Application::Application() :
+    Application(AppConfig({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, Grays::Black})) 
+{}
+
+Application::Application(const std::string &title, int monitor) :
+    Application(AppConfig({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true, Grays::Black})) 
+{}
+
+Application::Application(int width, int height, const std::string &title, bool resizable, int monitor) :
+    Application(AppConfig({title, width, height, monitor, false, resizable, true, true, false, true, 4, true, true, Grays::Black})) 
+{}
 
 Application::~Application()
 {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    nvgDeleteGL3(vg);
+    nvgDeleteGL3(m_nvg);
     glfwDestroyWindow(window);
     glfwTerminate();
 }
@@ -181,13 +153,10 @@ void Application::run()
         int fbWidth, fbHeight;
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
         glViewport(0, 0, fbWidth, fbHeight);
-        glClearColor(background_color.r, background_color.g, background_color.b, background_color.a);
+        if (!m_conf.transparent)
+            glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // nanovg
-        int winWidth, winHeight;
-        glfwGetWindowSize(window, &winWidth, &winHeight);
-        float pxRatio = static_cast<float>(fbWidth) / static_cast<float>(winWidth);
-        nvgBeginFrame(vg, static_cast<float>(winWidth), static_cast<float>(winHeight), pxRatio);
+
         // update
         update();
 #ifdef MAHI_COROUTINES
@@ -203,7 +172,14 @@ void Application::run()
             }
         }
 #endif 
-        nvgEndFrame(vg);
+        // nanovg
+        int winWidth, winHeight;
+        glfwGetWindowSize(window, &winWidth, &winHeight);
+        float pxRatio = static_cast<float>(fbWidth) / static_cast<float>(winWidth);
+        nvgBeginFrame(m_nvg, static_cast<float>(winWidth), static_cast<float>(winHeight), pxRatio);
+        draw(m_nvg);
+        nvgEndFrame(m_nvg);
+        // ImGui
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -213,7 +189,7 @@ void Application::run()
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(backup_current_context);
         }
-        if (!m_vsync && m_frame_time != util::Time::Inf) {
+        if (!m_conf.vsync && m_frame_time != util::Time::Inf) {
             
             util::sleep(m_frame_time - clock.get_elapsed_time());       
             clock.restart();     
@@ -229,6 +205,10 @@ void Application::quit() {
 
 util::Time Application::time() const {
     return util::seconds(glfwGetTime());
+}
+
+void Application::set_background(const Color& color) {
+    m_conf.background = color;
 }
 
 void Application::set_window_title(const std::string& title) {
@@ -313,8 +293,8 @@ void Application::request_window_attention() {
 }
 
 void Application::set_vsync(bool enabled) {
-    m_vsync = enabled;
-    if (m_vsync)
+    m_conf.vsync = enabled;
+    if (m_conf.vsync)
         glfwSwapInterval(1); // Enable vsync
     else
         glfwSwapInterval(0); // Disable vsync
@@ -331,11 +311,6 @@ std::pair<float,float> Application::get_mouse_pos() const {
     return {(float)x,(float)y};
 }
 
-
-void Application::update()
-{
-    // do nothing by default (user implemented)
-}
 
 #ifdef MAHI_COROUTINES
 

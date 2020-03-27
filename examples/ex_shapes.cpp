@@ -7,7 +7,6 @@ using namespace mahi::util;
 class ShapeDemo : public Application {
 public:
     ShapeDemo() : Application("Shape Demo") { 
-        background_color = Grays::Gray10;
         shape = make_polygon_shape(5, 50);
         shape.set_radii(10);
         shape.move(100,100);
@@ -36,20 +35,18 @@ public:
         star.set_radii(2);
         
     }
-    void update() override {  
-
-        fill_shape(vg, shape2, Greens::ForestGreen);
-        fill_shape(vg, shape,  Greens::Chartreuse);
-        fill_shape(vg, star,   Greens::ForestGreen);
-
+    void draw(NVGcontext* nvg) override {  
+        fill_shape(nvg, shape2, Greens::ForestGreen);
+        fill_shape(nvg, shape,  Greens::Chartreuse);
+        fill_shape(nvg, star,   Greens::ForestGreen);
         for (auto& s : union_shape)
-            fill_shape(vg, s, Reds::FireBrick);
+            fill_shape(nvg, s, Reds::FireBrick);
         for (auto& s : diff_shape)
-            fill_shape(vg, s, Reds::FireBrick);
+            fill_shape(nvg, s, Reds::FireBrick);
         for (auto& s : excl_shape)
-            fill_shape(vg, s, Reds::FireBrick);
+            fill_shape(nvg, s, Reds::FireBrick);
         for (auto& s : ints_shape)
-            fill_shape(vg, s, Reds::FireBrick);
+            fill_shape(nvg, s, Reds::FireBrick);
     } 
 
     Shape shape;

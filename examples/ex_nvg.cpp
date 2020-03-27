@@ -7,7 +7,7 @@ using namespace mahi::util;
 class NvgDemo : public Application {
 public:
     NvgDemo() : Application(250,250,"NVG Demo") { 
-        background_color = Grays::Gray10;
+        set_background(Grays::Gray10);
     }
 
     void update() override { 
@@ -27,10 +27,13 @@ public:
         ImGui::Text("%.3f FPS", ImGui::GetIO().Framerate);
         ImGui::End();
 
+
+    }
+
+    void draw(NVGcontext* vg) override {
         auto [w,h] = get_window_size();
         auto [x,y] = get_mouse_pos();
         double t = time().as_seconds();
-
         drawEyes(vg, (w-150)/2, (h-100)/2, 150, 100, x, y, t);
         nvgBeginPath(vg);
         nvgCircle(vg, x, y, 5);

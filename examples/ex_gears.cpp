@@ -130,9 +130,8 @@ static void gear(float inner_radius, float outer_radius, float width, int teeth,
 
 class GearsDemo : public Application {
 public:
-    GearsDemo() : Application(300, 300, "Gears Demo") {
+    GearsDemo(AppConfig conf) : Application(conf) {
 
-        background_color = Grays::Gray10;
 
         static float pos[4] = {5.f, 5.f, 10.f, 0.f};
 
@@ -251,8 +250,13 @@ public:
     float speed = 100.0f;
 };
 
-int main(int argc, char const* argv[]) {
-    GearsDemo demo;
+int main(int argc, char const* argv[]) {\
+
+    AppConfig conf;
+    conf.transparent = true;
+    conf.decorated = false;
+    conf.msaa = 4;
+    GearsDemo demo(conf);
     demo.run();
     return 0;
 }

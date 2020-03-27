@@ -26,7 +26,7 @@ class OpenGlDemo : public Application {
 public:
     OpenGlDemo() : Application(640, 480, "OpenGL Demo") {
 
-        background_color = Grays::Black;
+        set_background(Colors::Black);
 
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
