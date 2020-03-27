@@ -155,6 +155,10 @@ void Application::run()
         glViewport(0, 0, fbWidth, fbHeight);
         if (!m_conf.transparent)
             glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
+        else {
+            if (m_conf.background.a != 1) // user wants a transparent fill
+                glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
+        }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // update
