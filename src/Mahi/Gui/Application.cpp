@@ -198,7 +198,7 @@ void Application::run()
             temp.swap(m_coroutines);
             for (auto &coro : temp)
             {
-                if (coro.moveNext())
+                if (coro.move_next())
                     m_coroutines.push_back(std::move(coro));
             }
         }
@@ -341,7 +341,7 @@ void Application::update()
 
 std::shared_ptr<util::Coroutine> Application::start_coroutine(util::Enumerator &&e)
 {
-    auto h = e.getCoroutine();
+    auto h = e.get_coroutine();
     m_coroutines.push_back(std::move(e));
     return h;
 }

@@ -22,14 +22,24 @@
 namespace mahi {
 namespace gui {
 
-/// Yield instruction which waits a certain duration in seconds
+/// Yield instruction which waits until a key is pressed (use GLFW enums)
 struct WaitForKeyPress : public util::YieldInstruction {
     WaitForKeyPress(int key) : m_key(key) { }
-    bool isOver() override {
+    bool is_over() override {
         return ImGui::IsKeyPressed(m_key);
     }
 private:
     int m_key;
+};
+
+/// Yield instruction which waits until a mouse button is pressed (0=left, 1=right, 2=middle)
+struct WaitForMouseClick : public util::YieldInstruction {
+    WaitForMouseClick(int button) : m_button(button) { }
+    bool is_over() override {
+        return ImGui::IsMouseClicked(m_button);
+    }
+private:
+    int m_button;
 };
 
 } // namespace gui
