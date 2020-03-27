@@ -62,6 +62,7 @@ Color random_color() {
     color.r = static_cast<float>(util::random_range(0.0,1.0));
     color.g = static_cast<float>(util::random_range(0.0,1.0));
     color.b = static_cast<float>(util::random_range(0.0,1.0));
+    color.a = 1.0f;
     return color;
 }
 

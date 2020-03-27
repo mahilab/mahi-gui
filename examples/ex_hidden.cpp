@@ -20,11 +20,6 @@ public:
                 open1 = true;
             ImGui::End();
         }
-
-        ImGui::Begin("Test");
-
-        ImGui::End();
-
         if (!open1 && !open2)
             quit();
     }

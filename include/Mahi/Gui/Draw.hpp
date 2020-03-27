@@ -39,7 +39,7 @@ inline void path_shape(NVGcontext* vg, const Shape& shape) {
 inline void fill_shape(NVGcontext* vg, const Shape& shape, const Color& c) {
     nvgBeginPath(vg);
     path_shape(vg, shape);
-    nvgFillColor(vg, nvgRGBAf(c.r,c.g,c.b,c.a));
+    nvgFillColor(vg, c);
     nvgFill(vg);
 }
 
