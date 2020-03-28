@@ -229,20 +229,20 @@ void Application::set_window_pos(int xpos, int ypos) {
     glfwSetWindowPos(window, xpos, ypos);
 }
 
-std::pair<int,int> Application::get_window_pos() const {
+Vec2 Application::get_window_pos() const {
     int xpos, ypos;
     glfwGetWindowPos(window, &xpos, &ypos);
-    return {xpos, ypos};
+    return {(float)xpos, (float)ypos};
 }
 
 void Application::set_window_size(int width, int height) {
     glfwSetWindowSize(window, width, height);
 }
 
-std::pair<int,int> Application::get_window_size() const {
+Vec2 Application::get_window_size() const {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
-    return {width, height};
+    return {(float)width, (float)height};
 }
 
 void Application::set_window_size_limits(int min_width, int min_height, int max_width, int max_height) {
@@ -315,7 +315,7 @@ void Application::set_frame_limit(util::Frequency freq) {
     m_frame_time = freq.to_time();
 }
 
-std::pair<float,float> Application::get_mouse_pos() const {
+Vec2 Application::get_mouse_pos() const {
     double x,y;
     glfwGetCursorPos(window, &x, &y);
     return {(float)x,(float)y};

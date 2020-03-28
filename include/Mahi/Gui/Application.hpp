@@ -16,8 +16,6 @@
 
 #pragma once
 #include <memory>
-#include <tuple>
-#include <utility>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <nanovg.h>
@@ -86,11 +84,11 @@ public:
     /// Set the window top-left position
     void set_window_pos(int xpos, int ypos);
     /// Get the window top-left position: auto [x,y] = get_window_pos()
-    std::pair<int,int> get_window_pos() const;
+    Vec2 get_window_pos() const;
     /// Set the window size
     void set_window_size(int width, int height);
     /// Get the window size: auto [w,h] = get_window_size();
-    std::pair<int,int> get_window_size() const;
+    Vec2 get_window_size() const;
     /// Sets the limits that the user can size the window if resizable (pass -1 for no limit)
     void set_window_size_limits(int min_width, int min_height, int max_width, int max_height);
     /// Center the window on a monitor
@@ -115,7 +113,7 @@ public:
     void set_frame_limit(util::Frequency freq);
 
     /// Get the mouse position 
-    std::pair<float,float> get_mouse_pos() const;
+    Vec2 get_mouse_pos() const;
 
 public:
     /// Emitted when the Window moves
