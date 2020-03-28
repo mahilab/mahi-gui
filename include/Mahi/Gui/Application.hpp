@@ -76,6 +76,8 @@ public:
     virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
     /// Get the current time
     util::Time time() const;
+    /// Gets the delta time between consecutive calls to update
+    util::Time dt() const;
 
     /// Set the window background (i.e. clear) color (no effect if transparent)
     void set_background(const Color& color);
@@ -139,6 +141,7 @@ private:
     Config m_conf;
     NVGcontext* m_nvg;
     util::Time m_frame_time;
+    util::Time m_dt;
 
 #ifdef MAHI_COROUTINES
 public:

@@ -142,6 +142,7 @@ void Application::run()
 {
     ImGuiIO &io = ImGui::GetIO();
     util::Clock clock;
+    util::Clock dt_clk;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -162,6 +163,7 @@ void Application::run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // update
+        m_dt = dt_clk.restart();
         update();
 #ifdef MAHI_COROUTINES
         // resume coroutines
@@ -209,6 +211,10 @@ void Application::quit() {
 
 util::Time Application::time() const {
     return util::seconds(glfwGetTime());
+}
+
+util::Time Application::dt() const {
+    return m_dt;
 }
 
 void Application::set_background(const Color& color) {
