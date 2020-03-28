@@ -426,7 +426,7 @@ static void configureImGui(GLFWwindow *window)
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
     // io.ConfigViewportsNoAutoMerge = true;
@@ -448,12 +448,12 @@ static void configureImGui(GLFWwindow *window)
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
 
     ImFontConfig icons_config;
-    icons_config.MergeMode = true;
-    icons_config.PixelSnapH = true;
+    icons_config.MergeMode        = true;
+    icons_config.PixelSnapH       = true;
     icons_config.GlyphMinAdvanceX = 14.0f;
-    icons_config.GlyphOffset = ImVec2(0, 0);
-    icons_config.OversampleH = 1;
-    icons_config.OversampleV = 1;
+    icons_config.GlyphOffset      = ImVec2(0, 0);
+    icons_config.OversampleH      = 1;
+    icons_config.OversampleV      = 1;
 
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
@@ -470,22 +470,22 @@ static void configureImGui(GLFWwindow *window)
     ImGuiStyle *imStyle = &ImGui::GetStyle();
 
     // Main
-    imStyle->WindowPadding = ImVec2(8, 8);
-    imStyle->FramePadding = ImVec2(3, 2);
-    imStyle->ItemSpacing = ImVec2(4, 4);
+    imStyle->WindowPadding    = ImVec2(8, 8);
+    imStyle->FramePadding     = ImVec2(3, 2);
+    imStyle->ItemSpacing      = ImVec2(4, 4);
     imStyle->ItemInnerSpacing = ImVec2(4, 4);
-    imStyle->IndentSpacing = 20.0f;
-    imStyle->ScrollbarSize = 15.0f;
-    imStyle->GrabMinSize = 5.0f;
+    imStyle->IndentSpacing    = 20.0f;
+    imStyle->ScrollbarSize    = 15.0f;
+    imStyle->GrabMinSize      = 5.0f;
 
     // Rounding
-    imStyle->WindowRounding = 2.0f;
-    imStyle->ChildRounding = 2.0f;
-    imStyle->FrameRounding = 2.0f;
-    imStyle->PopupRounding = 2.0f;
+    imStyle->WindowRounding    = 2.0f;
+    imStyle->ChildRounding     = 2.0f;
+    imStyle->FrameRounding     = 2.0f;
+    imStyle->PopupRounding     = 2.0f;
     imStyle->ScrollbarRounding = 10.0f;
-    imStyle->GrabRounding = 2.0f;
-    imStyle->TabRounding = 2.0f;
+    imStyle->GrabRounding      = 2.0f;
+    imStyle->TabRounding       = 2.0f;
 
     // Alignment
     imStyle->WindowMenuButtonPosition = ImGuiDir_Right;
