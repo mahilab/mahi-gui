@@ -461,7 +461,7 @@ static void configureImGui(GLFWwindow *window)
 #else
     strcpy(font_cfg.Name, "Roboto Mono Bold");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
-    std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
+    memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
 
     strcpy(font_cfg.Name, "Roboto Mono Bold");
