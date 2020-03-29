@@ -455,11 +455,20 @@ static void configureImGui(GLFWwindow *window)
     font_cfg.PixelSnapH = true;
     font_cfg.OversampleH = 1;
     font_cfg.OversampleV = 1;
-    strcpy(font_cfg.Name, "./Fonts/DroidSans");
+#ifdef Linux
+    ImFont* font = io.Fonts->AddFontFromFileTTF("../../Fonts/DroidSans.ttf", 19.0f);
+    IM_ASSERT(font != NULL);
+#else
+    strcpy(font_cfg.Name, "Roboto Mono Bold");
+    unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
+    std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
+    io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
+
+    strcpy(font_cfg.Name, "Roboto Mono Bold");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
     memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
-
+#endif
     ImFontConfig icons_config;
     icons_config.MergeMode        = true;
     icons_config.PixelSnapH       = true;

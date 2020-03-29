@@ -1,12 +1,20 @@
 #define MAHI_GUI_NO_CONSOLE
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
+#if defined( Linux )
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
 #include <fstream>
 
 using namespace mahi::gui;
 using namespace mahi::util;
+#if defined( Linux )
+namespace fs = std::experimental::filesystem;
+#else
 namespace fs = std::filesystem;
+#endif
 
 /// Basic Likert survey application
 class Likert : public Application {

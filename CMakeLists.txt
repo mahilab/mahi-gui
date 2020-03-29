@@ -111,6 +111,7 @@ install(TARGETS clipper EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INST
 #===============================================================================
 
 include(FetchContent) 
+#FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/ebachard/mahi-util.git) 
 FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/mahilab/mahi-util.git) 
 FetchContent_MakeAvailable(mahi-util)
 
@@ -168,7 +169,7 @@ find_package(GLEW REQUIRED)
         message(STATUS "${GLEW_LIBRARIES} ${GLEW_INCLUDE_DIRS}")
     endif()
 
-    target_link_libraries(gui PUBLIC  GL ${GLEW_LIBRARIES} mahi::gui)
+    target_link_libraries(gui PUBLIC  GL ${GLEW_LIBRARIES} mahi::gui stdc++fs)
 endif()
 
 #===============================================================================
