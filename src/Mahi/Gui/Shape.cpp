@@ -191,6 +191,11 @@ const Shape& Shape::hole(std::size_t index) const {
     return m_holes[index];
 }
 
+std::vector<Shape>& Shape::holes() {
+    return m_holes;
+}
+
+
 void Shape::push_back_hole(const Shape &hole) {
     hole.update_if_stale();
     m_holes.push_back(hole);
