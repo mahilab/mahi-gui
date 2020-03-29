@@ -26,7 +26,7 @@ public:
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
                 payload = i;
                 ImGui::SetDragDropPayload("DND_PLOT", &payload, sizeof(int));
-                ImGui::Text(label.c_str());
+                ImGui::TextUnformatted(label.c_str());
                 ImGui::EndDragDropSource();
             }
         }

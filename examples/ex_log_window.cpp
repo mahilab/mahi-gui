@@ -55,8 +55,11 @@ public:
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
         ImGui::Begin("MAHI Log", &open);
         for (int i = 0; i < 7; ++i) {
-            if (ImGui::Button(severity_to_string((Severity)i)))
+
+            if (ImGui::Button(severity_to_string((Severity)i)))  {
                 LOG((Severity)i) << "Here's a " << severity_to_string((Severity)i) << " log";
+            }
+
             if (i != 6)
                 ImGui::SameLine();
         }
@@ -67,7 +70,7 @@ public:
         ImGui::SameLine();
         filter.Draw("Filter",-50);
         ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-        for (int i = 0; i < writer.logs.size(); ++i)
+        for (unsigned int i = 0; i < writer.logs.size(); ++i)
         {
             if (filter.PassFilter(writer.logs[i].second.c_str())) {
                 ImGui::PushStyleColor(ImGuiCol_Text, colors[writer.logs[i].first]);
