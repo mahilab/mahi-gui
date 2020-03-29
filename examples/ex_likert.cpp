@@ -172,7 +172,7 @@ public:
             return false;
         }
         // make sure every question answered
-        for (int i = 0; i < responses.size();  ++i) {
+        for (unsigned int i = 0; i < responses.size();  ++i) {
             if (responses[i] == NoResponse) {
                 message = "Please respond to Question " + std::to_string(i+1);
                 ImGui::OpenPopup("Message");
@@ -188,7 +188,7 @@ public:
             {Agree, "Agree"},
             {StronglyAgree, "Strongly Agree"}
         };
-        for (int i = 0; i < responses.size(); ++i)
+        for (unsigned int i = 0; i < responses.size(); ++i)
             responsesText[i] = responseMap[responses[i]];
         // save data
         json j;
