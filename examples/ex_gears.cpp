@@ -235,7 +235,7 @@ public:
                 else
                     view_rotz += 5.0;
                 break;
-            case GLFW_KEY_ESCAPE: glfwSetWindowShouldClose(window, GLFW_TRUE); break;
+            case GLFW_KEY_ESCAPE: glfwSetWindowShouldClose(m_window, GLFW_TRUE); break;
             case GLFW_KEY_UP: view_rotx += 5.0; break;
             case GLFW_KEY_DOWN: view_rotx -= 5.0; break;
             case GLFW_KEY_LEFT: view_roty += 5.0; break;
