@@ -24,11 +24,8 @@ endif()
 project(mahi-gui VERSION 1.0.0 LANGUAGES C CXX)
 
 
-if(CMAKE_SYSTEM MATCHES "Linux")
 set(CXX_CMAKE_STANDARD 14)
 set(CXX_CMAKE_STANDARD_REQUIRED ON)
-endif()
-
 
 # tell user they can't have shared version of MEL if they try
 if (BUILD_SHARED_LIBS)
