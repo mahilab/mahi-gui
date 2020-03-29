@@ -1,0 +1,407 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 48a75de..9004c32 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -4,6 +4,8 @@
+ 
+ cmake_minimum_required(VERSION 3.13.0)
+ 
++
++
+ #===============================================================================
+ # USER OPTIONS
+ #===============================================================================
+@@ -21,6 +23,13 @@ endif()
+ # create project
+ project(mahi-gui VERSION 1.0.0 LANGUAGES C CXX)
+ 
++
++if(CMAKE_SYSTEM MATCHES "Linux")
++set(CXX_CMAKE_STANDARD 14)
++set(CXX_CMAKE_STANDARD_REQUIRED ON)
++endif()
++
++
+ # tell user they can't have shared version of MEL if they try
+ if (BUILD_SHARED_LIBS)
+     message(FATAL_ERROR "mahi::gui does not support shared libaries")
+@@ -35,6 +44,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
+ 
+ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
++    if(CMAKE_SYSTEM MATCHES "Linux")
++        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DLinux -std=c++14") # ALL WARNINGS
++    endif()
+     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3") # ALL WARNINGS
+ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /MP")    # MULTICORE BUILDS
+@@ -118,7 +130,13 @@ set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
+ target_compile_definitions(gui PUBLIC MAHI_GUI) # for compatibility checks
+ 
+ # add source files
+-add_subdirectory(src/mahi/gui)
++
++if(CMAKE_SYSTEM MATCHES "Linux")
++    add_subdirectory(src/Mahi/Gui)
++else()
++    add_subdirectory(src/Mahi/Gui)
++endif()
++
+ target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
+ 
+ # add include files
+@@ -142,6 +160,17 @@ target_link_libraries(gui PUBLIC nanovg)
+ target_link_libraries(gui PUBLIC clipper)
+ target_link_libraries(gui PUBLIC nfd)
+ 
++if(CMAKE_SYSTEM MATCHES "Linux")
++
++find_package(GLEW REQUIRED)
++    if (GLEW_FOUND)
++        include_directories(${GLEW_INCLUDE_DIRS})
++        message(STATUS "${GLEW_LIBRARIES} ${GLEW_INCLUDE_DIRS}")
++    endif()
++
++    target_link_libraries(gui PUBLIC  GL ${GLEW_LIBRARIES} mahi::gui)
++endif()
++
+ #===============================================================================
+ # EXAMPLE EXECUTABLES
+ #===============================================================================
+diff --git a/examples/CMakeLists.txt b/examples/CMakeLists.txt
+index cbd2cc4..bc1d861 100644
+--- a/examples/CMakeLists.txt
++++ b/examples/CMakeLists.txt
+@@ -2,7 +2,11 @@ macro(mahi_gui_example target)
+     # create executable
+     add_executable(${target} "ex_${target}.cpp" my_icon.rc)
+     # set dependencies
++if(CMAKE_SYSTEM MATCHES "Linux")
++    target_link_libraries(${target} mahi::gui GL mahi::util)
++else()
+     target_link_libraries(${target} mahi::gui)
++endif()
+     # add install rule
+     install(TARGETS ${target}
+       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+@@ -31,6 +35,8 @@ mahi_gui_example(plots_dnd)
+ mahi_gui_example(shapes)
+ mahi_gui_example(transparent)
+ 
+-if (MAHI_UTIL_COROUTINES)
+-mahi_gui_example(coroutines)
++if(NOT CMAKE_SYSTEM MATCHES "Linux")
++    if (MAHI_UTIL_COROUTINES)
++        mahi_gui_example(coroutines)
++    endif()
+ endif()
+\ No newline at end of file
+diff --git a/examples/ex_coroutines.cpp b/examples/ex_coroutines.cpp
+index cb905b0..8b369f7 100644
+--- a/examples/ex_coroutines.cpp
++++ b/examples/ex_coroutines.cpp
+@@ -1,3 +1,4 @@
++#include <Mahi/Gui/Vec2.hpp>
+ #include <Mahi/Gui.hpp>
+ 
+ using namespace mahi::gui;
+diff --git a/examples/ex_demo.cpp b/examples/ex_demo.cpp
+index 2791532..f5a6875 100644
+--- a/examples/ex_demo.cpp
++++ b/examples/ex_demo.cpp
+@@ -16,9 +16,13 @@ public:
+         ImGui::ShowDemoWindow();
+         // A custom Window
+         ImGui::Begin("My ImGui Window");
++#ifndef Linux
+         if (ImGui::Button(ICON_FA_HOME))
+-            open_url("https://mahilab.rice.edu/");
++            quit();
+         ImGui::SameLine();
++#else
++        ImGui::Button(ICON_FA_HOME);
++#endif
+         if (ImGui::Button("Quit Demo", ImVec2(-1,0)))
+             quit();
+         ImGui::End();
+diff --git a/examples/ex_files.cpp b/examples/ex_files.cpp
+index 384d5e7..9c79d88 100644
+--- a/examples/ex_files.cpp
++++ b/examples/ex_files.cpp
+@@ -103,10 +103,12 @@ public:
+         ImGui::Separator();
+ 
+         ImGui::Text("Misc:");
++#ifndef Linux
+         if (ImGui::Button("github.com/mahilab"))
+             open_url("https://github.com/mahilab");
++#endif
+         if (ImGui::Button("epezent@rice.edu"))
+-            open_email("epezent@rice.edu", "I love mahi-gui!");
++            open_email("what ?", "I love mahi-gui!");
+ 
+         ImGui::End();
+     }
+diff --git a/examples/ex_plots.cpp b/examples/ex_plots.cpp
+index f10be8c..d0bb625 100644
+--- a/examples/ex_plots.cpp
++++ b/examples/ex_plots.cpp
+@@ -66,7 +66,7 @@ public:
+     void DemoAxisControls(const char *label, ImGui::PlotAxis &axis)
+     {
+         ImGui::PushID(label);
+-        ImGui::Text(label);
++        ImGui::TextUnformatted(label);
+         ImGui::SameLine();
+         ImGui::PushItemWidth(200);
+         ImGui::DragFloatRange2("##Range", &axis.minimum, &axis.maximum, 0.01f, -10, 10);
+diff --git a/include/Mahi/Gui.hpp b/include/Mahi/Gui.hpp
+index 09c4814..cb34598 100644
+--- a/include/Mahi/Gui.hpp
++++ b/include/Mahi/Gui.hpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <Mahi/Gui/Vec2.hpp>
+ #include <Mahi/Gui/Application.hpp>
+ #include <Mahi/Gui/Color.hpp>
+ #include <Mahi/Gui/Draw.hpp>
+@@ -12,7 +13,6 @@
+ #include <Mahi/Gui/Shape.hpp>
+ #include <Mahi/Gui/Transform.hpp>
+ #include <Mahi/Gui/Tween.hpp>
+-#include <Mahi/Gui/Vec2.hpp>
+ #include <Mahi/Gui/imgui_custom.hpp>
+ #include <Mahi/Gui/imgui_plot.hpp>
+ 
+diff --git a/include/Mahi/Gui/Draw.hpp b/include/Mahi/Gui/Draw.hpp
+index 66510b1..0c9e928 100644
+--- a/include/Mahi/Gui/Draw.hpp
++++ b/include/Mahi/Gui/Draw.hpp
+@@ -29,7 +29,7 @@ inline void path_shape(NVGcontext* vg, const Shape& shape) {
+         return;
+     const auto& vertices = shape.vertices();
+     nvgMoveTo(vg, vertices[0].x, vertices[0].y);
+-    for (int i = 1; i < vertices.size(); ++i) {
++    for (unsigned int i = 1; i < vertices.size(); ++i) {
+         nvgLineTo(vg, vertices[i].x, vertices[i].y);
+     }
+     nvgClosePath(vg);
+diff --git a/include/Mahi/Gui/Vec2.hpp b/include/Mahi/Gui/Vec2.hpp
+index 5d2e9f5..44d4ecd 100644
+--- a/include/Mahi/Gui/Vec2.hpp
++++ b/include/Mahi/Gui/Vec2.hpp
+@@ -16,7 +16,7 @@
+ 
+ #pragma once
+ 
+-#include <Mahi/Gui/Vec2.hpp>
++//#include <Mahi/Gui/Vec2.hpp>
+ #include <Mahi/Util/Math/Constants.hpp>
+ #include <Mahi/Util/Math/Functions.hpp>
+ #include <cmath>
+diff --git a/src/Mahi/Gui/Application.cpp b/src/Mahi/Gui/Application.cpp
+index 70f5a6b..d186417 100644
+--- a/src/Mahi/Gui/Application.cpp
++++ b/src/Mahi/Gui/Application.cpp
+@@ -1,3 +1,4 @@
++#include <Mahi/Gui/Vec2.hpp>
+ #include <Mahi/Gui/Application.hpp>
+ #include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
+ #include <Mahi/Gui/Icons/IconsFontAwesome5Brands.hpp>
+@@ -16,6 +17,12 @@
+ #include <stdexcept>
+ #include <thread>
+ 
++#ifdef Linux
++#include <string.h>
++#else
++using std::memcpy;
++#endif
++
+ using namespace mahi::util;
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+@@ -448,9 +455,9 @@ static void configureImGui(GLFWwindow *window)
+     font_cfg.PixelSnapH = true;
+     font_cfg.OversampleH = 1;
+     font_cfg.OversampleV = 1;
+-    strcpy(font_cfg.Name, "Roboto Mono Bold");
++    strcpy(font_cfg.Name, "./Fonts/DroidSans");
+     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
+-    std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
++    memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
+     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
+ 
+     ImFontConfig icons_config;
+@@ -464,13 +471,13 @@ static void configureImGui(GLFWwindow *window)
+     // merge in icons from font awesome 5
+     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+     unsigned char *fontCopy2 = new unsigned char[fa_solid_900_ttf_len];
+-    std::memcpy(fontCopy2, &fa_solid_900_ttf, fa_solid_900_ttf_len);
++    memcpy(fontCopy2, &fa_solid_900_ttf, fa_solid_900_ttf_len);
+     io.Fonts->AddFontFromMemoryTTF(fontCopy2, fa_solid_900_ttf_len, 14.0f, &icons_config, fa_ranges);
+ 
+     // merge in icons from font awesome 5 brands
+     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
+     unsigned char *fontCopy3 = new unsigned char[fa_brands_400_ttf_len];
+-    std::memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
++    memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
+     io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);   
+ 
+     ImGuiStyle *imStyle = &ImGui::GetStyle();
+diff --git a/src/Mahi/Gui/Native.cpp b/src/Mahi/Gui/Native.cpp
+index a15b293..b213ab6 100644
+--- a/src/Mahi/Gui/Native.cpp
++++ b/src/Mahi/Gui/Native.cpp
+@@ -2,7 +2,11 @@
+ #include <cstring>
+ #include <ctime>
+ #include <iomanip>
++#ifdef Linux
++#include <experimental/filesystem>
++#else
+ #include <filesystem>
++#endif
+ #include <cassert>
+ #include <sstream>
+ #include <iostream>
+@@ -25,8 +29,11 @@
+ #include <sys/sysctl.h>
+ #endif
+ 
++#ifdef Linux
++namespace fs = std::experimental::filesystem;
++#else
+ namespace fs = std::filesystem;
+-
++#endif
+ namespace mahi {
+ namespace gui {
+ 
+@@ -181,10 +188,10 @@ void open_email(const std::string &address, const std::string &subject)
+     ShellExecuteA(0, 0, str.c_str(), 0, 0, 5);
+ }
+ 
+-#elif (__APPLE__)
++#elif defined (__APPLE__)
+ 
+ ///////////////////////////////////////////////////////////////////////////////
+-// macOS
++// macOS or Linux
+ ///////////////////////////////////////////////////////////////////////////////
+ 
+ const std::string& sys_dir(SysDir dir) {
+@@ -194,6 +201,7 @@ const std::string& sys_dir(SysDir dir) {
+ 
+ bool open_folder(const std::string &path)
+ {
++    int anErr = 0;
+     fs::path p(path);
+     if (fs::exists(p) && fs::is_regular_file(p))
+     {
+@@ -206,6 +214,7 @@ bool open_folder(const std::string &path)
+ 
+ bool open_file(const std::string &path)
+ {
++    int anErr = 0;
+     fs::path p(path);
+     if (fs::exists(p) && fs::is_directory(p))
+     {
+@@ -218,6 +227,7 @@ bool open_file(const std::string &path)
+ 
+ void open_url(const std::string &url)
+ {
++    int anErr = 0;
+     std::string command = "open " + url;
+     system(command.c_str());
+ }
+@@ -229,8 +239,72 @@ void open_email(const std::string &address, const std::string &subject)
+     system(command.c_str());
+ }
+ 
++#elif defined(Linux)
++
++static int anErr = 0;
++
++///////////////////////////////////////////////////////////////////////////////
++// macOS or Linux
++///////////////////////////////////////////////////////////////////////////////
++
++const std::string& sys_dir(SysDir dir) {
++    static std::string todo = "TODO,SORRY";
++    return todo;
++}
++
++bool open_folder(const std::string &path)
++{
++    fs::path p(path);
++    if (fs::exists(p) && fs::is_regular_file(p))
++    {
++        std::string command = "open " + p.generic_string();
++        anErr = system(command.c_str());
++        if (anErr != 0)
++            std::cout << "Pb with open_folder()" << "\n";
++        return true;
++    }
++    return false;
++}
++
++bool open_file(const std::string &path)
++{
++    fs::path p(path);
++    if (fs::exists(p) && fs::is_directory(p))
++    {
++        std::string command = "open " + p.generic_string();
++        anErr = system(command.c_str());
++
++        if (anErr != 0)
++            std::cout << "Pb with open_file()" << "\n";
++
++        return true;
++    }
++    return false;
++}
++
++void open_url(const std::string &url)
++{
++    std::string command = "open " + url;
++
++    anErr = system(command.c_str());
++
++    if (anErr != 0)
++        std::cout << "Pb with open_url()" << "\n";
++}
++
++void open_email(const std::string &address, const std::string &subject)
++{
++    std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
++    std::string command = "open " + mailTo;
++    anErr = system(command.c_str());
++
++    if (anErr != 0)
++        std::cout << "Pb with open_url()" << "\n";
++}
++
+ #endif
+ 
++
+ } // namespace gui
+ } // namesapce mahi
+ 
+diff --git a/src/Mahi/Gui/imgui_custom.cpp b/src/Mahi/Gui/imgui_custom.cpp
+index 5bf787d..1dad979 100644
+--- a/src/Mahi/Gui/imgui_custom.cpp
++++ b/src/Mahi/Gui/imgui_custom.cpp
+@@ -99,9 +99,9 @@ bool ButtonColored(const char *label, const ImVec4 &color, const ImVec2 &size)
+     return ret;
+ }
+ 
+-bool ModeSelector(int* currentMode, const std::vector<std::string>& modes, bool horizontal) {
++bool ModeSelector(unsigned int* currentMode, const std::vector<std::string>& modes, bool horizontal) {
+     bool changed = false;
+-    for (int i = 0; i < modes.size(); ++i) {
++    for (unsigned int i = 0; i < modes.size(); ++i) {
+         if (ImGui::RadioButton(modes[i].c_str(), *currentMode == i)) {
+             *currentMode = i;
+             changed = true;

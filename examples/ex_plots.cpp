@@ -66,7 +66,7 @@ public:
     void DemoAxisControls(const char *label, ImGui::PlotAxis &axis)
     {
         ImGui::PushID(label);
-        ImGui::Text(label);
+        ImGui::TextUnformatted(label);
         ImGui::SameLine();
         ImGui::PushItemWidth(200);
         ImGui::DragFloatRange2("##Range", &axis.minimum, &axis.maximum, 0.01f, -10, 10);

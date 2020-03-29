@@ -2,7 +2,11 @@
 #include <cstring>
 #include <ctime>
 #include <iomanip>
+#ifdef Linux
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
 #include <cassert>
 #include <sstream>
 #include <iostream>
@@ -25,8 +29,11 @@
 #include <sys/sysctl.h>
 #endif
 
+#ifdef Linux
+namespace fs = std::experimental::filesystem;
+#else
 namespace fs = std::filesystem;
-
+#endif
 namespace mahi {
 namespace gui {
 
@@ -181,10 +188,63 @@ void open_email(const std::string &address, const std::string &subject)
     ShellExecuteA(0, 0, str.c_str(), 0, 0, 5);
 }
 
-#elif (__APPLE__)
+#elif defined (__APPLE__)
 
 ///////////////////////////////////////////////////////////////////////////////
-// macOS
+// macOS or Linux
+///////////////////////////////////////////////////////////////////////////////
+
+const std::string& sys_dir(SysDir dir) {
+    static std::string todo = "TODO,SORRY";
+    return todo;
+}
+
+bool open_folder(const std::string &path)
+{
+    int anErr = 0;
+    fs::path p(path);
+    if (fs::exists(p) && fs::is_regular_file(p))
+    {
+        std::string command = "open " + p.generic_string();
+        system(command.c_str());
+        return true;
+    }
+    return false;
+}
+
+bool open_file(const std::string &path)
+{
+    int anErr = 0;
+    fs::path p(path);
+    if (fs::exists(p) && fs::is_directory(p))
+    {
+        std::string command = "open " + p.generic_string();
+        system(command.c_str());
+        return true;
+    }
+    return false;
+}
+
+void open_url(const std::string &url)
+{
+    int anErr = 0;
+    std::string command = "open " + url;
+    system(command.c_str());
+}
+
+void open_email(const std::string &address, const std::string &subject)
+{
+    std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
+    std::string command = "open " + mailTo;
+    system(command.c_str());
+}
+
+#elif defined(Linux)
+
+static int anErr = 0;
+
+///////////////////////////////////////////////////////////////////////////////
+// macOS or Linux
 ///////////////////////////////////////////////////////////////////////////////
 
 const std::string& sys_dir(SysDir dir) {
@@ -198,7 +258,9 @@ bool open_folder(const std::string &path)
     if (fs::exists(p) && fs::is_regular_file(p))
     {
         std::string command = "open " + p.generic_string();
-        system(command.c_str());
+        anErr = system(command.c_str());
+        if (anErr != 0)
+            std::cout << "Pb with open_folder()" << "\n";
         return true;
     }
     return false;
@@ -210,7 +272,11 @@ bool open_file(const std::string &path)
     if (fs::exists(p) && fs::is_directory(p))
     {
         std::string command = "open " + p.generic_string();
-        system(command.c_str());
+        anErr = system(command.c_str());
+
+        if (anErr != 0)
+            std::cout << "Pb with open_file()" << "\n";
+
         return true;
     }
     return false;
@@ -219,17 +285,25 @@ bool open_file(const std::string &path)
 void open_url(const std::string &url)
 {
     std::string command = "open " + url;
-    system(command.c_str());
+
+    anErr = system(command.c_str());
+
+    if (anErr != 0)
+        std::cout << "Pb with open_url()" << "\n";
 }
 
 void open_email(const std::string &address, const std::string &subject)
 {
     std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
     std::string command = "open " + mailTo;
-    system(command.c_str());
+    anErr = system(command.c_str());
+
+    if (anErr != 0)
+        std::cout << "Pb with open_url()" << "\n";
 }
 
 #endif
+
 
 } // namespace gui
 } // namesapce mahi

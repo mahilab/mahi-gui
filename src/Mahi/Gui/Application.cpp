@@ -1,3 +1,4 @@
+#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Gui/Application.hpp>
 #include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
 #include <Mahi/Gui/Icons/IconsFontAwesome5Brands.hpp>
@@ -15,6 +16,12 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
+
+#ifdef Linux
+#include <string.h>
+#else
+using std::memcpy;
+#endif
 
 using namespace mahi::util;
 
@@ -448,9 +455,9 @@ static void configureImGui(GLFWwindow *window)
     font_cfg.PixelSnapH = true;
     font_cfg.OversampleH = 1;
     font_cfg.OversampleV = 1;
-    strcpy(font_cfg.Name, "Roboto Mono Bold");
+    strcpy(font_cfg.Name, "./Fonts/DroidSans");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
-    std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
+    memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
 
     ImFontConfig icons_config;
@@ -464,13 +471,13 @@ static void configureImGui(GLFWwindow *window)
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     unsigned char *fontCopy2 = new unsigned char[fa_solid_900_ttf_len];
-    std::memcpy(fontCopy2, &fa_solid_900_ttf, fa_solid_900_ttf_len);
+    memcpy(fontCopy2, &fa_solid_900_ttf, fa_solid_900_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy2, fa_solid_900_ttf_len, 14.0f, &icons_config, fa_ranges);
 
     // merge in icons from font awesome 5 brands
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
     unsigned char *fontCopy3 = new unsigned char[fa_brands_400_ttf_len];
-    std::memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
+    memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);   
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
