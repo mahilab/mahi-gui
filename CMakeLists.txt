@@ -174,6 +174,7 @@ find_package(GLEW REQUIRED)
         message(STATUS "${GLEW_LIBRARIES} ${GLEW_INCLUDE_DIRS}")
     endif()
 
+    # Reminder : https://techoverflow.net/2019/04/17/how-to-fix-gcc-undefined-reference-to-std-experimental-filesystem/
     target_link_libraries(gui PUBLIC  GL ${GLEW_LIBRARIES} mahi::gui stdc++fs)
 endif()
 
