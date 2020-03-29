@@ -134,7 +134,7 @@ target_compile_definitions(gui PUBLIC MAHI_GUI) # for compatibility checks
 if(CMAKE_SYSTEM MATCHES "Linux")
     add_subdirectory(src/Mahi/Gui)
 else()
-    add_subdirectory(src/Mahi/Gui)
+    add_subdirectory(src/mahi/gui)
 endif()
 
 target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
