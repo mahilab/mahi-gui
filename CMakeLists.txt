@@ -115,9 +115,7 @@ install(TARGETS clipper EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INST
 #===============================================================================
 
 include(FetchContent) 
-# FIXME : current workaround. Will be removed once the official mahilab/mahi-util repo will be fixed
-FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/ebachard/mahi-util.git) 
-#FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/mahilab/mahi-util.git) 
+FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/mahilab/mahi-util.git) 
 FetchContent_MakeAvailable(mahi-util)
 
 #===============================================================================
