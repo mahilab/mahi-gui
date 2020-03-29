@@ -7,6 +7,10 @@
 #include <Mahi/Util/Timing/Clock.hpp>
 #include "Fonts/Fonts.hpp"
 
+#ifdef Linux
+#include <glad/glad.h>
+#endif
+
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
 #include "imgui_internal.h"
@@ -525,6 +529,9 @@ static void configureImGui(GLFWwindow *window)
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 
+#if defined(Linux)
+    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+#endif
     // Decide GL+GLSL versions
 #if __APPLE__
     // GL 3.2 + GLSL 150
