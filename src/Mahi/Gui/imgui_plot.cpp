@@ -786,6 +786,8 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         ImGui::SameLine();
         ImGui::Checkbox("Crosshairs", &plot.show_crosshairs);
 
+        ImGui::EndPopup();
+
     }
     PopID();
 
