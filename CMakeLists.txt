@@ -92,10 +92,6 @@ set(IMGUI_SRC
 )
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 
-if(CMAKE_SYSTEM MATCHES "Linux")
-    set(IMGUI_INCLUD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glad)
-endif()
-
 # NANOVG
 add_subdirectory(3rdparty/nanovg)
 install(TARGETS nanovg EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -131,12 +127,7 @@ set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 target_compile_definitions(gui PUBLIC MAHI_GUI) # for compatibility checks
 
 # add source files
-
-if(CMAKE_SYSTEM MATCHES "Linux")
-    add_subdirectory(src/Mahi/Gui)
-else()
-    add_subdirectory(src/mahi/gui)
-endif()
+add_subdirectory(src/Mahi/Gui)
 
 target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
 
@@ -162,16 +153,6 @@ target_link_libraries(gui PUBLIC clipper)
 target_link_libraries(gui PUBLIC nfd)
 
 if(CMAKE_SYSTEM MATCHES "Linux")
-
-find_package(GLEW REQUIRED)
-    if (GLEW_FOUND)
-        include_directories(${GLEW_INCLUDE_DIRS})
-        message(STATUS "${GLEW_LIBRARIES} ${GLEW_INCLUDE_DIRS}")
-    endif()
-
-    # Reminder : https://techoverflow.net/2019/04/17/how-to-fix-gcc-undefined-reference-to-std-experimental-filesystem/
-    target_link_libraries(gui PUBLIC  GL ${GLEW_LIBRARIES} mahi::gui stdc++fs)
-endif()
 
 #===============================================================================
 # EXAMPLE EXECUTABLES
