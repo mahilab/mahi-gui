@@ -16,13 +16,9 @@ public:
         ImGui::ShowDemoWindow();
         // A custom Window
         ImGui::Begin("My ImGui Window");
-#ifndef Linux
         if (ImGui::Button(ICON_FA_HOME))
-            quit();
+            open_url("https://mahilab.rice.edu/");
         ImGui::SameLine();
-#else
-        ImGui::Button(ICON_FA_HOME);
-#endif
         if (ImGui::Button("Quit Demo", ImVec2(-1,0)))
             quit();
         ImGui::End();
