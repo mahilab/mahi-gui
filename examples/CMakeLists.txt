@@ -2,11 +2,7 @@ macro(mahi_gui_example target)
     # create executable
     add_executable(${target} "ex_${target}.cpp" my_icon.rc)
     # set dependencies
-if(CMAKE_SYSTEM MATCHES "Linux")
-    target_link_libraries(${target} mahi::gui GL mahi::util)
-else()
     target_link_libraries(${target} mahi::gui)
-endif()
     # add install rule
     install(TARGETS ${target}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
