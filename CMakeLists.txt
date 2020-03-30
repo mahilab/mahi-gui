@@ -149,7 +149,7 @@ target_link_libraries(gui PUBLIC nanovg)
 target_link_libraries(gui PUBLIC clipper)
 target_link_libraries(gui PUBLIC nfd)
 if(CMAKE_SYSTEM MATCHES "Linux")
-    # Reminder : https://techoverflow.net/2019/04/17/how-to-fix-gcc-undefined-reference-to-std-experimental-filesystem/
+    # https://techoverflow.net/2019/04/17/how-to-fix-gcc-undefined-reference-to-std-experimental-filesystem/
     target_link_libraries(gui PUBLIC GL stdc++fs)
 endif()
 #===============================================================================
