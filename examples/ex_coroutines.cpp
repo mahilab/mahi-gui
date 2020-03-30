@@ -1,4 +1,3 @@
-#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Gui.hpp>
 
 using namespace mahi::gui;
