@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Gui/Application.hpp>
 #include <Mahi/Gui/Color.hpp>
 #include <Mahi/Gui/Draw.hpp>
@@ -12,7 +13,6 @@
 #include <Mahi/Gui/Shape.hpp>
 #include <Mahi/Gui/Transform.hpp>
 #include <Mahi/Gui/Tween.hpp>
-#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Gui/imgui_custom.hpp>
 #include <Mahi/Gui/imgui_plot.hpp>
 

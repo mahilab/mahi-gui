@@ -30,6 +30,7 @@ mahi_gui_example(plots_dnd)
 mahi_gui_example(shapes)
 mahi_gui_example(transparent)
 
+
 mahi_gui_example(nvg)
 target_sources(nvg PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example/demo.c")
 target_include_directories(nvg PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example")
@@ -39,6 +40,9 @@ add_custom_command(TARGET nvg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_dif
 add_custom_command(TARGET nvg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example/Roboto-Regular.ttf" $<TARGET_FILE_DIR:nvg>)
 add_custom_command(TARGET nvg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example/Roboto-Bold.ttf" $<TARGET_FILE_DIR:nvg>)
 
-if (MAHI_UTIL_COROUTINES)
-mahi_gui_example(coroutines)
+
+if(NOT CMAKE_SYSTEM MATCHES "Linux")
+    if (MAHI_UTIL_COROUTINES)
+        mahi_gui_example(coroutines)
+    endif()
 endif()

@@ -29,7 +29,7 @@ inline void path_shape(NVGcontext* vg, const Shape& shape) {
         return;
     const auto& vertices = shape.vertices();
     nvgMoveTo(vg, vertices[0].x, vertices[0].y);
-    for (int i = 1; i < vertices.size(); ++i) {
+    for (unsigned int i = 1; i < vertices.size(); ++i) {
         nvgLineTo(vg, vertices[i].x, vertices[i].y);
     }
     nvgClosePath(vg);

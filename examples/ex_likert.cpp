@@ -1,12 +1,20 @@
 #define MAHI_GUI_NO_CONSOLE
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
+#if defined( Linux )
+#include <experimental/filesystem>
+#else
 #include <filesystem>
+#endif
 #include <fstream>
 
 using namespace mahi::gui;
 using namespace mahi::util;
+#if defined( Linux )
+namespace fs = std::experimental::filesystem;
+#else
 namespace fs = std::filesystem;
+#endif
 
 /// Basic Likert survey application
 class Likert : public Application {
@@ -76,7 +84,7 @@ public:
             ImGui::Text("Strongly\n Agree");
             // render questions
             float initialY = ImGui::GetCursorPos().y;
-            for (int i = 0; i < questions.size(); ++i) {
+            for (unsigned int i = 0; i < questions.size(); ++i) {
                 ImGui::PushID(i);
                 ImGui::SetCursorPosY(initialY + rowHeight * i);
                 ImGui::Separator();
@@ -84,7 +92,7 @@ public:
                 ImGui::Text("[Q.%02d]",i+1); 
                 ImGui::PopStyleVar();
                 ImGui::SameLine(); 
-                ImGui::Text(questions[i].c_str());
+                ImGui::TextUnformatted(questions[i].c_str());
                 ImGui::SameLine(qWidth);
                 if (ImGui::RadioButton("##SD",responses[i] == StronglyDisagree))
                     responses[i] = StronglyDisagree;
@@ -105,7 +113,7 @@ public:
             // begin message modal if opened this frame
             bool dummy = true;
             if (ImGui::BeginPopupModal("Message", &dummy, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize)) {
-                ImGui::Text(message.c_str());
+                ImGui::TextUnformatted(message.c_str());
                 ImGui::EndPopup();
             }
         }
@@ -164,7 +172,7 @@ public:
             return false;
         }
         // make sure every question answered
-        for (int i = 0; i < responses.size();  ++i) {
+        for (unsigned int i = 0; i < responses.size();  ++i) {
             if (responses[i] == NoResponse) {
                 message = "Please respond to Question " + std::to_string(i+1);
                 ImGui::OpenPopup("Message");
@@ -180,7 +188,7 @@ public:
             {Agree, "Agree"},
             {StronglyAgree, "Strongly Agree"}
         };
-        for (int i = 0; i < responses.size(); ++i)
+        for (unsigned int i = 0; i < responses.size(); ++i)
             responsesText[i] = responseMap[responses[i]];
         // save data
         json j;

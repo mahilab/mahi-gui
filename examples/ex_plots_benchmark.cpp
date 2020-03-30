@@ -48,7 +48,7 @@ public:
         ImGui::SameLine();
         ImGui::Checkbox("Animate", &animate);
 
-        ImGui::Text("%d lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
+        ImGui::Text("%lu lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
         if (render)
             ImGui::Plot("plot", plot, items);
         ImGui::End();

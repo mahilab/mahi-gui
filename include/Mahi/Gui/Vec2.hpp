@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <Mahi/Gui/Vec2.hpp>
+//#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Util/Math/Constants.hpp>
 #include <Mahi/Util/Math/Functions.hpp>
 #include <cmath>

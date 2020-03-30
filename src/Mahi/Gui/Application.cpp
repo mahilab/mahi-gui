@@ -16,6 +16,12 @@
 #include <stdexcept>
 #include <thread>
 
+#ifdef __linux__
+#include <string.h>
+#else
+using std::memcpy;
+#endif
+
 using namespace mahi::util;
 
 ///////////////////////////////////////////////////////////////////////////////
