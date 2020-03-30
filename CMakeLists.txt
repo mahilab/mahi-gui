@@ -4,8 +4,6 @@
 
 cmake_minimum_required(VERSION 3.13.0)
 
-
-
 #===============================================================================
 # USER OPTIONS
 #===============================================================================
@@ -22,7 +20,6 @@ endif()
 
 # create project
 project(mahi-gui VERSION 1.0.0 LANGUAGES C CXX)
-
 
 set(CXX_CMAKE_STANDARD 14)
 set(CXX_CMAKE_STANDARD_REQUIRED ON)
@@ -151,8 +148,6 @@ target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
 target_link_libraries(gui PUBLIC clipper)
 target_link_libraries(gui PUBLIC nfd)
-
-if(CMAKE_SYSTEM MATCHES "Linux")
 
 #===============================================================================
 # EXAMPLE EXECUTABLES
