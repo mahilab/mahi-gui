@@ -1,4 +1,3 @@
-#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Gui/Application.hpp>
 #include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
 #include <Mahi/Gui/Icons/IconsFontAwesome5Brands.hpp>
@@ -6,10 +5,6 @@
 #include <Mahi/Util/System.hpp>
 #include <Mahi/Util/Timing/Clock.hpp>
 #include "Fonts/Fonts.hpp"
-
-#ifdef Linux
-#include <glad/glad.h>
-#endif
 
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
@@ -21,7 +16,7 @@
 #include <stdexcept>
 #include <thread>
 
-#ifdef Linux
+#ifdef __linux__
 #include <string.h>
 #else
 using std::memcpy;
