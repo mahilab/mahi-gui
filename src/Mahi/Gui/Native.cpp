@@ -2,11 +2,6 @@
 #include <cstring>
 #include <ctime>
 #include <iomanip>
-#ifdef Linux
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#endif
 #include <cassert>
 #include <sstream>
 #include <iostream>
@@ -29,11 +24,15 @@
 #include <sys/sysctl.h>
 #endif
 
-#ifdef Linux
-namespace fs = std::experimental::filesystem;
+// TODO: We need a more robust way to detect where fs may be...
+#ifdef __linux__
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #else
-namespace fs = std::filesystem;
+    #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
+
 namespace mahi {
 namespace gui {
 
@@ -239,7 +238,7 @@ void open_email(const std::string &address, const std::string &subject)
     system(command.c_str());
 }
 
-#elif defined(Linux)
+#elif defined(__linux__)
 
 static int anErr = 0;
 

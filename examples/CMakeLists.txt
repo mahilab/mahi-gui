@@ -40,9 +40,10 @@ add_custom_command(TARGET nvg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_dif
 add_custom_command(TARGET nvg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example/Roboto-Regular.ttf" $<TARGET_FILE_DIR:nvg>)
 add_custom_command(TARGET nvg POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example/Roboto-Bold.ttf" $<TARGET_FILE_DIR:nvg>)
 
-
-if(NOT CMAKE_SYSTEM MATCHES "Linux")
-    if (MAHI_UTIL_COROUTINES)
-        mahi_gui_example(coroutines)
-    endif()
+if(CMAKE_CXX_COMPILER_ID MATCHES Clang AND WIN32)
+    # Clang on Windows won't compile coroutines
+elseif(CMAKE_SYSTEM MATCHES "Linux")
+    # Only GCC? Need to confirm
+elseif(MAHI_UTIL_COROUTINES)
+    mahi_gui_example(coroutines)
 endif()

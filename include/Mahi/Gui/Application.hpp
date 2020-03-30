@@ -20,6 +20,7 @@
 #include <GLFW/glfw3.h>
 #include <nanovg.h>
 #include <Mahi/Gui/Color.hpp>
+#include <Mahi/Gui/Vec2.hpp>
 #include <Mahi/Util/Event.hpp>
 #include <Mahi/Util/Timing/Time.hpp>
 #include <Mahi/Util/Timing/Frequency.hpp>

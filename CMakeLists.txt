@@ -39,7 +39,7 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake")
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     if(CMAKE_SYSTEM MATCHES "Linux")
-        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DLinux -DIMGUI_IMPL_OPENGL_LOADER_GLAD  -std=c++14") # ALL WARNINGS
+        set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++14") # ALL WARNINGS
     endif()
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3") # ALL WARNINGS
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -121,7 +121,7 @@ install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_
 set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
 # defines
-target_compile_definitions(gui PUBLIC MAHI_GUI) # for compatibility checks
+target_compile_definitions(gui PUBLIC MAHI_GUI IMGUI_IMPL_OPENGL_LOADER_GLAD)
 
 # add source files
 add_subdirectory(src/Mahi/Gui)
