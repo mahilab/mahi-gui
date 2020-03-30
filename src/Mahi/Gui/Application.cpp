@@ -454,20 +454,11 @@ static void configureImGui(GLFWwindow *window)
     font_cfg.PixelSnapH = true;
     font_cfg.OversampleH = 1;
     font_cfg.OversampleV = 1;
-#ifdef Linux
-    ImFont* font = io.Fonts->AddFontFromFileTTF("../../Fonts/DroidSans.ttf", 19.0f);
-    IM_ASSERT(font != NULL);
-#else
     strcpy(font_cfg.Name, "Roboto Mono Bold");
     unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
-    memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
+    std::memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
 
-    strcpy(font_cfg.Name, "Roboto Mono Bold");
-    unsigned char *fontCopy1 = new unsigned char[RobotoMono_Bold_ttf_len];
-    memcpy(fontCopy1, &RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len);
-    io.Fonts->AddFontFromMemoryTTF(fontCopy1, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
-#endif
     ImFontConfig icons_config;
     icons_config.MergeMode        = true;
     icons_config.PixelSnapH       = true;
@@ -479,13 +470,13 @@ static void configureImGui(GLFWwindow *window)
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     unsigned char *fontCopy2 = new unsigned char[fa_solid_900_ttf_len];
-    memcpy(fontCopy2, &fa_solid_900_ttf, fa_solid_900_ttf_len);
+    std::memcpy(fontCopy2, &fa_solid_900_ttf, fa_solid_900_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy2, fa_solid_900_ttf_len, 14.0f, &icons_config, fa_ranges);
 
     // merge in icons from font awesome 5 brands
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
     unsigned char *fontCopy3 = new unsigned char[fa_brands_400_ttf_len];
-    memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
+    std::memcpy(fontCopy3, &fa_brands_400_ttf, fa_brands_400_ttf_len);
     io.Fonts->AddFontFromMemoryTTF(fontCopy3, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);   
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
@@ -524,9 +515,6 @@ static void configureImGui(GLFWwindow *window)
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 
-#if defined(Linux)
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-#endif
     // Decide GL+GLSL versions
 #if __APPLE__
     // GL 3.2 + GLSL 150
