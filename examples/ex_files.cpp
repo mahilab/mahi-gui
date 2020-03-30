@@ -103,12 +103,10 @@ public:
         ImGui::Separator();
 
         ImGui::Text("Misc:");
-#ifndef Linux
         if (ImGui::Button("github.com/mahilab"))
             open_url("https://github.com/mahilab");
-#endif
         if (ImGui::Button("epezent@rice.edu"))
-            open_email("what ?", "I love mahi-gui!");
+            open_email("epezent@rice.edu", "I love mahi-gui!");
 
         ImGui::End();
     }
