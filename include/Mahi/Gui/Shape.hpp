@@ -94,6 +94,8 @@ public:
     void set_hole(std::size_t index, const Shape& hole);
     /// Gets the Shape of a hole
     const Shape& hole(std::size_t index) const;
+    /// Returns entire list of holes
+    std::vector<Shape>& holes();
     /// Adds a new hole and increments to hole count
     void push_back_hole(const Shape& hole);
     /// Gets the local bounding rectangle of the Shape

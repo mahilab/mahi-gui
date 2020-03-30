@@ -31,10 +31,10 @@ public:
     }
 
     Enumerator move(int axis) {
-        float t = 0;
-        while (t < 5) {
-            pos[axis] = 125 + 50 * std::sin(2*PI*t + HALFPI * axis);
-            t += ImGui::GetIO().DeltaTime;
+        Time t;
+        while (t < 5_s) {
+            pos[axis] = 125 + 50 * (float)std::sin(2*PI*t.as_seconds() + HALFPI * axis);
+            t += dt();
             co_yield nullptr;
         }
     }
@@ -56,7 +56,7 @@ public:
         co_yield start_coroutine(move(1));
     }
 
-    ImVec2 pos = {125,175};
+    Vec2 pos = {125,175};
     ImU32 col = ImGui::GetColorU32(Greens::Chartreuse);
 };
 

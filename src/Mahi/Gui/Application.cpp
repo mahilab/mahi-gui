@@ -53,7 +53,7 @@ static void configureImGui(GLFWwindow *window);
 util::Event<void(int, const std::string&)> Application::on_error;
 
 Application::Application(const Config& conf) : 
-    window(nullptr), m_conf(conf), m_nvg(nullptr), m_frame_time(Time::Zero)
+    m_window(nullptr), m_conf(conf), m_nvg(nullptr), m_frame_time(Time::Zero)
 {
     // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
@@ -89,22 +89,22 @@ Application::Application(const Config& conf) :
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
         glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-        window = glfwCreateWindow(mode->width, mode->height, conf.title.c_str(), monitor, NULL);
+        m_window = glfwCreateWindow(mode->width, mode->height, conf.title.c_str(), monitor, NULL);
     }
     else {
-        window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
+        m_window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
     }
-    if (window == NULL)
+    if (m_window == NULL)
         throw std::runtime_error("Failed to create Window!");
     // Make OpenGL context current
-    glfwMakeContextCurrent(window);
+    glfwMakeContextCurrent(m_window);
     // Enabel VSync
     set_vsync(true);
     // center window
     if (conf.center && !conf.fullscreen)
         center_window(conf.monitor);
     // Setup GLFW callbacks
-    glfw_setup_window_callbacks(window, this);
+    glfw_setup_window_callbacks(m_window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
         throw std::runtime_error("Failed to initialize OpenGL loader!");
@@ -119,7 +119,7 @@ Application::Application(const Config& conf) :
     if (m_nvg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
     // configure ImGui
-    configureImGui(window);
+    configureImGui(m_window);
 }
 
 Application::Application() :
@@ -140,7 +140,7 @@ Application::~Application()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     nvgDeleteGL3(m_nvg);
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
@@ -149,7 +149,7 @@ void Application::run()
     ImGuiIO &io = ImGui::GetIO();
     util::Clock clock;
     util::Clock dt_clk;
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(m_window))
     {
         glfwPollEvents();
         // Start the Dear ImGui frame
@@ -158,7 +158,7 @@ void Application::run()
         ImGui::NewFrame();
         // Clear frame, setup dendering
         int fbWidth, fbHeight;
-        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        glfwGetFramebufferSize(m_window, &fbWidth, &fbHeight);
         glViewport(0, 0, fbWidth, fbHeight);
         if (!m_conf.transparent)
             glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
@@ -186,7 +186,7 @@ void Application::run()
 #endif 
         // nanovg
         int winWidth, winHeight;
-        glfwGetWindowSize(window, &winWidth, &winHeight);
+        glfwGetWindowSize(m_window, &winWidth, &winHeight);
         float pxRatio = static_cast<float>(fbWidth) / static_cast<float>(winWidth);
         nvgBeginFrame(m_nvg, static_cast<float>(winWidth), static_cast<float>(winHeight), pxRatio);
         draw(m_nvg);
@@ -206,13 +206,13 @@ void Application::run()
             util::sleep(m_frame_time - clock.get_elapsed_time());       
             clock.restart();     
         }
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(m_window);
     }
     on_application_quit.emit();
 }
 
 void Application::quit() {
-    glfwSetWindowShouldClose(window, 1);
+    glfwSetWindowShouldClose(m_window, 1);
 }
 
 util::Time Application::time() const {
@@ -228,31 +228,31 @@ void Application::set_background(const Color& color) {
 }
 
 void Application::set_window_title(const std::string& title) {
-    glfwSetWindowTitle(window, title.c_str());
+    glfwSetWindowTitle(m_window, title.c_str());
 }
 
 void Application::set_window_pos(int xpos, int ypos) {
-    glfwSetWindowPos(window, xpos, ypos);
+    glfwSetWindowPos(m_window, xpos, ypos);
 }
 
 Vec2 Application::get_window_pos() const {
     int xpos, ypos;
-    glfwGetWindowPos(window, &xpos, &ypos);
+    glfwGetWindowPos(m_window, &xpos, &ypos);
     return {(float)xpos, (float)ypos};
 }
 
 void Application::set_window_size(int width, int height) {
-    glfwSetWindowSize(window, width, height);
+    glfwSetWindowSize(m_window, width, height);
 }
 
 Vec2 Application::get_window_size() const {
     int width, height;
-    glfwGetWindowSize(window, &width, &height);
+    glfwGetWindowSize(m_window, &width, &height);
     return {(float)width, (float)height};
 }
 
 void Application::set_window_size_limits(int min_width, int min_height, int max_width, int max_height) {
-    glfwSetWindowSizeLimits(window, min_width, min_height, max_width, max_height);
+    glfwSetWindowSizeLimits(m_window, min_width, min_height, max_width, max_height);
 }
 
 void Application::center_window(int monitorIdx) {
@@ -276,36 +276,36 @@ void Application::center_window(int monitorIdx) {
     int monitorX, monitorY;
     glfwGetMonitorPos(monitor, &monitorX, &monitorY);
     int windowWidth, windowHeight;
-    glfwGetWindowSize(window, &windowWidth, &windowHeight);
-    glfwSetWindowPos(window, monitorX + (mode->width - windowWidth) / 2, monitorY + (mode->height - windowHeight) / 2);
+    glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
+    glfwSetWindowPos(m_window, monitorX + (mode->width - windowWidth) / 2, monitorY + (mode->height - windowHeight) / 2);
 }
 
 void Application::minimize_window() {
-    glfwIconifyWindow(window);
+    glfwIconifyWindow(m_window);
 }
 
 void Application::maximize_window() {
-    glfwMaximizeWindow(window);
+    glfwMaximizeWindow(m_window);
 }
 
 void Application::restore_window() {
-    glfwRestoreWindow(window);
+    glfwRestoreWindow(m_window);
 }
 
 void Application::hide_window() {
-    glfwHideWindow(window);
+    glfwHideWindow(m_window);
 }
 
 void Application::show_window() {
-    glfwShowWindow(window);
+    glfwShowWindow(m_window);
 }
 
 void Application::focus_window() {
-    glfwFocusWindow(window);
+    glfwFocusWindow(m_window);
 }
 
 void Application::request_window_attention() {
-    glfwRequestWindowAttention(window);
+    glfwRequestWindowAttention(m_window);
 }
 
 void Application::set_vsync(bool enabled) {
@@ -323,7 +323,7 @@ void Application::set_frame_limit(util::Frequency freq) {
 
 Vec2 Application::get_mouse_pos() const {
     double x,y;
-    glfwGetCursorPos(window, &x, &y);
+    glfwGetCursorPos(m_window, &x, &y);
     return {(float)x,(float)y};
 }
 

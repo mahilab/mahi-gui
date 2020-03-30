@@ -133,11 +133,12 @@ public:
 
 protected:
     /// Internal GLFW window handle, you can use glfwXXX functions with this
-    GLFWwindow *window;
+    GLFWwindow *m_window;
+    /// Internal NVG Context, you use use nvgXXX functions with this
+    NVGcontext* m_nvg;
 
 private:
     Config m_conf;
-    NVGcontext* m_nvg;
     util::Time m_frame_time;
     util::Time m_dt;
 
