@@ -13,6 +13,7 @@
 #include <Mahi/Gui/Shape.hpp>
 #include <Mahi/Gui/Transform.hpp>
 #include <Mahi/Gui/Tween.hpp>
+#include <Mahi/Gui/Fonts.hpp>
 #include <Mahi/Gui/imgui_custom.hpp>
 #include <Mahi/Gui/imgui_plot.hpp>
 
