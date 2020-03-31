@@ -1,4 +1,4 @@
-#include "Fonts.hpp"
+#include <Mahi/Gui/Fonts.hpp>
 
 namespace mahi {
 namespace gui {

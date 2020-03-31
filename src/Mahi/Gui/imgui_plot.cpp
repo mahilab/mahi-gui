@@ -291,19 +291,19 @@ PlotInterface::PlotInterface() : show_crosshairs(false), show_mouse_pos(true), s
     selection_color = {.118f, .565f, 1, 0.25};
 }
 
-void Plot(const char *label_id, PlotInterface &plot, std::vector<PlotItem> &items, const ImVec2 &size)
+bool Plot(const char *label_id, PlotInterface &plot, std::vector<PlotItem> &items, const ImVec2 &size)
 {
-    Plot(label_id, &plot, &items[0], (int)items.size(), size);
+    return Plot(label_id, &plot, &items[0], (int)items.size(), size);
 }
 
-void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nItems, const ImVec2 &size)
+bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nItems, const ImVec2 &size)
 {
     PlotInterface &plot = *plot_ptr;
     // ImGui front matter
-    ImGuiWindow *Window = GetCurrentWindow();
-    if (Window->SkipItems)
-        return;
     ImGuiContext &G = *GImGui;
+    ImGuiWindow *Window = G.CurrentWindow;
+    if (Window->SkipItems)
+        return false;
     const ImGuiStyle &Style = G.Style;
     const ImGuiIO &IO = GetIO();
     ImDrawList &DrawList = *Window->DrawList;
@@ -334,7 +334,7 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     const ImRect frame_bb(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
     ItemSize(frame_bb);
     if (!ItemAdd(frame_bb, 0, &frame_bb))
-        return;
+        return false;
     const bool frame_hovered = ItemHoverable(frame_bb, id);
     RenderFrame(frame_bb.Min, frame_bb.Max, color_frame, true, Style.FrameRounding);
 
@@ -797,6 +797,8 @@ void Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     DrawList.AddRect(xAxisRegion_bb.Min, xAxisRegion_bb.Max, GetColorU32({1,0,1,1}));
     DrawList.AddRect(yAxisRegion_bb.Min, yAxisRegion_bb.Max, GetColorU32({1,1,0,1}));
 #endif
+
+    return true;
 }
 
 

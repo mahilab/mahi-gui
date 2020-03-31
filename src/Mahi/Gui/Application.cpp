@@ -4,7 +4,7 @@
 #include <Mahi/Gui/imgui_custom.hpp>
 #include <Mahi/Util/System.hpp>
 #include <Mahi/Util/Timing/Clock.hpp>
-#include "Fonts/Fonts.hpp"
+#include <Mahi/Gui/Fonts.hpp>
 
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"

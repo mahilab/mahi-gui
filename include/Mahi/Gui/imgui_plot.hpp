@@ -126,9 +126,9 @@ struct PlotInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Renders a Plot and PlotItems
-void Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items, const ImVec2& size = {-1,-1});
+bool Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items, const ImVec2& size = {-1,-1});
 /// Renders a Plot and PlotItems (STL version)
-void Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items, const ImVec2& size = {-1,-1});
+bool Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items, const ImVec2& size = {-1,-1});
 
 ///////////////////////////////////////////////////////////////////////////////
 // REAL-TIME UTILS
