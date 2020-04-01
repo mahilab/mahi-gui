@@ -6,7 +6,7 @@ using namespace mahi::util;
 
 class ShapeDemo : public Application {
 public:
-    ShapeDemo() : Application("Shape Demo") { 
+    ShapeDemo(const Config& cfg) : Application(cfg) { 
         shape = make_polygon_shape(5, 50);
         shape.set_radii(10);
         shape.move(100,100);
@@ -33,20 +33,29 @@ public:
         star = make_star_shape(5, 15, 30);
         star.move(100,100);
         star.set_radii(2);
+
+        hole_shape = make_polygon_shape(6, 50);
+        hole_shape.set_hole_count(1);
+        hole_shape.set_hole(0, make_star_shape(6, 30, 20));
         
     }
     void draw(NVGcontext* nvg) override {  
-        fill_shape(nvg, shape2, Greens::ForestGreen);
-        fill_shape(nvg, shape,  Greens::Chartreuse);
-        fill_shape(nvg, star,   Greens::ForestGreen);
+        nvgFillShape(nvg, shape2, Greens::ForestGreen);
+        nvgFillShape(nvg, shape,  Greens::Chartreuse);
+        nvgFillShape(nvg, star,   Greens::ForestGreen);
         for (auto& s : union_shape)
-            fill_shape(nvg, s, Reds::FireBrick);
+            nvgFillShape(nvg, s, Reds::FireBrick);
         for (auto& s : diff_shape)
-            fill_shape(nvg, s, Reds::FireBrick);
+            nvgFillShape(nvg, s, Reds::FireBrick);
         for (auto& s : excl_shape)
-            fill_shape(nvg, s, Reds::FireBrick);
+            nvgFillShape(nvg, s, Reds::FireBrick);
         for (auto& s : ints_shape)
-            fill_shape(nvg, s, Reds::FireBrick);
+            nvgFillShape(nvg, s, Reds::FireBrick);
+
+        nvgTranslate(nvg, 100, 400);
+        nvgFillShape(nvg, hole_shape, Blues::DeepSkyBlue);
+        nvgStrokeShape(nvg, hole_shape, 5, Whites::Azure);
+        nvgResetTransform(nvg);
     } 
 
     Shape shape;
@@ -55,12 +64,15 @@ public:
     std::vector<Shape> diff_shape;
     std::vector<Shape> excl_shape;
     std::vector<Shape> ints_shape;
+    Shape hole_shape;
     Shape star;
 };
 
 int main(int argc, char const *argv[])
 {
-    ShapeDemo demo;
+    Application::Config cfg;
+    cfg.msaa = 0;
+    ShapeDemo demo(cfg);
     demo.run();
     return 0;
 }

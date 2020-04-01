@@ -24,7 +24,7 @@ namespace mahi {
 namespace gui {
 
 /// Creates an NVG path from a Shape
-inline void path_shape(NVGcontext* vg, const Shape& shape) {
+inline void nvgShape(NVGcontext* vg, const Shape& shape) {
     if (shape.vertex_count() < 3)
         return;
     const auto& vertices = shape.vertices();
@@ -35,25 +35,34 @@ inline void path_shape(NVGcontext* vg, const Shape& shape) {
     nvgClosePath(vg);
 }
 
-/// Fills a Shape with NVG
-inline void fill_shape(NVGcontext* vg, const Shape& shape, const Color& c) {
+/// Creates an NVG path from a Shape that contains holes
+inline void nvgShapeWithHoles(NVGcontext* vg, const Shape& shape) {
+    nvgShape(vg, shape);
+    for (int i = 0; i < shape.hole_count(); ++i) {
+        nvgShape(vg, shape.hole(i));
+        nvgPathWinding(vg, NVG_HOLE);
+    }
+}
+
+/// Fills a Shape with NVG (will render holes if they  exists)
+inline void nvgFillShape(NVGcontext* vg, const Shape& shape, const Color& c) {
     nvgBeginPath(vg);
-    path_shape(vg, shape);
+    nvgShapeWithHoles(vg, shape);
     nvgFillColor(vg, c);
     nvgFill(vg);
 }
 
 /// Strokes a Shape with NVG
-inline void stroke_shape(NVGcontext* vg, const Shape& shape, float width, const Color& c) {
+inline void nvgStrokeShape(NVGcontext* vg, const Shape& shape, float width, const Color& c) {
     nvgBeginPath(vg);
-    path_shape(vg, shape);
+    nvgShapeWithHoles(vg, shape);
     nvgStrokeWidth(vg,width);
     nvgStrokeColor(vg, nvgRGBAf(c.r,c.g,c.b,c.a));
     nvgStroke(vg);
 }
 
 /// Draws an SVG file from a NSVGimage, created with nsvgParseFromFile
-void draw_svg(NVGcontext* vg, NSVGimage* svg);
+void nvgDrawSvg(NVGcontext* vg, NSVGimage* svg);
 
 } // namespace gui
 } // namespace mahi

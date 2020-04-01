@@ -3,7 +3,23 @@
 namespace mahi {
 namespace gui {
 
-// Embedded Engine Fonts
+// Embedded mahi-gui fonts. The data for each font can be loaded by ImGui and NanoVG.
+//
+// ImGui::
+//
+// ImFontConfig font_cfg;
+// font_cfg.FontDataOwnedByAtlas = false;
+// ... more font_cfg params.
+// ImGui::GetIO().Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len, 14.0f, &font_cfg);
+// 
+// NanoVG:
+//
+// nvgCreateFontMem(m_nvg, "roboto", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
+//
+// Note that "RobotoMono_Bold_ttf", "fa_solid_900_ttf", and "fa_brands_400_ttf" are
+// already loaded into ImGui by mahi-gui in Application.cpp, so don't duplicate them.
+//
+// The font data was generated with:
 // Bash: xxd -i Roboto-Regular.ttf > font_data.txt
 
 //==============================================================================
