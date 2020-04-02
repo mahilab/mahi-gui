@@ -53,7 +53,8 @@ static void configureImGui(GLFWwindow *window);
 util::Event<void(int, const std::string&)> Application::on_error;
 
 Application::Application(const Config& conf) : 
-    m_window(nullptr), m_conf(conf), m_nvg(nullptr), m_frame_time(Time::Zero)
+    m_window(nullptr), m_conf(conf), m_nvg(nullptr), 
+    m_frame_time(Time::Zero), m_dt(Time::Zero), m_time(Time::Zero), m_time_scale(1)
 {
     // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
@@ -169,7 +170,9 @@ void Application::run()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // update
-        m_dt = dt_clk.restart();
+        m_dt = dt_clk.restart() * m_time_scale;
+        m_time += m_dt;
+
         update();
 #ifdef MAHI_COROUTINES
         // resume coroutines
@@ -215,12 +218,24 @@ void Application::quit() {
     glfwSetWindowShouldClose(m_window, 1);
 }
 
-util::Time Application::time() const {
+util::Time Application::realtime() const {
     return util::seconds(glfwGetTime());
 }
 
-util::Time Application::dt() const {
+util::Time Application::time() const {
+    return m_time;
+}
+
+util::Time Application::delta_time() const {
     return m_dt;
+}
+
+void Application::set_time(util::Time t) {
+    m_time = t;
+}
+
+void Application::set_time_scale(float scale) {
+    m_time_scale = scale;
 }
 
 void Application::set_background(const Color& color) {
@@ -307,6 +322,17 @@ void Application::focus_window() {
 void Application::request_window_attention() {
     glfwRequestWindowAttention(m_window);
 }
+
+Vec2 Application::get_framebuffer_size() const {
+    int w, h;
+    glfwGetFramebufferSize(m_window, &w, &h);
+    return Vec2((float)w, (float)h);
+}
+
+float Application::get_pixel_ratio() const {
+    return get_framebuffer_size().x / get_window_size().x;
+}
+
 
 void Application::set_vsync(bool enabled) {
     m_conf.vsync = enabled;

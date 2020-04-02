@@ -29,7 +29,7 @@ mahi_gui_example(plots_benchmark)
 mahi_gui_example(plots_dnd)
 mahi_gui_example(shapes)
 mahi_gui_example(transparent)
-
+mahi_gui_example(fbo)
 
 mahi_gui_example(nvg)
 target_sources(nvg PUBLIC "${CMAKE_SOURCE_DIR}/3rdparty/nanovg/example/demo.c")

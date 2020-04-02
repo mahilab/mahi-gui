@@ -22,12 +22,14 @@
 namespace mahi {
 namespace gui {
 
+class Application;
+
 /// mahi-gui specific coroutine yield instructions to supplement those already in
 /// <Mahi/Util/Coroutine.hpp>
 
 /// Yield instruction which waits until a key is pressed (use GLFW enums)
-struct WaitForKeyPress : public util::YieldInstruction {
-    WaitForKeyPress(int key) : m_key(key) { }
+struct YieldKey : public util::YieldInstruction {
+    YieldKey(int key) : m_key(key) { }
     bool is_over() override {
         return ImGui::IsKeyPressed(m_key);
     }
@@ -35,14 +37,32 @@ private:
     int m_key;
 };
 
+/// Makes a YieldKey instruction
+inline std::shared_ptr<YieldKey> yield_key(int key) {
+    return std::make_shared<YieldKey>(key);
+}
+
 /// Yield instruction which waits until a mouse button is pressed (0=left, 1=right, 2=middle)
-struct WaitForMouseClick : public util::YieldInstruction {
-    WaitForMouseClick(int button) : m_button(button) { }
+struct YieldMouse : public util::YieldInstruction {
+    YieldMouse(int button) : m_button(button) { }
     bool is_over() override {
         return ImGui::IsMouseClicked(m_button);
     }
 private:
     int m_button;
+};
+
+/// Makes a YieldMouse instruction
+inline std::shared_ptr<YieldMouse> yield_mouse(int button) {
+    return std::make_shared<YieldMouse>(button);
+}
+
+/// Yield instruction which waits for scaled Application time
+struct YieldTimeScaled : public util::YieldInstruction {
+    YieldTimeScaled(util::Time duration, Application* app);
+private:
+    util::Time m_start;
+    Application* m_app;
 };
 
 } // namespace gui

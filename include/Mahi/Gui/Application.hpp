@@ -73,10 +73,17 @@ public:
     virtual void update() { /* nothing by default */ }
     /// NanoVG drawing context, called immediately after update()
     virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
-    /// Get the current time
+
+    /// Gets the current real time since startup (not affected by time scale)
+    util::Time realtime() const;
+    /// Get the current time (affected by time scale)
     util::Time time() const;
-    /// Gets the delta time between consecutive calls to update
-    util::Time dt() const;
+    /// Gets the delta time between consecutive calls to update (affected by time scale)
+    util::Time delta_time() const;
+    /// Sets the time to a desired value
+    void set_time(util::Time t);
+    /// Sets the time scaling factor, which can be used for slow motion effects 
+    void set_time_scale(float scale);
 
     /// Set the window background (i.e. clear) color (no effect if transparent)
     void set_background(const Color& color);
@@ -108,6 +115,10 @@ public:
     void focus_window();
     /// Notify the user by requesting window attention
     void request_window_attention();
+    /// Returns the frame buffer size
+    Vec2 get_framebuffer_size() const;
+    /// Get pixel ratio (FB width / window width) for high DPI screens
+    float get_pixel_ratio() const;
     /// Enable/disable VSync
     void set_vsync(bool enabled);
     /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit) 
@@ -142,6 +153,8 @@ private:
     Config m_conf;
     util::Time m_frame_time;
     util::Time m_dt;
+    util::Time m_time;
+    float m_time_scale;
 
 #ifdef MAHI_COROUTINES
 public:
@@ -153,6 +166,7 @@ public:
     void stop_coroutines();
     /// Returns the number of coroutines running
     int coroutine_count() const;
+    /// Yield instruction for scale time
 private:
     /// Vector of running coroutines
     std::vector<util::Enumerator> m_coroutines;

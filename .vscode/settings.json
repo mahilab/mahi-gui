@@ -77,7 +77,9 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "nanovg_gl.h": "c",
+        "nanovg_gl_utils.h": "c"
     },
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
 }

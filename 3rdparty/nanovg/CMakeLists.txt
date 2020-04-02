@@ -15,5 +15,8 @@ target_include_directories(nanovg PUBLIC
 )
 target_compile_definitions(nanovg PUBLIC NANOVG_GLAD)
 
-# add_executable(nanovg-demo example/demo.h example/demo.c example/example_gl3.c example/perf.c example/perf.h example/stb_image_write.h)
-# target_link_libraries(nanovg-demo nanovg glfw glad)
+add_executable(nanovg-demo example/demo.h example/demo.c example/example_gl3.c example/perf.c example/perf.h example/stb_image_write.h)
+target_link_libraries(nanovg-demo nanovg glfw glad)
+
+add_executable(nanovg-fbo  example/example_fbo.c example/perf.c example/perf.h example/stb_image_write.h)
+target_link_libraries(nanovg-fbo nanovg glfw glad)

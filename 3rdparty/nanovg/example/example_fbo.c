@@ -19,6 +19,8 @@
 #include <stdio.h>
 #ifdef NANOVG_GLEW
 #	include <GL/glew.h>
+#elif NANOVG_GLAD
+#  include <glad/glad.h>
 #endif
 #ifdef __APPLE__
 #	define GLFW_INCLUDE_GLCOREARB
@@ -73,12 +75,12 @@ void renderPattern(NVGcontext* vg, NVGLUframebuffer* fb, float t, float pxRatio)
 int loadFonts(NVGcontext* vg)
 {
 	int font;
-	font = nvgCreateFont(vg, "sans", "../example/Roboto-Regular.ttf");
+	font = nvgCreateFont(vg, "sans", "Roboto-Regular.ttf");
 	if (font == -1) {
 		printf("Could not add font regular.\n");
 		return -1;
 	}
-	font = nvgCreateFont(vg, "sans-bold", "../example/Roboto-Bold.ttf");
+	font = nvgCreateFont(vg, "sans-bold", "Roboto-Bold.ttf");
 	if (font == -1) {
 		printf("Could not add font bold.\n");
 		return -1;
@@ -150,6 +152,11 @@ int main()
 	}
 	// GLEW generates GL error because it calls glGetString(GL_EXTENSIONS), we'll consume it here.
 	glGetError();
+#elif NANOVG_GLAD
+	if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0) {
+		printf("Could not init GLAD.\n");
+		return -1;
+	}
 #endif
 
 #ifdef DEMO_MSAA
