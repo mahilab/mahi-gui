@@ -391,7 +391,6 @@ std::shared_ptr<YieldTimeScaled> Application::yield_time_scaled(util::Time durat
     return ::mahi::gui::yield_time_scaled(duration, this);
 }
 
-
 #endif
 
 namespace

@@ -166,7 +166,7 @@ public:
     void stop_coroutines();
     /// Returns the number of coroutines running
     int coroutine_count() const;
-    /// Yield instruction for scaled time of this Application
+    /// Yield instruction which waits for scaled time. Prefer this over mahi::util::yield_time.
     std::shared_ptr<YieldTimeScaled> yield_time_scaled(util::Time duration);
 private:
     /// Vector of running coroutines

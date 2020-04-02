@@ -57,7 +57,7 @@ inline std::shared_ptr<YieldMouse> yield_mouse(int button) {
     return std::make_shared<YieldMouse>(button);
 }
 
-/// Yield instruction which waits for scaled Application time
+/// Yield instruction which waits for scaled Application time. Prefer this over mahi::util::yield_time.
 struct YieldTimeScaled : public util::YieldInstruction {
     YieldTimeScaled(util::Time duration, Application* app);
     bool is_over() override;
