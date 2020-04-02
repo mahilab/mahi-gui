@@ -52,9 +52,9 @@ public:
         auto col2 = Greens::Chartreuse;
         for (int i = 0; i < 20; ++i) {
             col = col1;
-            co_yield yield_time(100_ms);
+            co_yield yield_time_scaled(100_ms);
             col = col2;
-            co_yield yield_time(150_ms);
+            co_yield yield_time_scaled(150_ms);
         }
     }
 

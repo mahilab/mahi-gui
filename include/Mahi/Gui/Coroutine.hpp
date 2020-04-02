@@ -60,10 +60,16 @@ inline std::shared_ptr<YieldMouse> yield_mouse(int button) {
 /// Yield instruction which waits for scaled Application time
 struct YieldTimeScaled : public util::YieldInstruction {
     YieldTimeScaled(util::Time duration, Application* app);
+    bool is_over() override;
 private:
-    util::Time m_start;
+    util::Time m_end;
     Application* m_app;
 };
+
+/// Makes a YieldMouse instruction
+inline std::shared_ptr<YieldTimeScaled> yield_time_scaled(util::Time duration, Application* app) {
+    return std::make_shared<YieldTimeScaled>(duration, app);
+}
 
 } // namespace gui
 } // namespace mahi

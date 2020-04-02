@@ -379,6 +379,19 @@ int Application::coroutine_count() const
     return static_cast<int>(m_coroutines.size());
 }
 
+YieldTimeScaled::YieldTimeScaled(util::Time duration, Application* app) : 
+    m_end(app->time() + duration), m_app(app)
+{ }
+
+bool YieldTimeScaled::is_over() {
+    return m_app->time() >= m_end;
+}
+
+std::shared_ptr<YieldTimeScaled> Application::yield_time_scaled(util::Time duration) {
+    return ::mahi::gui::yield_time_scaled(duration, this);
+}
+
+
 #endif
 
 namespace
