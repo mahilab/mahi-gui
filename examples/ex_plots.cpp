@@ -106,7 +106,9 @@ public:
     {
         Vec2 vpPos = ImGui::GetMainViewport()->Pos;
         Vec2 vpSize = ImGui::GetMainViewport()->Size;
-        ImGui::BeginFixed("Plots", vpPos, vpSize, ImGuiWindowFlags_NoTitleBar);
+        ImGui::SetNextWindowPos(vpPos, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(vpSize, ImGuiCond_FirstUseEver);
+        ImGui::Begin("Plots");
         ImGui::Plot("My Plot", &plot, &items[0], items.size());
         ImGui::End();
 

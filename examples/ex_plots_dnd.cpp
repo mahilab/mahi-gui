@@ -16,7 +16,9 @@ public:
     void update() override {
         float t = (float)time().as_seconds();
 
-        ImGui::BeginFixed("Data List", {0, 0}, {800, 500}, ImGuiWindowFlags_NoTitleBar);
+        ImGui::SetNextWindowPos({0,0}, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({800,500}, ImGuiCond_FirstUseEver);
+        ImGui::Begin("Data List", nullptr, ImGuiWindowFlags_NoTitleBar);
         ImGui::BeginGroup();
         if (ImGui::Button("Clear Plot", {100, 0}))
             items.clear();
@@ -37,14 +39,13 @@ public:
                 i, t, i.data.back().y + random_range(0.0049f, 0.0051f) * random_range(-1.0, 1.0), 1000);
 
         ImGui::SameLine();
-ImGui::Plot("My Rolling Plot", plot, items);
-ImGui::PlotAxisScroll(plot.x_axis, t, 10);
-if (ImGui::IsItemHovered()) {
-    ImGui::BeginTooltip();
-    ImGui::Text("My Plot");
-    ImGui::EndTooltip();
-}
-
+        ImGui::Plot("My Rolling Plot", plot, items);
+        ImGui::PlotAxisScroll(plot.x_axis, t, 10);
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            ImGui::Text("My Plot");
+            ImGui::EndTooltip();
+        }
         if (ImGui::BeginDragDropTarget()) {
             if (ImGui::AcceptDragDropPayload("DND_PLOT")) {
                 items.emplace_back();

@@ -35,7 +35,9 @@ public:
         }
 
         auto [w,h] = get_window_size();
-        ImGui::BeginFixed("Plot Benchmark",{0,0},ImVec2(w,h), ImGuiWindowFlags_NoTitleBar);
+        ImGui::SetNextWindowPos({0,0}, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(w,h), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Plot Benchmark",nullptr, ImGuiWindowFlags_NoTitleBar);
         if (ImGui::Button("VSync On"))
             set_vsync(true);
         ImGui::SameLine();

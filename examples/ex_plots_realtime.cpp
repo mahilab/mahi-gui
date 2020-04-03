@@ -20,7 +20,9 @@ public:
 
     void update() override {
         auto [w,h] = get_window_size();
-        ImGui::BeginFixed("Real Time Plots", {0,0}, ImVec2(w,h), ImGuiWindowFlags_NoTitleBar);  
+        ImGui::SetNextWindowPos({0,0}, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({w,h}, ImGuiCond_FirstUseEver);
+        ImGui::Begin("Real Time Plots", nullptr, ImGuiWindowFlags_NoTitleBar);  
         float regionHeight = ImGui::GetContentRegionAvail().y;   
         float t = time().as_seconds();
         auto [x,y] = get_mouse_pos();

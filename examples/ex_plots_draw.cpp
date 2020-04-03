@@ -16,7 +16,9 @@ public:
 
     void update() override {
 
-        ImGui::BeginFixed("Click the Plot Area##1",{0,0},{500,250});
+        ImGui::SetNextWindowPos({0,0}, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize({500,250}, ImGuiCond_FirstUseEver);
+        ImGui::Begin("Click the Plot Area##1");
         ImGui::Plot("draw",&plot1,&item1,1);
         if (ImGui::IsPlotHovered() && ImGui::GetIO().MouseClicked[0]) 
             item1.data.push_back(ImGui::GetPlotMousePos());        
