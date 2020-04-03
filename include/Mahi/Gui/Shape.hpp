@@ -60,14 +60,18 @@ public:
     void move(float offsetX, float offsetY);
     /// Translate all points
     void move(const Vec2& offset);
-    /// Rotates all points about a particular point
+    /// Rotates all points about the origin
     void rotate(float angle);
+    /// Rotates all points about a single point
+    void rotate(float angle, const Vec2& center);
+    /// Rotates all points about a single point
+    void rotate(float angle, float cx, float cy);
     /// Translates all points
     void scale(float scaleX, float scaleY);
     /// Translate all points
     void scale(const Vec2& scale);
     /// Transform all points
-    virtual void transform(const Transform& matrix);
+    void transform(const Transform& matrix);
     /// Sets the radius associated with a point
     void set_radius(std::size_t index, float radius, std::size_t smoothness = 10);
     /// Gets the radius associated with a point
@@ -81,8 +85,7 @@ public:
     /// Gets the number of vertices making up the Shape's outer contour after
     /// all radii have been applied
     std::size_t vertex_count() const;
-    /// Gets the vertices making up the Shape's outer contour after all radii
-    // have been applied.
+    /// Gets the vertices making up the Shape's outer contour after all radii have been applied.
     const std::vector<Vec2>& vertices() const;
     /// Permanently applies all radii (i.e. converts vertices to points)
     void apply_radii();
@@ -197,7 +200,27 @@ inline Shape make_star_shape(std::size_t points, float r1, float r2) {
     return shape;
 }
 
+/// Makes a cross shape
+inline Shape make_cross_shape(float width, float height, float thickness) {
+    float halfWidth = 0.5f * width;
+    float halfHeight = 0.5f * height;
+    float halfThickness = 0.5f * thickness;
+    Shape shape(12);
+    shape.set_point(0, -halfThickness, halfHeight);
+    shape.set_point(1, halfThickness, halfHeight);
+    shape.set_point(2, halfThickness, halfThickness);
+    shape.set_point(3, halfWidth, halfThickness);
+    shape.set_point(4, halfWidth, -halfThickness);
+    shape.set_point(5, halfThickness, -halfThickness);
+    shape.set_point(6, halfThickness, -halfHeight);
+    shape.set_point(7, -halfThickness, -halfHeight);
+    shape.set_point(8, -halfThickness, -halfThickness);
+    shape.set_point(9, -halfWidth, -halfThickness);
+    shape.set_point(10, -halfWidth, halfThickness);
+    shape.set_point(11, -halfThickness, halfThickness);
+}
 
+// TODO: Import more make_xxx_shape functions from carnot and ShapeRenderer
 
 } // namespace gui
 } // namespace mahi

@@ -14,7 +14,7 @@ namespace gui {
 // 
 // NanoVG:
 //
-// nvgCreateFontMem(m_nvg, "roboto", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
+// nvgCreateFontMem(m_vg, "roboto", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
 //
 // Note that "RobotoMono_Bold_ttf", "fa_solid_900_ttf", and "fa_brands_400_ttf" are
 // already loaded into ImGui by mahi-gui in Application.cpp, so don't duplicate them.

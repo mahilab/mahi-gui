@@ -8,6 +8,7 @@
 
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
+#include "nanovg_gl_utils.h"
 #include "imgui_internal.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
@@ -53,7 +54,7 @@ static void configureImGui(GLFWwindow *window);
 util::Event<void(int, const std::string&)> Application::on_error;
 
 Application::Application(const Config& conf) : 
-    m_window(nullptr), m_conf(conf), m_nvg(nullptr), 
+    m_window(nullptr), m_conf(conf), m_vg(nullptr), 
     m_frame_time(Time::Zero), m_dt(Time::Zero), m_time(Time::Zero), m_time_scale(1)
 {
     // setup GLFW error callback
@@ -114,10 +115,10 @@ Application::Application(const Config& conf) :
     glEnable(GL_MULTISAMPLE);  
     // initialize NanoVG
     if (conf.nvg_aa)
-        m_nvg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+        m_vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
     else
-        m_nvg = nvgCreateGL3(NVG_STENCIL_STROKES); // | NVG_DEBUG
-    if (m_nvg == NULL)
+        m_vg = nvgCreateGL3(NVG_STENCIL_STROKES); // | NVG_DEBUG
+    if (m_vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
     // configure ImGui
     configureImGui(m_window);
@@ -140,7 +141,7 @@ Application::~Application()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    nvgDeleteGL3(m_nvg);
+    nvgDeleteGL3(m_vg);
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
@@ -157,23 +158,12 @@ void Application::run()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        // Clear frame, setup dendering
-        int fbWidth, fbHeight;
-        glfwGetFramebufferSize(m_window, &fbWidth, &fbHeight);
-        glViewport(0, 0, fbWidth, fbHeight);
-        if (!m_conf.transparent)
-            glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
-        else {
-            if (m_conf.background.a != 1) // user wants a transparent fill
-                glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
-        }
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // update
         m_dt = dt_clk.restart() * m_time_scale;
         m_time += m_dt;
-
         update();
+
 #ifdef MAHI_COROUTINES
         // resume coroutines
         if (!m_coroutines.empty())
@@ -187,14 +177,27 @@ void Application::run()
             }
         }
 #endif 
-        // nanovg
+        // Clear frame, setup rendering
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(m_window, &fbWidth, &fbHeight);
+        glViewport(0, 0, fbWidth, fbHeight);
+        if (!m_conf.transparent)
+            glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
+        else {
+            if (m_conf.background.a != 1) // user wants a transparent fill
+                glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
+        }
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        /// call user's draw call
+        draw();
+        // call user's NanoVG call
         int winWidth, winHeight;
         glfwGetWindowSize(m_window, &winWidth, &winHeight);
         float pxRatio = static_cast<float>(fbWidth) / static_cast<float>(winWidth);
-        nvgBeginFrame(m_nvg, static_cast<float>(winWidth), static_cast<float>(winHeight), pxRatio);
-        draw(m_nvg);
-        nvgEndFrame(m_nvg);
-        // ImGui
+        nvgBeginFrame(m_vg, static_cast<float>(winWidth), static_cast<float>(winHeight), pxRatio);
+        draw(m_vg);
+        nvgEndFrame(m_vg);
+        // draw ImGui
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -218,7 +221,7 @@ void Application::quit() {
     glfwSetWindowShouldClose(m_window, 1);
 }
 
-util::Time Application::realtime() const {
+util::Time Application::real_time() const {
     return util::seconds(glfwGetTime());
 }
 
@@ -445,7 +448,7 @@ static void glfw_size_callback(GLFWwindow* window, int width, int height) {
 
 static void glfw_close_callback(GLFWwindow* window) {
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-    auto close = app->on_window_closed.emit();
+    auto close = app->on_window_closing.emit();
     if (!close) 
         glfwSetWindowShouldClose(window, GLFW_FALSE);
 }

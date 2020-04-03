@@ -175,6 +175,8 @@ int main()
 	// Calculate pixel ration for hi-dpi devices.
 	pxRatio = (float)fbWidth / (float)winWidth;
 
+	printf("%.3f\n", pxRatio);
+
 	// The image pattern is tiled, set repeat on x and y.
 	fb = nvgluCreateFramebuffer(vg, (int)(100*pxRatio), (int)(100*pxRatio), NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
 	if (fb == NULL) {
@@ -244,10 +246,10 @@ int main()
 			nvgRestore(vg);
 		}
 
-		renderGraph(vg, 5,5, &fps);
-		renderGraph(vg, 5+200+5,5, &cpuGraph);
-		if (gpuTimer.supported)
-			renderGraph(vg, 5+200+5+200+5,5, &gpuGraph);
+		// renderGraph(vg, 5,5, &fps);
+		// renderGraph(vg, 5+200+5,5, &cpuGraph);
+		// if (gpuTimer.supported)
+		// 	renderGraph(vg, 5+200+5+200+5,5, &gpuGraph);
 
 		nvgEndFrame(vg);
 

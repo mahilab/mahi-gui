@@ -25,7 +25,7 @@ public:
         static float ts = 1;
         if (ImGui::SliderFloat("Time Scale", &ts, 0, 2))
             set_time_scale(ts);
-        ImGui::Text("Real Time:  %.3f s", realtime().as_seconds());
+        ImGui::Text("Real Time:  %.3f s", real_time().as_seconds());
         ImGui::Text("Time:       %.3f s", time().as_seconds());
         ImGui::Text("Delta Time: %.3f s", delta_time().as_seconds());
         ImGui::End();

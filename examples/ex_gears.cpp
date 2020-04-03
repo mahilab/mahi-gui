@@ -132,7 +132,6 @@ class GearsDemo : public Application {
 public:
     GearsDemo(Application::Config conf) : Application(conf) {
 
-
         static float pos[4] = {5.f, 5.f, 10.f, 0.f};
 
         glLightfv(GL_LIGHT0, GL_POSITION, pos);
@@ -168,55 +167,45 @@ public:
     }
 
     void update() {
-        draw();
-        animate();
-
         ImGui::Begin("Gears");
         ImGui::DragFloat("Rot. X", &view_rotx, 1, 0, 360);
         ImGui::DragFloat("Rot. Y", &view_roty, 1, 0, 360);
         ImGui::DragFloat("Rot. Z", &view_rotz, 1, 0, 360);
         ImGui::DragFloat("Speed", &speed, 1, 0, 1000);
-
         ImGui::End();
+        // animate
+        angle = speed * (float)time().as_seconds();
     }
 
-    void animate() { angle = speed * (float)time().as_seconds(); }
-
-    void draw(void) {
+    void draw() override {
         glPushMatrix();
         glRotatef(view_rotx, 1.0, 0.0, 0.0);
         glRotatef(view_roty, 0.0, 1.0, 0.0);
         glRotatef(view_rotz, 0.0, 0.0, 1.0);
-
         glPushMatrix();
         glTranslatef(-3.0, -2.0, 0.0);
         glRotatef(angle, 0.0, 0.0, 1.0);
         glCallList(gear1);
         glPopMatrix();
-
         glPushMatrix();
         glTranslatef(3.1f, -2.f, 0.f);
         glRotatef(-2.f * angle - 9.f, 0.f, 0.f, 1.f);
         glCallList(gear2);
         glPopMatrix();
-
         glPushMatrix();
         glTranslatef(-3.1f, 4.2f, 0.f);
         glRotatef(-2.f * angle - 25.f, 0.f, 0.f, 1.f);
         glCallList(gear3);
         glPopMatrix();
-
         glPopMatrix();
     }
 
     void reshape(int width, int height) {
         float h = (float)height / (float)width;
         float xmax, znear, zfar;
-
         znear = 5.0f;
         zfar  = 30.0f;
         xmax  = znear * 0.5f;
-
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glFrustum(-xmax, xmax, -xmax * h, xmax * h, znear, zfar);

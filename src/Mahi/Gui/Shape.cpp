@@ -11,23 +11,23 @@ namespace gui {
 
 namespace {
 
-ClipperLib::Path toClipper(const std::vector<Vec2>& carnot) {
+ClipperLib::Path to_clipper(const std::vector<Vec2>& vec) {
     ClipperLib::Path clipper;
-    clipper.resize(carnot.size());
-    for (std::size_t i = 0; i < carnot.size(); ++i) {
-        clipper[i] = ClipperLib::IntPoint(static_cast<ClipperLib::cInt>(carnot[i].x * CLIPPER_PREC),
-                                     static_cast<ClipperLib::cInt>(carnot[i].y * CLIPPER_PREC));
+    clipper.resize(vec.size());
+    for (std::size_t i = 0; i < vec.size(); ++i) {
+        clipper[i] = ClipperLib::IntPoint(static_cast<ClipperLib::cInt>(vec[i].x * CLIPPER_PREC),
+                                          static_cast<ClipperLib::cInt>(vec[i].y * CLIPPER_PREC));
     }
     return clipper;
 }
 
-std::vector<Vec2> fromClipper(const ClipperLib::Path& clipper) {
-    std::vector<Vec2> carnot(clipper.size());
+std::vector<Vec2> from_clipper(const ClipperLib::Path& clipper) {
+    std::vector<Vec2> vec(clipper.size());
     for (std::size_t j = 0; j < clipper.size(); ++j) {
-        carnot[j] = Vec2(static_cast<float>(clipper[j].X) * INV_CLIPPER_PREC,
-                                      static_cast<float>(clipper[j].Y) * INV_CLIPPER_PREC);
+        vec[j] = Vec2(static_cast<float>(clipper[j].X) * INV_CLIPPER_PREC,
+                      static_cast<float>(clipper[j].Y) * INV_CLIPPER_PREC);
     }
-    return carnot;
+    return vec;
 }
 
 } // namespace carnot
@@ -89,28 +89,43 @@ void Shape::push_back(float x, float y) {
 }
 
 void Shape::move(float x, float y) {
-    move(Vec2(x,y));
+    Transform matrix = Transform::Identity;
+    matrix.translate(x, y);
+    transform(matrix);
 }
 
 void Shape::move(const Vec2& offset) {
     Transform matrix = Transform::Identity;
-    matrix.translate(offset);
+    matrix.translate(offset.x, offset.y);
     transform(matrix);
 }
 
 void Shape::scale(float x, float y) {
-    scale(Vec2(x,y));
-}
+    Transform matrix = Transform::Identity;
+    matrix.scale(x,y);
+    transform(matrix);}
 
 void Shape::scale(const Vec2& scale) {
     Transform matrix = Transform::Identity;
-    matrix.scale(scale);
+    matrix.scale(scale.x, scale.y);
     transform(matrix);
 }
 
 void Shape::rotate(float angle) {
     Transform matrix = Transform::Identity;
     matrix.rotate(angle);
+    transform(matrix);
+}
+
+void Shape::rotate(float angle, const Vec2& center) {
+    Transform matrix = Transform::Identity;
+    matrix.rotate(angle, center.x, center.y);
+    transform(matrix);
+}
+
+void Shape::rotate(float angle, float cx, float cy) {
+    Transform matrix = Transform::Identity;
+    matrix.rotate(angle, cx, cy);
     transform(matrix);
 }
 
@@ -388,7 +403,7 @@ void Shape::update_bounds() const {
 //==============================================================================
 
 Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
-    ClipperLib::Path subj = toClipper(shape.vertices());
+    ClipperLib::Path subj = to_clipper(shape.vertices());
     ClipperLib::ClipperOffset co;
     switch (type) {
         case Miter:
@@ -404,10 +419,10 @@ Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
     co.Execute(solution, offset * CLIPPER_PREC);
     Shape offset_shape;
     if (solution.size() > 0)
-        offset_shape.set_points(fromClipper(solution[0]));
+        offset_shape.set_points(from_clipper(solution[0]));
     for (std::size_t i = 0; i < shape.hole_count(); ++i) {
         co.Clear();
-        ClipperLib::Path holeSubj = toClipper(shape.hole(i).vertices());
+        ClipperLib::Path holeSubj = to_clipper(shape.hole(i).vertices());
         switch (type) {
             case Miter:
                 co.AddPath(holeSubj, ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
@@ -422,7 +437,7 @@ Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
         co.Execute(solution, -offset * CLIPPER_PREC);
         if (solution.size() > 0) {
             Shape hole;
-            hole.set_points(fromClipper(solution[0]));
+            hole.set_points(from_clipper(solution[0]));
             offset_shape.push_back_hole(hole);
         }
     }
@@ -435,13 +450,13 @@ std::vector<Shape> clip_shapes(const Shape &subject, const Shape &clip, ClipType
     ClipperLib::Paths subj;
     ClipperLib::Paths clp;
 
-    subj << toClipper(subject.vertices());
-    clp  << toClipper(clip.vertices());
+    subj << to_clipper(subject.vertices());
+    clp  << to_clipper(clip.vertices());
 
     for (std::size_t i = 0; i < subject.hole_count(); ++i)
-        subj << toClipper(subject.hole(i).vertices());
+        subj << to_clipper(subject.hole(i).vertices());
     for (std::size_t i = 0; i < clip.hole_count(); ++i)
-        clp << toClipper(clip.hole(i).vertices());
+        clp << to_clipper(clip.hole(i).vertices());
 
     ClipperLib::Clipper clpr;
     clpr.AddPaths(subj, ClipperLib::ptSubject, true);
@@ -464,12 +479,12 @@ std::vector<Shape> clip_shapes(const Shape &subject, const Shape &clip, ClipType
     }
     std::vector<Shape> clippedShapes(polyTree.ChildCount());
     for (std::size_t i = 0; i < static_cast<std::size_t>(polyTree.ChildCount()); ++i) {
-        clippedShapes[i].set_points(fromClipper(polyTree.Childs[i]->Contour));
+        clippedShapes[i].set_points(from_clipper(polyTree.Childs[i]->Contour));
         // add holes
         for (std::size_t j = 0; j < static_cast<std::size_t>(polyTree.Childs[i]->ChildCount()); ++j) {
             if (polyTree.Childs[i]->Childs[j]->IsHole()) {
                 Shape hole;
-                hole.set_points(fromClipper(polyTree.Childs[i]->Childs[j]->Contour));
+                hole.set_points(from_clipper(polyTree.Childs[i]->Childs[j]->Contour));
                 clippedShapes[i].push_back_hole(hole);
             }
         }

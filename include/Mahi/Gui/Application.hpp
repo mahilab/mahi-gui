@@ -60,26 +60,22 @@ public:
     Application(const std::string& title, int monitor = 0);
     /// Windowed Main Window Constructor
     Application(int width, int height, const std::string& title, bool resizable = true, int monitor = 0);
-    /// Advanced Construct from Application::Config instance
+    /// Advanced Constructor from Application::Config instance
     Application(const Config& conf);
     /// Destructor
     ~Application();
 
-    /// Runs the application
+    /// Runs the application. Usually called from main.
     void run();
-    /// Quits the application
+    /// Quits the application. Usually called internally be derived classes.
     void quit();
-    /// Called once per frame
-    virtual void update() { /* nothing by default */ }
-    /// NanoVG drawing context, called immediately after update()
-    virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
 
-    /// Gets the current real time since startup (not affected by time scale)
-    util::Time realtime() const;
     /// Get the current time (affected by time scale)
     util::Time time() const;
     /// Gets the delta time between consecutive calls to update (affected by time scale)
-    util::Time delta_time() const;
+    util::Time delta_time() const;    
+    /// Gets the current real time since startup (not affected by time scale)
+    util::Time real_time() const;
     /// Sets the time to a desired value
     void set_time(util::Time t);
     /// Sets the time scaling factor, which can be used for slow motion effects 
@@ -124,40 +120,12 @@ public:
     /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit) 
     void set_frame_limit(util::Frequency freq);
 
+    // TODO: Input API (use ImGui for now)
+
     /// Get the mouse position 
     Vec2 get_mouse_pos() const;
 
-public:
-    /// Emitted when the Window moves
-    util::Event<void(int,int)> on_window_moved;
-    /// Emitted when the Window is resized
-    util::Event<void(int,int)> on_window_resized;
-    /// Emitted right before the Window is closed; return false to cancel the close
-    util::Event<bool(void), util::CollectorBooleanAnd> on_window_closed;
-    /// Emitted when a key is pressed, repeated, or release.
-    util::Event<void(int,int,int,int)> on_keyboard;
-    /// Emitted when the application quits
-    util::Event<void(void)> on_application_quit;
-    /// Emitted when file(s) is dropped, passes list of filepaths
-    util::Event<void(const std::vector<std::string>&)> on_file_drop;
-    /// Emitted when there is an internal GLFW error (error code, description)
-    static util::Event<void(int, const std::string&)> on_error;
-
-protected:
-    /// Internal GLFW window handle, you can use glfwXXX functions with this
-    GLFWwindow *m_window;
-    /// Internal NVG Context, you use use nvgXXX functions with this
-    NVGcontext* m_nvg;
-
-private:
-    Config m_conf;
-    util::Time m_frame_time;
-    util::Time m_dt;
-    util::Time m_time;
-    float m_time_scale;
-
 #ifdef MAHI_COROUTINES
-public:
     /// Starts a coroutine
     std::shared_ptr<util::Coroutine> start_coroutine(util::Enumerator &&coro);
     /// Stops an already running coroutine
@@ -168,9 +136,47 @@ public:
     int coroutine_count() const;
     /// Yield instruction which waits for scaled time. Prefer this over mahi::util::yield_time.
     std::shared_ptr<YieldTimeScaled> yield_time_scaled(util::Time duration);
+#endif
+
+protected:
+
+    /// Called once per frame. For application logic and ImGui. Do not make raw OpenGL calls here.
+    virtual void update() { /* nothing by default */ }
+    /// Generic OpenGL drawing context, called immediately after update(). 
+    virtual void draw() { /* nothing by default */ }
+    /// NanoVG specific drawing context, called immediately after draw()
+    virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
+
+public:
+    /// Emitted when the Window moves. Passes (x,y) window position pixels.
+    util::Event<void(int,int)> on_window_moved;
+    /// Emitted when the Window is resized. Passes (width,height) window size in pixels.
+    util::Event<void(int,int)> on_window_resized;
+    /// Emitted right before the Window is closed. Return false to cancel the close.
+    util::Event<bool(void), util::CollectorBooleanAnd> on_window_closing;
+    /// Emitted when a key is pressed, repeated, or release. Passes (key, scancode, action, mods). See GLFW.
+    util::Event<void(int,int,int,int)> on_keyboard;
+    /// Emitted when the application quits.
+    util::Event<void(void)> on_application_quit;
+    /// Emitted when file(s) is dropped Passes vector of filepaths.
+    util::Event<void(const std::vector<std::string>&)> on_file_drop;
+    /// Emitted when there is an internal GLFW error. Passes (error code, description).
+    static util::Event<void(int, const std::string&)> on_error;
+
+protected:
+    /// Internal GLFW window handle, you can use glfwXXX functions with this
+    GLFWwindow *m_window;
+    /// Internal NVG Context, you can use use nvgXXX functions with this
+    NVGcontext* m_vg;
+
 private:
-    /// Vector of running coroutines
-    std::vector<util::Enumerator> m_coroutines;
+    Config m_conf;           ///< Application configuration
+    util::Time m_frame_time; ///< target time to sleep to each frame if VSync is disabled
+    util::Time m_dt;         ///< delta time (scaled)
+    util::Time m_time;       ///< Application time (scaled)
+    float m_time_scale;      ///< time scale (default = 1, no scale)
+#ifdef MAHI_COROUTINES
+    std::vector<util::Enumerator> m_coroutines;  /// Vector of running coroutines
 #endif
 };
 

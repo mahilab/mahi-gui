@@ -9,11 +9,11 @@ class NvgDemo : public Application {
 public:
     NvgDemo(Config conf) : Application(conf) { 
         set_background({0.3f, 0.3f, 0.32f, 1.0f});
-        loadDemoData(m_nvg,&data);
+        loadDemoData(m_vg,&data);
     }
 
     ~NvgDemo() {
-        freeDemoData(m_nvg,&data);
+        freeDemoData(m_vg,&data);
     }
 
     void update() override { 

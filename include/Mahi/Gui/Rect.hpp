@@ -13,6 +13,11 @@
 // all copies or substantial portions of the Software.
 //
 // Author(s): Evan Pezent (epezent@rice.edu)
+//
+// Adapted from:
+//
+// SFML - Simple and Fast Multimedia Library
+// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
 
 #pragma once
 

@@ -57,7 +57,7 @@ public:
         glLinkProgram(shader);
     }
 
-    void update() {
+    void draw() override {
         glUseProgram(shader);
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);

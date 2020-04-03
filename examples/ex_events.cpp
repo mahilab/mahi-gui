@@ -25,7 +25,7 @@ public:
         // connect Event usign a static member function
         on_file_drop.connect(&EventsDemo::file_drop_handler);
         // connect Event using a free function
-        on_window_closed.connect(window_close_handler);
+        on_window_closing.connect(window_close_handler);
     }
 
     void window_resize_handler(int width, int height) {
