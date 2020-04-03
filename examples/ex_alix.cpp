@@ -10,11 +10,11 @@ public:
     { 
         // disable viewports
         ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable;
-        generate_dots({250,250}, 50, 20000);
-        generate_dots({500,250}, 50, 20000);
-        generate_dots({750,250}, 50, 20000);
-        generate_dots({1000,250}, 50, 20000);
-        generate_dots({1250,250}, 50, 20000);
+        generate_dots({360,540}, 50, 20000);
+        generate_dots({660,540}, 50, 20000);
+        generate_dots({960,540}, 50, 20000);
+        generate_dots({1260,540}, 50, 20000);
+        generate_dots({1560,540}, 50, 20000);
         set_vsync(false);
     }
 
@@ -24,11 +24,6 @@ public:
                 ImGui::GetBackgroundDrawList()->AddRectFilled(dot,dot + ImVec2(1,1), dotColor);
             }
         }
-        ImGui::Begin("My Window");
-        ImGui::Checkbox("Anit-Aliased Lines", &ImGui::GetStyle().AntiAliasedLines);
-        ImGui::Checkbox("Anit-Aliased Fill", &ImGui::GetStyle().AntiAliasedFill);
-        ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
-        ImGui::End();
     }    
 
     void generate_dots(ImVec2 center, float radius, int n) {

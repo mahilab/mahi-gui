@@ -37,8 +37,13 @@ public:
                 i, t, i.data.back().y + random_range(0.0049f, 0.0051f) * random_range(-1.0, 1.0), 1000);
 
         ImGui::SameLine();
-        ImGui::Plot("My Rolling Plot", plot, items);
-        ImGui::PlotAxisScroll(plot.x_axis, t, 10);
+ImGui::Plot("My Rolling Plot", plot, items);
+ImGui::PlotAxisScroll(plot.x_axis, t, 10);
+if (ImGui::IsItemHovered()) {
+    ImGui::BeginTooltip();
+    ImGui::Text("My Plot");
+    ImGui::EndTooltip();
+}
 
         if (ImGui::BeginDragDropTarget()) {
             if (ImGui::AcceptDragDropPayload("DND_PLOT")) {

@@ -32,7 +32,7 @@
 namespace mahi {
 namespace gui {
 
-/// A Windowed Application
+/// A Application
 class Application
 {
 public:
