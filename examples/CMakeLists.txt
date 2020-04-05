@@ -45,5 +45,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Clang AND WIN32)
 elseif(CMAKE_SYSTEM MATCHES "Linux")
     # Only GCC? Need to confirm
 elseif(MAHI_UTIL_COROUTINES)
+    mahi_gui_example(puzzometry)
     mahi_gui_example(coroutines)
+    mahi_gui_example(coroutines_benchmark)
 endif()
