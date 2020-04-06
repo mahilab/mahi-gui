@@ -535,7 +535,7 @@ class Board
 {
   public:
   
-    Board() : matrix(g_board), color(Grays::Gray50) {
+    Board(Application* app) : app(app), matrix(g_board), color(Grays::Gray50) {
         shape.set_point_count(4);
         shape.set_point(0, coordPosition(9,-2));
         shape.set_point(1, coordPosition(-2,9));
@@ -548,6 +548,24 @@ class Board
     }
 
     void draw(NVGcontext* vg) {
+
+        float trans[6], inv[6];
+        nvgCurrentTransform(vg, trans);
+        nvgTransformInverse(inv, trans);
+        Vec2 mouse = app->get_mouse_pos();
+        nvgTransformPoint(&mouse.x, &mouse.y, inv, mouse.x, mouse.y);
+        bool hovered = shape.contains(mouse);
+
+        if (hovered) {
+            ImGui::BeginTooltip();
+            ImGui::Text("Board");
+            ImGui::Separator();
+            auto matStr = matToStr(matrix);
+            ImGui::Text(matStr.c_str());
+            ImGui::Separator();
+            ImGui::EndTooltip();
+        }
+
         Vec2 tl = shape.bounds().position();
         Vec2 br = tl + shape.bounds().size();
         nvgBeginPath(vg);
@@ -556,10 +574,11 @@ class Board
         nvgFillPaint(vg, paint);
         nvgFill(vg);
         nvgStrokeColor(vg, Grays::Gray80);
-        nvgStrokeWidth(vg, 1);
+        nvgStrokeWidth(vg, hovered ? 3 : 1);
         nvgStroke(vg);
     }
 
+    Application* app;
     Shape shape;
     Matrix matrix;
     Color color;
@@ -573,7 +592,7 @@ class Piece
 {
   public:
 
-    Piece(const Matrix &mat, const Color &col, Application* app) : m_app(app), matrix(mat), color(col)
+    Piece(const Matrix &mat, const Color &col, Application* app) : app(app), matrix(mat), color(col)
     {
         shape = makeShape(matrix);
         shape = offset_shape(shape, -2.0f);
@@ -591,28 +610,28 @@ class Piece
         perm = 0;
     }
 
-    Vec2 getScale(int perm) {
+
+    Vec2 computeScale(int perm) {
         return perm < 4 ? Vec2(1,1) : Vec2(-1,1);
     }
 
-    Vec2 getOrigin(int perm) {
+    Vec2 computeOrigin(int perm) {
         return g_gridSize * Vec2((perm == 2 || perm == 3 || perm == 4 || perm == 5) ? (float)size(matrix,1) - 1 : 0.0f, 
                                  (perm == 1 || perm == 2 || perm == 5 || perm == 6) ? (float)size(matrix,0) - 1 : 0.0f);
     }
 
-    float getRotation(int perm) {
+    float computeRotation(int perm) {
         return 90.0f * (float)(perm % 4);
     }
 
     void place(const Coord& new_coord, int new_perm) {
         pos = coordPosition(new_coord); 
-        origin = getOrigin(new_perm);
-        scale  = getScale(new_perm);
-        rotation = getRotation(new_perm);
+        origin = computeOrigin(new_perm);
+        scale  = computeScale(new_perm);
+        rotation = computeRotation(new_perm);
         coord = new_coord;
         perm = new_perm;
     }
-
 
     Enumerator transition(Coord to_coord, int perm, float duration) {
         transitioning = true;
@@ -623,9 +642,9 @@ class Piece
         auto startOrigin   = origin;
         // end state
         auto endPosition   = coordPosition(to_coord);
-        auto endRotation   = getRotation(perm);
-        auto endScale      = getScale(perm);
-        auto endOrigin     = getOrigin(perm);
+        auto endRotation   = computeRotation(perm);
+        auto endScale      = computeScale(perm);
+        auto endOrigin     = computeOrigin(perm);
         // animation loop
         float elapsedTime = 0.0f;
         while (elapsedTime < duration) {
@@ -634,19 +653,16 @@ class Piece
             rotation = Tween::Smootherstep(startRotation, endRotation, t);
             scale = Tween::Smootherstep(startScale, endScale, t);
             origin = Tween::Smootherstep(startOrigin, endOrigin, t);
-            elapsedTime += (float)m_app->delta_time().as_seconds();
+            elapsedTime += (float)app->delta_time().as_seconds();
             co_yield nullptr;
         }        
-        pos = endPosition;
-        rotation = endRotation;
-        scale = endScale;
-        origin = endOrigin;
         place(to_coord, perm);
         transitioning = false;        
     }
 
     void draw(NVGcontext* vg) {
-        float angle  = -rotation * 3.141592654f / 180.f;
+
+        float angle  = -rotation * (float)DEG2RAD;
         float c = static_cast<float>(std::cos(angle));
         float s   = static_cast<float>(std::sin(angle));
         float sxc    = scale.x * c;
@@ -656,6 +672,26 @@ class Piece
         float tx     = -origin.x * sxc - origin.y * sys + pos.x;
         float ty     =  origin.x * sxs - origin.y * syc + pos.y;
         nvgTransform(vg, sxc, -sxs, sys, syc, tx, ty);
+
+        float trans[6], inv[6];
+        nvgCurrentTransform(vg, trans);
+        nvgTransformInverse(inv, trans);
+        Vec2 mouse = app->get_mouse_pos();
+        nvgTransformPoint(&mouse.x, &mouse.y, inv, mouse.x, mouse.y);
+        bool hovered = shape.contains(mouse);
+        if (hovered) {
+            ImGui::BeginTooltip();
+            ImGui::TextColored(color, "Piece");
+            ImGui::Text("R:%i C:%i P:%i", coord.r, coord.c, perm);
+            ImGui::Separator();
+            auto permMat = matrix;
+            permute(permMat, perm);
+            auto matStr = matToStr(permMat);
+            ImGui::Text(matStr.c_str());
+            ImGui::Separator();
+            ImGui::EndTooltip();
+        }
+
         Vec2 tl = shape.bounds().position();
         Vec2 br = tl + shape.bounds().size();
         nvgBeginPath(vg);
@@ -664,7 +700,7 @@ class Piece
         nvgFillPaint(vg, paint);
         nvgFill(vg);        
         nvgStrokeColor(vg, Tween::Linear(Whites::White, color, 0.5f));
-        nvgStrokeWidth(vg,1);
+        nvgStrokeWidth(vg, hovered ? 3 : 1);
         nvgStroke(vg);
     }
 
@@ -675,10 +711,9 @@ class Piece
         }
     }
 
-    Application* m_app;
+    Application* app;
     Shape shape;
     bool transitioning = false;
-    bool selected = false;
     int perm;
     Coord coord;
     Matrix matrix;
@@ -687,16 +722,15 @@ class Piece
     Vec2 pos;
     Vec2 scale;
     float rotation;
-    
 };
 
 //==============================================================================
-// PUZZOMETRY (ROOT OBJECT)
+// PUZZOMETRY 
 //==============================================================================
 
 class Puzzometry : public Application {
 public:
-    Puzzometry() : Application(800,800,"Puzzometry",false,0), problem(g_board, g_matrices), solver(problem.dense, problem.numCols) { 
+    Puzzometry() : Application(800,800,"Puzzometry",false,0), board(this), problem(g_board, g_matrices), solver(problem.dense, problem.numCols) { 
 
         pieces.reserve(g_matrices.size());
         for (size_t i = 0; i < g_matrices.size(); ++i) {
@@ -706,6 +740,7 @@ public:
         }
         // solve
         set_vsync(false);  
+        nvgCreateFontMem(m_vg, "roboto-bold", Roboto_Bold_ttf, Roboto_Bold_ttf_len, 0);
         createCheckerBoard();   
     }
 
@@ -804,7 +839,7 @@ public:
                 pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
             ImGui::SameLine();
-            if (ImGui::SliderInt("Perm",&p,0,7))
+            if (ImGui::SliderInt("Permutation",&p,0,7))
             { 
                 pieces[i].perm = p;
                 pieces[i].place(pieces[i].coord, pieces[i].perm);
@@ -822,10 +857,13 @@ public:
         nvgFillPaint(vg, img);
         nvgFill(vg);
 
-        nvgTranslate(vg, 400 - g_gridSize*7.5f,400-g_gridSize*7.5f);
+        nvgTranslate(vg, 400-g_gridSize*7.5f, 400-g_gridSize*7.5f);
 
         // grid
         for (int i = 0; i < 16; ++i) {
+            static std::vector<const char*> rtxt = {"R0","R1","R2","R3","R4","R5","R6","R7","R8","R9","R10","R11","R12","R13","R14","R15"};
+            static std::vector<const char*> ctxt = {"C0","C1","C2","C3","C4","C5","C6","C7","C8","C9","C10","C11","C12","C13","C14","C15"};
+
             auto p1 = coordPosition(-1, i);
             auto p2 = coordPosition(16, i);
             auto p3 = coordPosition(i, -1);
@@ -842,6 +880,14 @@ public:
             nvgStrokeColor(vg, Grays::Gray30);
             nvgStrokeWidth(vg, 1);
             nvgStroke(vg);
+            nvgFontSize(vg,15);
+            nvgFontFace(vg, "roboto-bold");
+            nvgFillColor(vg, Whites::White);
+            nvgTextAlign(vg, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+            nvgText(vg, p3.x - 10, p3.y, rtxt[i], nullptr);
+            nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+            nvgText(vg, p2.x, p2.y + 10, ctxt[i], nullptr);
+
         }
 
         board.draw(vg);
@@ -856,8 +902,8 @@ public:
         stop_coroutines();
         animating = true;
         for (auto& p : pieces)
-            co_yield start_coroutine(p.transition({0, 0}, 0, 0.1f));
-        // co_yield yield_time_scaled(500_ms);
+            start_coroutine(p.transition({0, 0}, 0, 0.1f));
+        co_yield yield_time_scaled(200_ms);
         for (auto i : range(solver.operations.size())) {
             percent = (float)i / (float)solver.operations.size();
             auto op    = solver.operations[i];
@@ -889,6 +935,7 @@ public:
     bool toggled = true;
     float percent = 0;
     NVGLUframebuffer* checker = NULL;
+
 };
 
 

@@ -19,6 +19,7 @@
 #include <nanosvg.h>
 #include <Mahi/Gui/Shape.hpp>
 #include <Mahi/Gui/Color.hpp>
+#include <Mahi/Gui/Transform.hpp>
 
 namespace mahi {
 namespace gui {
@@ -63,6 +64,12 @@ inline void nvgStrokeShape(NVGcontext* vg, const Shape& shape, float width, cons
 
 /// Draws an SVG file from a NSVGimage, created with nsvgParseFromFile
 void nvgDrawSvg(NVGcontext* vg, NSVGimage* svg);
+
+/// Premultiplies current coordinate system by specified Transformation matrix.
+inline void nvgTransform(NVGcontext* vg, const Transform& transform) {
+    auto m = transform.matrix();
+    nvgTransform(vg, m[0], m[1], m[4], m[5], m[12], m[13]);
+}
 
 } // namespace gui
 } // namespace mahi
