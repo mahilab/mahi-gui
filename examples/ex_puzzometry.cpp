@@ -25,6 +25,8 @@ using namespace mahi::util;
 #include <set>
 #include <fstream>
 #include <utility>
+#include <algorithm>
+#include <random>
 
 using std::size_t;
 using std::vector;
@@ -81,11 +83,10 @@ inline void permute(Matrix& mat, size_t permutation) {
         case 1 : { rot90(mat); break; }
         case 2 : { rot90(mat); rot90(mat); break;}
         case 3 : { rot90(mat); rot90(mat); rot90(mat); break;}
-        case 4 : { break; }
-        case 5 : { fliplr(mat); break;}
-        case 6 : { fliplr(mat); rot90(mat); break;}
-        case 7 : { fliplr(mat); rot90(mat); rot90(mat); break;}
-        case 8 : { fliplr(mat); rot90(mat); rot90(mat); rot90(mat); break;}
+        case 4 : { fliplr(mat); break;}
+        case 5 : { fliplr(mat); rot90(mat); break;}
+        case 6 : { fliplr(mat); rot90(mat); rot90(mat); break;}
+        case 7 : { fliplr(mat); rot90(mat); rot90(mat); rot90(mat); break;}
     }
 }
 
@@ -170,7 +171,7 @@ const Matrix g_board {
     {0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-const vector<Matrix> g_pieces
+const vector<Matrix> g_matrices
 {
     {{8, 4, 8, 4}, {0, 8, 4, 8}},                                          
     {{0, 4, 8}, {4, 8, 4}, {8, 4, 8}},                                     
@@ -572,42 +573,48 @@ class Piece
 {
   public:
 
-    Piece(const Matrix &mat, const Color &col, Application& app) : m_app(app), m_matrix(mat), m_color(col)
+    Piece(const Matrix &mat, const Color &col, Application* app) : m_app(app), matrix(mat), color(col)
     {
-        m_shape = makeShape(m_matrix);
-        m_shape = offset_shape(m_shape, -2.0f);
-        m_perm = 0;
+        shape = makeShape(matrix);
+        shape = offset_shape(shape, -2.0f);
+        perm = 0;
         pos = Vec2(0,0);
         origin = Vec2(0,0);
         scale = Vec2(1,1);
         rotation = 0;
     }
 
+    void updateMatrix(const Matrix &mat) {
+        matrix = mat;
+        shape = makeShape(matrix);
+        shape = offset_shape(shape, -2.0f);
+        perm = 0;
+    }
 
     Vec2 getScale(int perm) {
         return perm < 4 ? Vec2(1,1) : Vec2(-1,1);
     }
 
     Vec2 getOrigin(int perm) {
-        return g_gridSize * Vec2((perm == 2 || perm == 3 || perm == 4 || perm == 5) ? (float)size(m_matrix,1) - 1 : 0.0f, 
-                                 (perm == 1 || perm == 2 || perm == 5 || perm == 6) ? (float)size(m_matrix,0) - 1 : 0.0f);
+        return g_gridSize * Vec2((perm == 2 || perm == 3 || perm == 4 || perm == 5) ? (float)size(matrix,1) - 1 : 0.0f, 
+                                 (perm == 1 || perm == 2 || perm == 5 || perm == 6) ? (float)size(matrix,0) - 1 : 0.0f);
     }
 
     float getRotation(int perm) {
         return 90.0f * (float)(perm % 4);
     }
 
-    void place(const Coord& coord, int perm) {
-        pos = coordPosition(coord); 
-        origin = getOrigin(perm);
-        scale  = getScale(perm);
-        rotation = getRotation(perm);
-        m_coord = coord;
-        m_perm = perm;
+    void place(const Coord& new_coord, int new_perm) {
+        pos = coordPosition(new_coord); 
+        origin = getOrigin(new_perm);
+        scale  = getScale(new_perm);
+        rotation = getRotation(new_perm);
+        coord = new_coord;
+        perm = new_perm;
     }
 
 
-    Enumerator transition(Coord coord, int perm, float duration) {
+    Enumerator transition(Coord to_coord, int perm, float duration) {
         transitioning = true;
         // start state
         auto startPosition = pos;
@@ -615,7 +622,7 @@ class Piece
         auto startScale    = scale;
         auto startOrigin   = origin;
         // end state
-        auto endPosition   = coordPosition(coord);
+        auto endPosition   = coordPosition(to_coord);
         auto endRotation   = getRotation(perm);
         auto endScale      = getScale(perm);
         auto endOrigin     = getOrigin(perm);
@@ -627,14 +634,14 @@ class Piece
             rotation = Tween::Smootherstep(startRotation, endRotation, t);
             scale = Tween::Smootherstep(startScale, endScale, t);
             origin = Tween::Smootherstep(startOrigin, endOrigin, t);
-            elapsedTime += (float)m_app.delta_time().as_seconds();
+            elapsedTime += (float)m_app->delta_time().as_seconds();
             co_yield nullptr;
         }        
         pos = endPosition;
         rotation = endRotation;
         scale = endScale;
         origin = endOrigin;
-        place(coord, perm);
+        place(to_coord, perm);
         transitioning = false;        
     }
 
@@ -649,14 +656,14 @@ class Piece
         float tx     = -origin.x * sxc - origin.y * sys + pos.x;
         float ty     =  origin.x * sxs - origin.y * syc + pos.y;
         nvgTransform(vg, sxc, -sxs, sys, syc, tx, ty);
-        Vec2 tl = m_shape.bounds().position();
-        Vec2 br = tl + m_shape.bounds().size();
+        Vec2 tl = shape.bounds().position();
+        Vec2 br = tl + shape.bounds().size();
         nvgBeginPath(vg);
-        nvgShape(vg, m_shape);
-        auto paint = nvgLinearGradient(vg, tl.x, tl.y, br.x, br.y, with_alpha(m_color,0.25f), with_alpha(m_color,0.5f));   
+        nvgShape(vg, shape);
+        auto paint = nvgLinearGradient(vg, tl.x, tl.y, br.x, br.y, with_alpha(color,0.25f), with_alpha(color,0.5f));   
         nvgFillPaint(vg, paint);
         nvgFill(vg);        
-        nvgStrokeColor(vg, Tween::Linear(Whites::White, m_color, 0.5f));
+        nvgStrokeColor(vg, Tween::Linear(Whites::White, color, 0.5f));
         nvgStrokeWidth(vg,1);
         nvgStroke(vg);
     }
@@ -668,16 +675,14 @@ class Piece
         }
     }
 
-    Application& m_app;
-    Shape m_shape;
-
+    Application* m_app;
+    Shape shape;
     bool transitioning = false;
-    bool m_selected = false;
-    int m_perm;
-    Coord   m_coord;
-    Matrix    m_matrix;
-    Color      m_color;
-
+    bool selected = false;
+    int perm;
+    Coord coord;
+    Matrix matrix;
+    Color color;
     Vec2 origin;
     Vec2 pos;
     Vec2 scale;
@@ -691,52 +696,118 @@ class Piece
 
 class Puzzometry : public Application {
 public:
-    Puzzometry() : Application(800,800,"Puzzometry",false,1), problem(g_board, g_pieces), solver(problem.dense, problem.numCols) { 
+    Puzzometry() : Application(800,800,"Puzzometry",false,0), problem(g_board, g_matrices), solver(problem.dense, problem.numCols) { 
 
-        pieces.reserve(g_pieces.size());
-        for (size_t i = 0; i < g_pieces.size(); ++i) {
-            auto p = Piece(g_pieces[i], g_colors[i], *this);
+        pieces.reserve(g_matrices.size());
+        for (size_t i = 0; i < g_matrices.size(); ++i) {
+            auto p = Piece(g_matrices[i], g_colors[i], this);
             p.place(g_solutions[i], 0);
             pieces.emplace_back(std::move(p));
         }
         // solve
-        solver.search();
         set_vsync(false);  
+        createCheckerBoard();   
+    }
+
+    void createCheckerBoard() {
+        checker = nvgluCreateFramebuffer(m_vg, 16, 16, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);     
+        nvgluBindFramebuffer(checker);
+        glViewport(0, 0, 16, 16);
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+        nvgBeginFrame(m_vg, 16, 16, 1);
+        nvgBeginPath(m_vg);
+        nvgRect(m_vg, 0, 0, 8, 8);
+        nvgFillColor(m_vg, Grays::Gray10);
+        nvgFill(m_vg);
+            nvgBeginPath(m_vg);
+        nvgRect(m_vg, 8, 8, 16, 16);
+        nvgFillColor(m_vg, Grays::Gray10);
+        nvgFill(m_vg);
+        nvgEndFrame(m_vg);
+        nvgluBindFramebuffer(nullptr);
+    }
+
+    ~Puzzometry() {
+        nvgluDeleteFramebuffer(checker);
+    }
+
+    Enumerator shuffle() {
+        stop_coroutines();    
+        animating = false;  
+        percent = 0;
+        solver.solutions.clear();
+        std::random_device rng;
+        std::mt19937 gen(rng()); 
+        std::shuffle(pieces.begin(), pieces.end(), gen);
+        std::vector<Matrix> matrices;
+        for (auto& p : pieces) {
+            int perm = random_range(0,7);
+            auto mat = p.matrix;
+            permute(mat, perm);
+            matrices.push_back(mat);
+            co_yield start_coroutine(p.transition({0,0},perm,0.1f));
+            p.updateMatrix(mat);
+            p.place({0,0},0);
+        }
+        problem = ExactCover(g_board, matrices);
+    }
+
+
+    void solve() {
+        Clock clk;
+        solver = DLX(problem.dense, problem.numCols); 
+        solver.search();
+        ms_solve = clk.get_elapsed_time().as_milliseconds();
     }
 
     void update() {
         ImGui::Begin("Puzzometry");
-        if (ImGui::Button("Solve"))
+        if (ImGui::Button("Shuffle")) 
+            start_coroutine(shuffle());      
+        ImGui::SameLine();  
+        ImGui::BeginDisabled(animating || solver.solutions.size() > 0);
+        if (ImGui::Button("Solve")) 
+            solve();        
+        ImGui::EndDisabled();
+        if (solver.solutions.size()) {
+            ImGui::SameLine();
+            ImGui::Text("Solve Time: %d ms | Operations: %d", ms_solve, solver.operations.size(), solver.solutions.size());
+        }
+
+        ImGui::BeginDisabled(solver.solutions.size() == 0);
+        if (ImGui::Button("Animate"))
             start_coroutine(animateSolution());
         ImGui::SameLine();
-        ImGui::ProgressBar(percent);
+        ImGui::ProgressBar(percent);        
         static float scale = 1;
         if (ImGui::DragFloat("Animation Speed", &scale, 0.1f, 0, 100, "%.1fx"))
             set_time_scale(scale);
+        ImGui::EndDisabled();
         ImGui::Separator();
         for (int i = 0; i < pieces.size(); ++i) {
             ImGui::PushID(i);
             ImGui::PushItemWidth(100);
-            ImGui::ColorButton("##Color",pieces[i].m_color); ImGui::SameLine();
-            int r = pieces[i].m_coord.r;
-            int c = pieces[i].m_coord.c;
-            int p = pieces[i].m_perm;
+            ImGui::ColorButton("##Color",pieces[i].color); ImGui::SameLine();
+            int r = pieces[i].coord.r;
+            int c = pieces[i].coord.c;
+            int p = pieces[i].perm;
             if (ImGui::SliderInt("Row",&r,0,15))
             { 
-                pieces[i].m_coord.r = r;
-                pieces[i].place(pieces[i].m_coord, pieces[i].m_perm);
+                pieces[i].coord.r = r;
+                pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
             ImGui::SameLine();
             if (ImGui::SliderInt("Col",&c,0,15))
             { 
-                pieces[i].m_coord.c = c;
-                pieces[i].place(pieces[i].m_coord, pieces[i].m_perm);
+                pieces[i].coord.c = c;
+                pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
             ImGui::SameLine();
-            if (ImGui::SliderInt("Perm",&p,0,8))
+            if (ImGui::SliderInt("Perm",&p,0,7))
             { 
-                pieces[i].m_perm = p;
-                pieces[i].place(pieces[i].m_coord, pieces[i].m_perm);
+                pieces[i].perm = p;
+                pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
             ImGui::PopItemWidth();
             ImGui::PopID();
@@ -745,6 +816,11 @@ public:
     }
 
     void draw(NVGcontext* vg) override {
+        NVGpaint img = nvgImagePattern(vg, 0, 0, 16, 16, 0, checker->image, 1.0f);
+        nvgBeginPath(vg);
+        nvgRect(vg,0,0,800,800);
+        nvgFillPaint(vg, img);
+        nvgFill(vg);
 
         nvgTranslate(vg, 400 - g_gridSize*7.5f,400-g_gridSize*7.5f);
 
@@ -777,10 +853,11 @@ public:
     }
 
     Enumerator animateSolution() {
+        stop_coroutines();
         animating = true;
         for (auto& p : pieces)
             co_yield start_coroutine(p.transition({0, 0}, 0, 0.1f));
-        co_yield yield_time_scaled(500_ms);
+        // co_yield yield_time_scaled(500_ms);
         for (auto i : range(solver.operations.size())) {
             percent = (float)i / (float)solver.operations.size();
             auto op    = solver.operations[i];
@@ -796,7 +873,7 @@ public:
                 auto nextOp   = solver.operations[(i + 1) % solver.operations.size()];
                 auto nextInfo = problem.info[nextOp.first];
                 if (info.piece != nextInfo.piece)
-                    co_yield start_coroutine(piece.transition({0,0}, piece.m_perm, 0.1f));
+                    co_yield start_coroutine(piece.transition({0,0}, piece.perm, 0.1f));
             }
         }
         animating = false;
@@ -804,13 +881,14 @@ public:
 
     ExactCover problem;
     DLX solver;
-
+    int ms_solve = -1;
     Board board;
     vector<Piece> pieces;
     bool spinning = false;
     bool animating = false;
     bool toggled = true;
     float percent = 0;
+    NVGLUframebuffer* checker = NULL;
 };
 
 
