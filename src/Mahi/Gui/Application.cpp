@@ -91,7 +91,7 @@ Application::Application(const Config& conf) :
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
         glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-        glfwWindowHint(GLFW_AUTO_ICONIFY, false);
+        // glfwWindowHint(GLFW_AUTO_ICONIFY, false);
         m_window = glfwCreateWindow(mode->width, mode->height, conf.title.c_str(), monitor, NULL);
     }
     else {
@@ -102,7 +102,7 @@ Application::Application(const Config& conf) :
     // Make OpenGL context current
     glfwMakeContextCurrent(m_window);
     // Enabel VSync
-    set_vsync(true);
+    set_vsync(conf.vsync);
     // center window
     if (conf.center && !conf.fullscreen)
         center_window(conf.monitor);
@@ -110,7 +110,7 @@ Application::Application(const Config& conf) :
     glfw_setup_window_callbacks(m_window, this);
     // Initialize OpenGL loader
     if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) == 0)
-        throw std::runtime_error("Failed to initialize OpenGL loader!");
+        throw std::runtime_error("Failed to initialize GLAD OpenGL loader!");
     // enable MSAA and depth testing in OpenGL
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);  
