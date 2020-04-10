@@ -51,7 +51,7 @@ public:
         int msaa           = 4;          ///< multisample anti-aliasing level (0 = none, 2, 4, 8, etc.)
         bool nvg_aa        = true;       ///< should NanoVG use anti-aliasing?
         bool vsync         = true;       ///< should VSync be enabled?
-        Color background   = {0,0,0,1};  ///< OpenGL clear color, i.e. background color
+        Color background   = {0,0,0,1};  ///< OpenGL clear color, i.e. window background color
     };
 
     /// Hidden Main Window Constructor (for using ImGui windows exclusively)
@@ -138,6 +138,21 @@ public:
     std::shared_ptr<YieldTimeScaled> yield_time_scaled(util::Time duration);
 #endif
 
+    /// Contains Application profiling information
+    struct Profile {
+        util::Time t_poll;       ///< time elapsed polling input events
+        util::Time t_update;     ///< time elapsed across update()
+        util::Time t_coroutines; ///< time elapsed across all coroutines
+        util::Time t_gl;         ///< time elapsed rendering raw OpenGL (i.e. inside of draw())
+        util::Time t_nvg;        ///< time elapsed rendering NanoVG (i.e. inside of draw(NVGcontext*)) 
+        util::Time t_imgui;      ///< time elapsed rendering ImGui
+        util::Time t_idle;       ///< time elapsed idling
+        util::Time t_buffers;    ///< time elapsed swapping OpenGL buffers
+    };
+
+    /// Gets the most recent profiling information
+    const Profile& profile() const;
+
 protected:
 
     /// Called once per frame. For application logic and ImGui. Do not make raw OpenGL calls here.
@@ -175,6 +190,7 @@ private:
     util::Time m_dt;         ///< delta time (scaled)
     util::Time m_time;       ///< Application time (scaled)
     float m_time_scale;      ///< time scale (default = 1, no scale)
+    Profile m_profile;       ///< most recent Profile
 #ifdef MAHI_COROUTINES
     std::vector<util::Enumerator> m_coroutines;  /// Vector of running coroutines
 #endif
