@@ -30,15 +30,15 @@ enum DialogResult { DialogError, DialogOkay, DialogCancel };
 typedef nfdu8filteritem_t DialogFilter;
 
 /// Opens a native file save dialog
-DialogResult save_dialog(std::string&                     out_path, 
+DialogResult save_dialog(std::string& out_path, 
                          const std::vector<DialogFilter>& filters = {},
-                         const std::string&               default_path = "",
-                         const std::string&               default_name = "");
+                         const std::string& default_path = "",
+                         const std::string& default_name = "");
 
 /// Opens a native single file open dialog
-DialogResult open_dialog(std::string&                     out_path, 
+DialogResult open_dialog(std::string& out_path, 
                          const std::vector<DialogFilter>& filters = {},
-                         const std::string&               default_path = "");
+                         const std::string& default_path = "");
 
 /// Opens a native multiple file open dialog
 DialogResult open_dialog(std::vector<std::string>&        out_paths,
@@ -46,8 +46,7 @@ DialogResult open_dialog(std::vector<std::string>&        out_paths,
                          const std::string&               default_path = "");
 
 /// Opens a native folder selection dialog
-DialogResult pick_dialog(std::string&       out_path, 
-                         const std::string& default_path = "");
+DialogResult pick_dialog(std::string& out_path, const std::string& default_path = "");
 
 enum SysDir {
     UserProfile,

@@ -10,8 +10,9 @@ namespace gui {
 // ImFontConfig font_cfg;
 // font_cfg.FontDataOwnedByAtlas = false;
 // ... more font_cfg params.
-// ImGui::GetIO().Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len, 14.0f, &font_cfg);
-// 
+// ImGui::GetIO().Fonts->AddFontFromMemoryTTF(Roboto_Regular_ttf, Roboto_Regular_ttf_len, 14.0f,
+// &font_cfg);
+//
 // NanoVG:
 //
 // nvgCreateFontMem(m_vg, "roboto", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
@@ -58,7 +59,5 @@ extern unsigned int  fa_solid_900_ttf_len;
 extern unsigned char fa_brands_400_ttf[];
 extern unsigned int  fa_brands_400_ttf_len;
 
-} // namespace gui
-} // namespace mahi
-
-
+}  // namespace gui
+}  // namespace mahi

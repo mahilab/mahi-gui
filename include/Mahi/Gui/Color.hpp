@@ -35,28 +35,20 @@ struct HSV {
 
 /// Creates an RGB Color from an HSV
 Color to_rgb(const HSV& hsv);
-
 /// Creates a RGB Color from a hex code
 Color to_rgb(std::string hex);
-
 /// Creaets an HSV from an RGB Color
 HSV to_hsv(const Color& color);
-
 /// Creates an HSV from a hex code
 HSV to_hsv(std::string hex);
-
 /// Convenienve function to add alpha to a color
 Color with_alpha(Color color, float a);
-
 /// Returns the luminance of a Color
 float luminance(const Color& color);
-
 /// Returns a random Color
 Color random_color();
-
 /// Returns a random color between two colors in RGB space
 Color random_color(const Color& color1, const Color& color2);
-
 /// Steam a color
 std::ostream& operator<<(std::ostream& out, const Color& color);
 /// Stream an HSV
@@ -71,7 +63,7 @@ constexpr Color RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
 
 /// Most Commonly Used Colors
 namespace Colors {
-constexpr Color Auto        = {0, 0, 0,-1}; 
+constexpr Color Auto        = {0, 0, 0, -1};
 constexpr Color Transparent = {0, 0, 0, 0};
 constexpr Color Black       = {0, 0, 0, 1};
 constexpr Color Gray        = {0.5f, 0.5f, 0.5f, 1.0f};

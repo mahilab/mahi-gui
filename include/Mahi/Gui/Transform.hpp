@@ -30,8 +30,8 @@ public:
     /// Default constructor
     Transform();
     /// Construct a transform from a 3x3 matrix
-    Transform(float a00, float a01, float a02,
-              float a10, float a11, float a12,
+    Transform(float a00, float a01, float a02, 
+              float a10, float a11, float a12, 
               float a20, float a21, float a22);
     /// Return the transform as a 4x4 matrix compatible with OpenGL
     const float* matrix() const;
@@ -58,38 +58,39 @@ public:
     /// Combine the current transform with a scaling
     Transform& scale(float scaleX, float scaleY);
     /// Combine the current transform with a scaling
-    Transform& scale(float scaleX, float scaleY, float centerX, float centerY);    
+    Transform& scale(float scaleX, float scaleY, float centerX, float centerY);
     /// Combine the current transform with a scaling
     Transform& scale(const Vec2& factors);
     /// Combine the current transform with a scaling
     Transform& scale(const Vec2& factors, const Vec2& center);
+
 public:
-    static const Transform Identity; ///< The identity transform
+    static const Transform Identity;  ///< The identity transform
 private:
-    float m_matrix[16]; ///< 4x4 matrix defining the transformation
+    float m_matrix[16];  ///< 4x4 matrix defining the transformation
 };
 
 /// Equivalent to calling Transform(left).combine(right).
-Transform operator *(const Transform& left, const Transform& right);
+Transform operator*(const Transform& left, const Transform& right);
 /// Equivalent to calling left.combine(right).
-Transform& operator *=(Transform& left, const Transform& right);
+Transform& operator*=(Transform& left, const Transform& right);
 /// Equivalent to calling left.transform(right).
-Vec2 operator *(const Transform& left, const Vec2& right);
+Vec2 operator*(const Transform& left, const Vec2& right);
 /// Performs an element-wise comparison of the elements of the
 /// left transform with the elements of the right transform.
-bool operator ==(const Transform& left, const Transform& right);
+bool operator==(const Transform& left, const Transform& right);
 /// Equivalent to !(left == right).
-bool operator !=(const Transform& left, const Transform& right);
+bool operator!=(const Transform& left, const Transform& right);
 
-} // namespace gui
-} // namespace mahi
-
+}  // namespace gui
+}  // namespace mahi
 
 // SFML - Simple and Fast Multimedia Library
 // Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
-// In no event will the authors be held liable for any damages arising from the use of this software.
+// In no event will the authors be held liable for any damages arising from the use of this
+// software.
 //
 // Permission is granted to anyone to use this software for any purpose,
 // including commercial applications, and to alter it and redistribute it freely,
@@ -104,5 +105,3 @@ bool operator !=(const Transform& left, const Transform& right);
 //    and must not be misrepresented as being the original software.
 //
 // 3. This notice may not be removed or altered from any source distribution.
-
-

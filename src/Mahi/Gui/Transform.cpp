@@ -3,7 +3,7 @@
 
 namespace mahi {
 namespace gui {
-    
+
 const Transform Transform::Identity;
 
 Transform::Transform() {
@@ -73,12 +73,10 @@ Transform Transform::inverse() const {
 
 Vec2 Transform::transform(float x, float y) const {
     return Vec2(m_matrix[0] * x + m_matrix[4] * y + m_matrix[12],
-                    m_matrix[1] * x + m_matrix[5] * y + m_matrix[13]);
+                m_matrix[1] * x + m_matrix[5] * y + m_matrix[13]);
 }
 
-Vec2 Transform::transform(const Vec2& point) const {
-    return transform(point.x, point.y);
-}
+Vec2 Transform::transform(const Vec2& point) const { return transform(point.x, point.y); }
 
 Rect Transform::transform(const Rect& rectangle) const {
     // Transform the 4 corners of the rectangle
@@ -179,9 +177,7 @@ Transform operator*(const Transform& left, const Transform& right) {
 
 Transform& operator*=(Transform& left, const Transform& right) { return left.combine(right); }
 
-Vec2 operator*(const Transform& left, const Vec2& right) {
-    return left.transform(right);
-}
+Vec2 operator*(const Transform& left, const Vec2& right) { return left.transform(right); }
 
 bool operator==(const Transform& left, const Transform& right) {
     const float* a = left.matrix();

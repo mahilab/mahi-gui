@@ -29,14 +29,14 @@ namespace ImGui {
 struct PlotItem {
     /// Supported plot types.
     enum Type {
-        Line,    // Data plotted as a solid line.
-        Scatter, // Data plotted as discontinuous circles.
-        XBar,    // Data plotted as centered bars plot emanating from X-axis.
-        YBar     // Data plotted as centered bars plot emanating from Y axis.
+        Line,     // Data plotted as a solid line.
+        Scatter,  // Data plotted as discontinuous circles.
+        XBar,     // Data plotted as centered bars plot emanating from X-axis.
+        YBar      // Data plotted as centered bars plot emanating from Y axis.
     };
     /// Default constructor.
     PlotItem();
-    /// Should this item be shown? 
+    /// Should this item be shown?
     bool show;
     /// The type of plot this is.
     Type type;
@@ -44,10 +44,11 @@ struct PlotItem {
     std::vector<ImVec2> data;
     /// The item color.
     ImVec4 color;
-    /// The size of the item (Line = pixel width, Scatter = pixel diameter, XBar/YBar = bar width in plot units).
+    /// The size of the item (Line = pixel width, Scatter = pixel diameter, XBar/YBar = bar width in
+    /// plot units).
     float size;
     /// The label to be displayed in any legends.
-    std::string label; 
+    std::string label;
     /// The "first" data element index, can be used for ring-buffering Line and Scatter types
     int data_begin;
 };
@@ -74,7 +75,8 @@ struct PlotAxis {
     bool adaptive;
     /// Axis color (affects grid lines, ticks, and labels)
     ImVec4 color;
-    /// The percentage of the axis range that each mouse scroll adds/subracts from view (default=0.1).
+    /// The percentage of the axis range that each mouse scroll adds/subracts from view
+    /// (default=0.1).
     float zoom_rate;
     /// Is the minimum locked from zooming?
     bool lock_min;
@@ -109,15 +111,15 @@ struct PlotInterface {
     /// The color of the grid background (i.e. inner background)
     ImVec4 background_color;
     /// The color of the grid border
-    ImVec4 border_color;  
+    ImVec4 border_color;
     /// The color of the selection box tool
     ImVec4 selection_color;
     /// The plot title (default="", i.e. no title displayed)
     std::string title;
     /// [Internal]
-    bool _dragging_x;
-    bool _dragging_y;
-    bool _selecting;
+    bool   _dragging_x;
+    bool   _dragging_y;
+    bool   _selecting;
     ImVec2 _select_start;
 };
 
@@ -126,9 +128,11 @@ struct PlotInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Renders a Plot and PlotItems
-bool Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items, const ImVec2& size = {-1,-1});
+bool Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items,
+          const ImVec2& size = {-1, -1});
 /// Renders a Plot and PlotItems (STL version)
-bool Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items, const ImVec2& size = {-1,-1});
+bool Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items,
+          const ImVec2& size = {-1, -1});
 
 ///////////////////////////////////////////////////////////////////////////////
 // REAL-TIME UTILS
@@ -150,4 +154,4 @@ bool IsPlotHovered();
 /// Returns the mouse position in x,y coordinates of the last ImGui::Plot
 ImVec2 GetPlotMousePos();
 
-} // namespce ImGui
+}  // namespace ImGui

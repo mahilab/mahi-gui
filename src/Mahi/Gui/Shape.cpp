@@ -30,17 +30,13 @@ std::vector<Vec2> from_clipper(const ClipperLib::Path& clipper) {
     return vec;
 }
 
-} // namespace carnot
+}  // namespace
 
 //==============================================================================
 // PUBLIC FUNCTIONS
 //==============================================================================
 
-Shape::Shape(std::size_t pointCount) :
-    m_holes(0), m_stale(true)
-{
-    set_point_count(pointCount);
-}
+Shape::Shape(std::size_t pointCount) : m_holes(0), m_stale(true) { set_point_count(pointCount); }
 
 Shape::~Shape() {}
 
@@ -51,31 +47,23 @@ void Shape::set_point_count(std::size_t count) {
     m_stale = true;
 }
 
-std::size_t Shape::point_count() const {
-    return m_points.size();
-}
+std::size_t Shape::point_count() const { return m_points.size(); }
 
 void Shape::set_point(std::size_t index, Vec2 position) {
     m_points[index] = position;
-    m_stale = true;
+    m_stale         = true;
 }
 
-void Shape::set_point(std::size_t index, float x, float y) {
-    set_point(index, Vec2(x,y));
-}
+void Shape::set_point(std::size_t index, float x, float y) { set_point(index, Vec2(x, y)); }
 
 void Shape::set_points(const std::vector<Vec2>& points) {
     set_point_count(points.size());
     m_points = points;
 }
 
-Vec2 Shape::point(std::size_t index) const {
-    return m_points[index];
-}
+Vec2 Shape::point(std::size_t index) const { return m_points[index]; }
 
-const std::vector<Vec2>& Shape::points() const {
-    return m_points;
-}
+const std::vector<Vec2>& Shape::points() const { return m_points; }
 
 void Shape::push_back(Vec2 position) {
     m_points.push_back(position);
@@ -84,9 +72,7 @@ void Shape::push_back(Vec2 position) {
     m_stale = true;
 }
 
-void Shape::push_back(float x, float y) {
-    push_back(Vec2(x,y));
-}
+void Shape::push_back(float x, float y) { push_back(Vec2(x, y)); }
 
 void Shape::move(float x, float y) {
     Transform matrix = Transform::Identity;
@@ -102,8 +88,9 @@ void Shape::move(const Vec2& offset) {
 
 void Shape::scale(float x, float y) {
     Transform matrix = Transform::Identity;
-    matrix.scale(x,y);
-    transform(matrix);}
+    matrix.scale(x, y);
+    transform(matrix);
+}
 
 void Shape::scale(const Vec2& scale) {
     Transform matrix = Transform::Identity;
@@ -139,35 +126,31 @@ void Shape::transform(const Transform& matrix) {
 
 void Shape::set_radius(std::size_t index, float radius, std::size_t smoothness) {
     if (radius >= 0.0f) {
-        m_radii[index] = radius;
+        m_radii[index]      = radius;
         m_smoothness[index] = smoothness;
-        m_stale = true;
+        m_stale             = true;
     }
 }
 
-float Shape::radius(std::size_t index) const {
-    return m_radii[index];
-}
+float Shape::radius(std::size_t index) const { return m_radii[index]; }
 
 void Shape::set_radii(float radius, std::size_t smoothness) {
     if (radius >= 0.0f) {
         for (std::size_t i = 0; i < point_count(); ++i) {
-            m_radii[i] = radius;
+            m_radii[i]      = radius;
             m_smoothness[i] = smoothness;
         }
         m_stale = true;
     }
 }
 
-void Shape::set_radii(const std::vector<float> &radii) {
+void Shape::set_radii(const std::vector<float>& radii) {
     assert(m_radii.size() == radii.size());
     m_radii = radii;
     m_stale = true;
 }
 
-const std::vector<float>& Shape::radii() const {
-    return m_radii;
-}
+const std::vector<float>& Shape::radii() const { return m_radii; }
 
 std::size_t Shape::vertex_count() const {
     update_if_stale();
@@ -186,32 +169,24 @@ void Shape::apply_radii() {
     m_stale = true;
 }
 
-
 void Shape::set_hole_count(std::size_t count) {
     m_holes.resize(count);
     m_stale = true;
 }
 
-std::size_t Shape::hole_count() const {
-    return m_holes.size();
-}
+std::size_t Shape::hole_count() const { return m_holes.size(); }
 
 void Shape::set_hole(std::size_t index, const Shape& hole) {
     hole.update_if_stale();
     m_holes[index] = hole;
-    m_stale = true;
+    m_stale        = true;
 }
 
-const Shape& Shape::hole(std::size_t index) const {
-    return m_holes[index];
-}
+const Shape& Shape::hole(std::size_t index) const { return m_holes[index]; }
 
-std::vector<Shape>& Shape::holes() {
-    return m_holes;
-}
+std::vector<Shape>& Shape::holes() { return m_holes; }
 
-
-void Shape::push_back_hole(const Shape &hole) {
+void Shape::push_back_hole(const Shape& hole) {
     hole.update_if_stale();
     m_holes.push_back(hole);
     m_stale = true;
@@ -250,9 +225,7 @@ float Shape::area(QueryMode mode) const {
     return area;
 }
 
-bool Shape::is_convex() const {
-    return mahi::gui::is_convex(m_points);
-}
+bool Shape::is_convex() const { return mahi::gui::is_convex(m_points); }
 
 //==============================================================================
 // PRIVATE FUNCTIONS
@@ -265,13 +238,11 @@ void Shape::update_if_stale() const {
     }
 }
 
-
 void Shape::update_vertices() const {
     // precompute vertice count
     std::size_t verticeCount = 0;
     for (std::size_t i = 0; i < m_points.size(); ++i) {
-        if (m_smoothness[i] == 0 || m_smoothness[i] == 1 ||
-            m_radii[i] <= 0.0f) {
+        if (m_smoothness[i] == 0 || m_smoothness[i] == 1 || m_radii[i] <= 0.0f) {
             verticeCount++;
         } else {
             verticeCount += m_smoothness[i];
@@ -328,8 +299,8 @@ void Shape::update_vertices() const {
             // TODO: check if tangent points are on line segments
             // ...
             // compute angles
-            float angle1 = std::atan2(T1.y - I.y, T1.x - I.x);
-            float angle2 = std::atan2(T2.y - I.y, T2.x - I.x);
+            float              angle1 = std::atan2(T1.y - I.y, T1.x - I.x);
+            float              angle2 = std::atan2(T2.y - I.y, T2.x - I.x);
             std::vector<float> angles(m_smoothness[i]);
             if (std::abs(angle1 - angle2) < util::PI)
                 util::linspace(angle1, angle2, angles);
@@ -373,7 +344,7 @@ void Shape::update_bounds() const {
     } else {
         // Array is empty
         m_pointsBounds = Rect();
-    }   
+    }
     // update vertices bounds
     if (m_vertices.size() > 0) {
         float left   = m_vertices[0].x;
@@ -396,24 +367,19 @@ void Shape::update_bounds() const {
     } else {
         // Array is empty
         m_verticesBounds = Rect();
-    }    
+    }
 }
 //==============================================================================
 // PUBLIC STATIC FUNCTIONS
 //==============================================================================
 
-Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
-    ClipperLib::Path subj = to_clipper(shape.vertices());
+Shape offset_shape(const Shape& shape, float offset, OffsetType type) {
+    ClipperLib::Path          subj = to_clipper(shape.vertices());
     ClipperLib::ClipperOffset co;
     switch (type) {
-        case Miter:
-            co.AddPath(subj, ClipperLib::jtMiter, ClipperLib::etClosedPolygon);
-            break;
-        case Round:
-            co.AddPath(subj, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
-            break;
-        case Square:
-            co.AddPath(subj, ClipperLib::jtSquare, ClipperLib::etClosedPolygon);
+        case Miter: co.AddPath(subj, ClipperLib::jtMiter, ClipperLib::etClosedPolygon); break;
+        case Round: co.AddPath(subj, ClipperLib::jtRound, ClipperLib::etClosedPolygon); break;
+        case Square: co.AddPath(subj, ClipperLib::jtSquare, ClipperLib::etClosedPolygon);
     }
     ClipperLib::Paths solution;
     co.Execute(solution, offset * CLIPPER_PREC);
@@ -430,8 +396,7 @@ Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
             case Round:
                 co.AddPath(holeSubj, ClipperLib::jtRound, ClipperLib::etClosedPolygon);
                 break;
-            case Square:
-                co.AddPath(holeSubj, ClipperLib::jtSquare, ClipperLib::etClosedPolygon);
+            case Square: co.AddPath(holeSubj, ClipperLib::jtSquare, ClipperLib::etClosedPolygon);
         }
         solution.clear();
         co.Execute(solution, -offset * CLIPPER_PREC);
@@ -445,13 +410,12 @@ Shape offset_shape(const Shape &shape, float offset, OffsetType type) {
     return offset_shape;
 }
 
-std::vector<Shape> clip_shapes(const Shape &subject, const Shape &clip, ClipType type) {
-
+std::vector<Shape> clip_shapes(const Shape& subject, const Shape& clip, ClipType type) {
     ClipperLib::Paths subj;
     ClipperLib::Paths clp;
 
     subj << to_clipper(subject.vertices());
-    clp  << to_clipper(clip.vertices());
+    clp << to_clipper(clip.vertices());
 
     for (std::size_t i = 0; i < subject.hole_count(); ++i)
         subj << to_clipper(subject.hole(i).vertices());
@@ -465,23 +429,28 @@ std::vector<Shape> clip_shapes(const Shape &subject, const Shape &clip, ClipType
     ClipperLib::PolyTree polyTree;
     switch (type) {
         case Intersection:
-            clpr.Execute(ClipperLib::ctIntersection, polyTree, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+            clpr.Execute(ClipperLib::ctIntersection, polyTree, ClipperLib::pftEvenOdd,
+                         ClipperLib::pftEvenOdd);
             break;
         case Union:
-            clpr.Execute(ClipperLib::ctUnion, polyTree, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+            clpr.Execute(ClipperLib::ctUnion, polyTree, ClipperLib::pftEvenOdd,
+                         ClipperLib::pftEvenOdd);
             break;
         case Difference:
-            clpr.Execute(ClipperLib::ctDifference, polyTree, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+            clpr.Execute(ClipperLib::ctDifference, polyTree, ClipperLib::pftEvenOdd,
+                         ClipperLib::pftEvenOdd);
             break;
         case Exclusion:
-            clpr.Execute(ClipperLib::ctXor, polyTree, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
+            clpr.Execute(ClipperLib::ctXor, polyTree, ClipperLib::pftEvenOdd,
+                         ClipperLib::pftEvenOdd);
             break;
     }
     std::vector<Shape> clippedShapes(polyTree.ChildCount());
     for (std::size_t i = 0; i < static_cast<std::size_t>(polyTree.ChildCount()); ++i) {
         clippedShapes[i].set_points(from_clipper(polyTree.Childs[i]->Contour));
         // add holes
-        for (std::size_t j = 0; j < static_cast<std::size_t>(polyTree.Childs[i]->ChildCount()); ++j) {
+        for (std::size_t j = 0; j < static_cast<std::size_t>(polyTree.Childs[i]->ChildCount());
+             ++j) {
             if (polyTree.Childs[i]->Childs[j]->IsHole()) {
                 Shape hole;
                 hole.set_points(from_clipper(polyTree.Childs[i]->Childs[j]->Contour));
@@ -492,5 +461,5 @@ std::vector<Shape> clip_shapes(const Shape &subject, const Shape &clip, ClipType
     return clippedShapes;
 }
 
-} // namespace gui
-} // namespace mahi
+}  // namespace gui
+}  // namespace mahi

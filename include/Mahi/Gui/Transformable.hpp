@@ -66,24 +66,25 @@ public:
     const Transform& inverse_transform() const;
 
 private:
-    Vec2              m_origin;                   ///< Origin of translation/rotation/scaling of the object
-    Vec2              m_position;                 ///< Position of the object in the 2D world
-    float             m_rotation;                 ///< Orientation of the object, in degrees
-    Vec2              m_scale;                    ///< Scale of the object
-    mutable Transform m_transform;                ///< Combined transformation of the object
-    mutable bool      m_transform_stale;          ///< Does the transform need to be recomputed?
+    Vec2              m_origin;           ///< Origin of translation/rotation/scaling of the object
+    Vec2              m_position;         ///< Position of the object in the 2D world
+    float             m_rotation;         ///< Orientation of the object, in degrees
+    Vec2              m_scale;            ///< Scale of the object
+    mutable Transform m_transform;        ///< Combined transformation of the object
+    mutable bool      m_transform_stale;  ///< Does the transform need to be recomputed?
     mutable Transform m_inverse_transform;        ///< Combined transformation of the object
     mutable bool      m_inverse_transform_stale;  ///< Does the transform need to be recomputed?
 };
 
-} // namespace gui
-} // namespace mahi
+}  // namespace gui
+}  // namespace mahi
 
 // SFML - Simple and Fast Multimedia Library
 // Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
 //
 // This software is provided 'as-is', without any express or implied warranty.
-// In no event will the authors be held liable for any damages arising from the use of this software.
+// In no event will the authors be held liable for any damages arising from the use of this
+// software.
 //
 // Permission is granted to anyone to use this software for any purpose,
 // including commercial applications, and to alter it and redistribute it freely,

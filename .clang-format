@@ -28,7 +28,7 @@ FixNamespaceComments: 'true'
 IncludeBlocks: Regroup
 IndentWidth: '4'
 ReflowComments: 'true'
-SortIncludes: 'true'
+SortIncludes: 'false'
 SortUsingDeclarations: 'true'
 SpaceAfterCStyleCast: 'false'
 SpaceAfterLogicalNot: 'false'

@@ -33,25 +33,24 @@ namespace mahi {
 namespace gui {
 
 /// A Application
-class Application
-{
+class Application {
 public:
     /// Application Configuration options (for advanced Application construction)
     struct Config {
-        std::string title  = "mahi-gui"; ///< window title
-        int width          = 640;        ///< window width in pixels
-        int height         = 480;        ///< window height in pixels
-        int monitor        = 0;          ///< monitor the window will be on
-        bool fullscreen    = false;      ///< should the window be fullscreen?
-        bool resizable     = true;       ///< should the window be resizable?
-        bool visible       = true;       ///< should the window be visible?
-        bool decorated     = true;       ///< should the window have a title bar, close button, etc.?
-        bool transparent   = false;      ///< should the window area be transparent?
-        bool center        = true;       ///< should the window be centered to the monitor?
-        int msaa           = 4;          ///< multisample anti-aliasing level (0 = none, 2, 4, 8, etc.)
-        bool nvg_aa        = true;       ///< should NanoVG use anti-aliasing?
-        bool vsync         = true;       ///< should VSync be enabled?
-        Color background   = {0,0,0,1};  ///< OpenGL clear color, i.e. window background color
+        std::string title = "mahi-gui";    ///< window title
+        int  width        = 640;           ///< window width in pixels
+        int  height       = 480;           ///< window height in pixels
+        int  monitor      = 0;             ///< monitor the window will be on
+        bool fullscreen   = false;         ///< should the window be fullscreen?
+        bool resizable    = true;          ///< should the window be resizable?
+        bool visible      = true;          ///< should the window be visible?
+        bool decorated    = true;          ///< should the window have a title bar, close button, etc.?
+        bool transparent  = false;         ///< should the window area be transparent?
+        bool center       = true;          ///< should the window be centered to the monitor?
+        int  msaa         = 4;             ///< multisample anti-aliasing level (0 = none, 2, 4, 8, etc.)
+        bool nvg_aa       = true;          ///< should NanoVG use anti-aliasing?
+        bool vsync        = true;          ///< should VSync be enabled?
+        Color background  = {0, 0, 0, 1};  ///< OpenGL clear color, i.e. window background color
     };
 
     /// Hidden Main Window Constructor (for using ImGui windows exclusively)
@@ -73,12 +72,12 @@ public:
     /// Get the current time (affected by time scale)
     util::Time time() const;
     /// Gets the delta time between consecutive calls to update (affected by time scale)
-    util::Time delta_time() const;    
+    util::Time delta_time() const;
     /// Gets the current real time since startup (not affected by time scale)
     util::Time real_time() const;
     /// Sets the time to a desired value
     void set_time(util::Time t);
-    /// Sets the time scaling factor, which can be used for slow motion effects 
+    /// Sets the time scaling factor, which can be used for slow motion effects
     void set_time_scale(float scale);
 
     /// Set the window background (i.e. clear) color (no effect if transparent)
@@ -117,17 +116,17 @@ public:
     float get_pixel_ratio() const;
     /// Enable/disable VSync
     void set_vsync(bool enabled);
-    /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit) 
+    /// Sets a target framelimit in hertz and disables VSync (pass 0 for no limit)
     void set_frame_limit(util::Frequency freq);
 
     // TODO: Input API (use ImGui for now)
 
-    /// Get the mouse position 
+    /// Get the mouse position
     Vec2 get_mouse_pos() const;
 
 #ifdef MAHI_COROUTINES
     /// Starts a coroutine
-    std::shared_ptr<util::Coroutine> start_coroutine(util::Enumerator &&coro);
+    std::shared_ptr<util::Coroutine> start_coroutine(util::Enumerator&& coro);
     /// Stops an already running coroutine
     void stop_coroutine(std::shared_ptr<util::Coroutine> coro);
     /// Stops all running coroutines
@@ -140,37 +139,36 @@ public:
 
     /// Contains Application profiling information
     struct Profile {
-        util::Time t_poll;       ///< time elapsed polling input events
-        util::Time t_update;     ///< time elapsed across update()
-        util::Time t_coroutines; ///< time elapsed across all coroutines
-        util::Time t_gl;         ///< time elapsed rendering raw OpenGL (i.e. inside of draw())
-        util::Time t_nvg;        ///< time elapsed rendering NanoVG (i.e. inside of draw(NVGcontext*)) 
-        util::Time t_imgui;      ///< time elapsed rendering ImGui
-        util::Time t_idle;       ///< time elapsed idling
-        util::Time t_buffers;    ///< time elapsed swapping OpenGL buffers
+        util::Time t_poll;        ///< time elapsed polling input events
+        util::Time t_update;      ///< time elapsed across update()
+        util::Time t_coroutines;  ///< time elapsed across all coroutines
+        util::Time t_gl;          ///< time elapsed rendering raw OpenGL (i.e. inside of draw())
+        util::Time t_nvg;      ///< time elapsed rendering NanoVG (i.e. inside of draw(NVGcontext*))
+        util::Time t_imgui;    ///< time elapsed rendering ImGui
+        util::Time t_idle;     ///< time elapsed idling
+        util::Time t_buffers;  ///< time elapsed swapping OpenGL buffers
     };
 
     /// Gets the most recent profiling information
     const Profile& profile() const;
 
 protected:
-
     /// Called once per frame. For application logic and ImGui. Do not make raw OpenGL calls here.
     virtual void update() { /* nothing by default */ }
-    /// Generic OpenGL drawing context, called immediately after update(). 
+    /// Generic OpenGL drawing context, called immediately after update().
     virtual void draw() { /* nothing by default */ }
     /// NanoVG specific drawing context, called immediately after draw()
     virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
 
 public:
     /// Emitted when the Window moves. Passes (x,y) window position pixels.
-    util::Event<void(int,int)> on_window_moved;
+    util::Event<void(int, int)> on_window_moved;
     /// Emitted when the Window is resized. Passes (width,height) window size in pixels.
-    util::Event<void(int,int)> on_window_resized;
+    util::Event<void(int, int)> on_window_resized;
     /// Emitted right before the Window is closed. Return false to cancel the close.
     util::Event<bool(void), util::CollectorBooleanAnd> on_window_closing;
     /// Emitted when a key is pressed, repeated, or release. Passes (key, scancode, action, mods). See GLFW.
-    util::Event<void(int,int,int,int)> on_keyboard;
+    util::Event<void(int, int, int, int)> on_keyboard;
     /// Emitted when the application quits.
     util::Event<void(void)> on_application_quit;
     /// Emitted when file(s) is dropped Passes vector of filepaths.
@@ -180,21 +178,21 @@ public:
 
 protected:
     /// Internal GLFW window handle, you can use glfwXXX functions with this
-    GLFWwindow *m_window;
+    GLFWwindow* m_window;
     /// Internal NVG Context, you can use use nvgXXX functions with this
     NVGcontext* m_vg;
 
 private:
-    Config m_conf;           ///< Application configuration
-    util::Time m_frame_time; ///< target time to sleep to each frame if VSync is disabled
-    util::Time m_dt;         ///< delta time (scaled)
-    util::Time m_time;       ///< Application time (scaled)
-    float m_time_scale;      ///< time scale (default = 1, no scale)
-    Profile m_profile;       ///< most recent Profile
+    Config     m_conf;        ///< Application configuration
+    util::Time m_frame_time;  ///< target time to sleep to each frame if VSync is disabled
+    util::Time m_dt;          ///< delta time (scaled)
+    util::Time m_time;        ///< Application time (scaled)
+    float      m_time_scale;  ///< time scale (default = 1, no scale)
+    Profile    m_profile;     ///< most recent Profile
 #ifdef MAHI_COROUTINES
     std::vector<util::Enumerator> m_coroutines;  /// Vector of running coroutines
 #endif
 };
 
-} // namespace gui
-} // namespace mahi
+}  // namespace gui
+}  // namespace mahi

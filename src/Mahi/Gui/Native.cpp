@@ -26,64 +26,62 @@
 
 // TODO: We need a more robust way to detect where fs may be...
 #ifdef __linux__
-    #include <experimental/filesystem>
-    namespace fs = std::experimental::filesystem;
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 #else
-    #include <filesystem>
-    namespace fs = std::filesystem;
+#include <filesystem>
+namespace fs = std::filesystem;
 #endif
 
 namespace mahi {
 namespace gui {
 
-DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters, const std::string& default_path, const std::string& default_name) {
+DialogResult save_dialog(std::string& out_path, const std::vector<DialogFilter>& filters,
+                         const std::string& default_path, const std::string& default_name) {
     fs::path defpath(default_path);
     defpath.make_preferred();
-    NFD::Guard nfdGuard;
+    NFD::Guard        nfdGuard;
     NFD::UniquePathU8 savePath;
-    nfdresult_t result = NFD::SaveDialog(savePath, 
-                                         filters.empty() ? nullptr : &filters[0], 
-                                         (nfdfiltersize_t)filters.size(),
-                                         default_path.empty() ? nullptr : defpath.string().c_str(),
-                                         default_name.c_str());
+    nfdresult_t       result = NFD::SaveDialog(
+        savePath, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size(),
+        default_path.empty() ? nullptr : defpath.string().c_str(), default_name.c_str());
     if (result == NFD_OKAY) {
         out_path = savePath.get();
         return DialogOkay;
-    }
-    else if (result == NFD_CANCEL)
+    } else if (result == NFD_CANCEL)
         return DialogResult::DialogCancel;
     else
         return DialogResult::DialogError;
 }
 
-DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>& filters, const std::string& default_path) {
+DialogResult open_dialog(std::string& out_path, const std::vector<DialogFilter>& filters,
+                         const std::string& default_path) {
     fs::path defpath(default_path);
     defpath.make_preferred();
-    NFD::Guard nfdGuard;
+    NFD::Guard        nfdGuard;
     NFD::UniquePathU8 openPath;
-    nfdresult_t result = NFD::OpenDialog(openPath, 
-                                         filters.empty() ? nullptr : &filters[0], 
-                                         (nfdfiltersize_t)filters.size(), 
+    nfdresult_t       result = NFD::OpenDialog(openPath, filters.empty() ? nullptr : &filters[0],
+                                         (nfdfiltersize_t)filters.size(),
                                          default_path.empty() ? nullptr : defpath.string().c_str());
     if (result == NFD_OKAY) {
         out_path = openPath.get();
         return DialogOkay;
-    }
-    else if (result == NFD_CANCEL)
+    } else if (result == NFD_CANCEL)
         return DialogResult::DialogCancel;
     else
         return DialogResult::DialogError;
 }
 
-DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<DialogFilter>& filters, const std::string& default_path) {
+DialogResult open_dialog(std::vector<std::string>&        out_paths,
+                         const std::vector<DialogFilter>& filters,
+                         const std::string&               default_path) {
     fs::path defpath(default_path);
     defpath.make_preferred();
-    NFD::Guard nfdGuard;
-    NFD::UniquePathSet openPaths;   
-    nfdresult_t result = NFD::OpenDialogMultiple(openPaths, 
-                                                 filters.empty() ? nullptr : &filters[0], 
-                                                 (nfdfiltersize_t)filters.size(),
-                                                 default_path.empty() ? nullptr : defpath.string().c_str());
+    NFD::Guard         nfdGuard;
+    NFD::UniquePathSet openPaths;
+    nfdresult_t        result = NFD::OpenDialogMultiple(
+        openPaths, filters.empty() ? nullptr : &filters[0], (nfdfiltersize_t)filters.size(),
+        default_path.empty() ? nullptr : defpath.string().c_str());
     if (result == NFD_OKAY) {
         nfdpathsetsize_t numPaths;
         NFD::PathSet::Count(openPaths, numPaths);
@@ -94,25 +92,23 @@ DialogResult open_dialog(std::vector<std::string>& out_paths, const std::vector<
             out_paths[i] = path.get();
         }
         return DialogResult::DialogOkay;
-    }
-    else if (result == NFD_CANCEL)
+    } else if (result == NFD_CANCEL)
         return DialogResult::DialogCancel;
     else
         return DialogResult::DialogError;
 }
 
-DialogResult pick_dialog(std::string &out_path, const std::string& default_path)
-{
+DialogResult pick_dialog(std::string& out_path, const std::string& default_path) {
     fs::path defpath(default_path);
     defpath.make_preferred();
-    NFD::Guard nfdGuard;
+    NFD::Guard        nfdGuard;
     NFD::UniquePathU8 openPath;
-    nfdresult_t result = NFD::PickFolder(openPath, default_path.empty() ? nullptr : defpath.string().c_str());
+    nfdresult_t       result =
+        NFD::PickFolder(openPath, default_path.empty() ? nullptr : defpath.string().c_str());
     if (result == NFD_OKAY) {
         out_path = openPath.get();
         return DialogOkay;
-    }
-    else if (result == NFD_CANCEL)
+    } else if (result == NFD_CANCEL)
         return DialogResult::DialogCancel;
     else
         return DialogResult::DialogError;
@@ -126,7 +122,7 @@ struct SysDirStr {
     }
     std::string str;
 };
-}
+}  // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
 // WINDOWS
@@ -152,42 +148,34 @@ const std::string& sys_dir(SysDir dir) {
     }
 }
 
-bool open_folder(const std::string &path)
-{
+bool open_folder(const std::string& path) {
     fs::path p(path);
-    if (fs::exists(p) && fs::is_directory(p))
-    {
+    if (fs::exists(p) && fs::is_directory(p)) {
         ShellExecuteA(NULL, "open", p.generic_string().c_str(), NULL, NULL, SW_SHOWDEFAULT);
         return true;
     }
     return false;
 }
 
-bool open_file(const std::string &path)
-{
+bool open_file(const std::string& path) {
     fs::path p(path);
-    if (fs::exists(p) && fs::is_regular_file(p))
-    {
+    if (fs::exists(p) && fs::is_regular_file(p)) {
         ShellExecuteA(NULL, "open", p.generic_string().c_str(), NULL, NULL, SW_SHOWDEFAULT);
         return true;
     }
     return false;
 }
 
-void open_url(const std::string &url)
-{
-    ShellExecuteA(0, 0, url.c_str(), 0, 0, 5);
-}
+void open_url(const std::string& url) { ShellExecuteA(0, 0, url.c_str(), 0, 0, 5); }
 
-void open_email(const std::string &address, const std::string &subject)
-{
+void open_email(const std::string& address, const std::string& subject) {
     std::string str = "mailto:" + address;
     if (!subject.empty())
         str += "?subject=" + subject;
     ShellExecuteA(0, 0, str.c_str(), 0, 0, 5);
 }
 
-#elif defined (__APPLE__)
+#elif defined(__APPLE__)
 
 ///////////////////////////////////////////////////////////////////////////////
 // macOS
@@ -198,12 +186,10 @@ const std::string& sys_dir(SysDir dir) {
     return todo;
 }
 
-bool open_folder(const std::string &path)
-{
-    int anErr = 0;
+bool open_folder(const std::string& path) {
+    int      anErr = 0;
     fs::path p(path);
-    if (fs::exists(p) && fs::is_regular_file(p))
-    {
+    if (fs::exists(p) && fs::is_regular_file(p)) {
         std::string command = "open " + p.generic_string();
         system(command.c_str());
         return true;
@@ -211,12 +197,10 @@ bool open_folder(const std::string &path)
     return false;
 }
 
-bool open_file(const std::string &path)
-{
-    int anErr = 0;
+bool open_file(const std::string& path) {
+    int      anErr = 0;
     fs::path p(path);
-    if (fs::exists(p) && fs::is_directory(p))
-    {
+    if (fs::exists(p) && fs::is_directory(p)) {
         std::string command = "open " + p.generic_string();
         system(command.c_str());
         return true;
@@ -224,16 +208,15 @@ bool open_file(const std::string &path)
     return false;
 }
 
-void open_url(const std::string &url)
-{
-    int anErr = 0;
+void open_url(const std::string& url) {
+    int         anErr   = 0;
     std::string command = "open " + url;
     system(command.c_str());
 }
 
-void open_email(const std::string &address, const std::string &subject)
-{
-    std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
+void open_email(const std::string& address, const std::string& subject) {
+    std::string mailTo =
+        "mailto:" + address + "?subject=" + subject;  // + "\\&body=" + bodyMessage;
     std::string command = "open " + mailTo;
     system(command.c_str());
 }
@@ -251,61 +234,59 @@ const std::string& sys_dir(SysDir dir) {
     return todo;
 }
 
-bool open_folder(const std::string &path)
-{
+bool open_folder(const std::string& path) {
     fs::path p(path);
-    if (fs::exists(p) && fs::is_regular_file(p))
-    {
+    if (fs::exists(p) && fs::is_regular_file(p)) {
         std::string command = "open " + p.generic_string();
-        anErr = system(command.c_str());
+        anErr               = system(command.c_str());
         if (anErr != 0)
-            std::cout << "Pb with open_folder()" << "\n";
+            std::cout << "Pb with open_folder()"
+                      << "\n";
         return true;
     }
     return false;
 }
 
-bool open_file(const std::string &path)
-{
+bool open_file(const std::string& path) {
     fs::path p(path);
-    if (fs::exists(p) && fs::is_directory(p))
-    {
+    if (fs::exists(p) && fs::is_directory(p)) {
         std::string command = "open " + p.generic_string();
-        anErr = system(command.c_str());
+        anErr               = system(command.c_str());
 
         if (anErr != 0)
-            std::cout << "Pb with open_file()" << "\n";
+            std::cout << "Pb with open_file()"
+                      << "\n";
 
         return true;
     }
     return false;
 }
 
-void open_url(const std::string &url)
-{
+void open_url(const std::string& url) {
     std::string command = "open " + url;
 
     anErr = system(command.c_str());
 
     if (anErr != 0)
-        std::cout << "Pb with open_url()" << "\n";
+        std::cout << "Pb with open_url()"
+                  << "\n";
 }
 
-void open_email(const std::string &address, const std::string &subject)
-{
-    std::string mailTo = "mailto:" + address + "?subject=" + subject; // + "\\&body=" + bodyMessage;
+void open_email(const std::string& address, const std::string& subject) {
+    std::string mailTo =
+        "mailto:" + address + "?subject=" + subject;  // + "\\&body=" + bodyMessage;
     std::string command = "open " + mailTo;
-    anErr = system(command.c_str());
+    anErr               = system(command.c_str());
 
     if (anErr != 0)
-        std::cout << "Pb with open_url()" << "\n";
+        std::cout << "Pb with open_url()"
+                  << "\n";
 }
 
 #endif
 
-
-} // namespace gui
-} // namesapce mahi
+}  // namespace gui
+}  // namespace mahi
 
 // Links/Resources
 // https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process

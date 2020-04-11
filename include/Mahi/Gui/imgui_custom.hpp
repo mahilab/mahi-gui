@@ -24,37 +24,26 @@ namespace ImGui {
 
 /// Enable Viewports
 void EnableViewports();
-
 /// Disable Viewports
 void DisableViewports();
-
 /// Enable Docking
 void EnableDocking();
-
 /// Disable Docking
 void DisableDocking();
-
 /// Begins a fixed size ImGui window (useful for single window apps)
 bool BeginFixed(const char* name, const ImVec2& pos, const ImVec2& size, ImGuiWindowFlags flags = 0);
-
 /// Shows a tooltip when an item is hovered for longer than delay.
 void HoverTooltip(const char* tip, float delay = 1.0f);
-
 /// Begins an disabled section. If disbled is true, everything until EndDisabled will be visible but disabled
 void BeginDisabled(bool disabled = true, float alpha = 0.25f);
-
 /// Ends a disabled section.
 void EndDisabled();
-
 /// A button that acts like a toggle, dimming itself when disabled.
 void ToggleButton(const char* label, bool* toggled, const ImVec2& size = ImVec2(0,0));
-
 /// A regular button with a color.
 bool ButtonColored(const char* label, const ImVec4& color, const ImVec2& size = ImVec2(0,0));
-
 /// A series of mutually exclusive RadioButtons. Useful for mode selection.
 bool ModeSelector(int* currentMode, const std::vector<std::string>& modes, bool horizontal = true);
-
 
 bool DragDouble(const char* label, double* v, float v_speed = 1.0f, double v_min = 0.0, double v_max = 0.0, const char* format = "%.3f", float power = 1.0f);     // If v_min >= v_max we have no bound
 bool DragDouble2(const char* label, double v[2], float v_speed = 1.0f, double v_min = 0.0, double v_max = 0.0, const char* format = "%.3f", float power = 1.0f);

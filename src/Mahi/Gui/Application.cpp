@@ -31,32 +31,35 @@ using namespace mahi::util;
 
 namespace mahi {
 namespace gui {
-    
-namespace
-{
+
+namespace {
 // GLFW
 static void glfw_context_version();
-static void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer);
+static void glfw_setup_window_callbacks(GLFWwindow *window, void *userPointer);
 static void glfw_error_callback(int error, const char *description);
-static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos);
-static void glfw_size_callback(GLFWwindow* window, int width, int height);
-static void glfw_close_callback(GLFWwindow* window);
-static void glfw_key_callback(GLFWwindow*,int key, int scancode, int action, int mods);
+static void glfw_pos_callback(GLFWwindow *window, int xpos, int ypos);
+static void glfw_size_callback(GLFWwindow *window, int width, int height);
+static void glfw_close_callback(GLFWwindow *window);
+static void glfw_key_callback(GLFWwindow *, int key, int scancode, int action, int mods);
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths);
 // IMGUI
 static void configureImGui(GLFWwindow *window);
-} // namespace
+}  // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
 // APPLICATION
 ///////////////////////////////////////////////////////////////////////////////
 
-util::Event<void(int, const std::string&)> Application::on_error;
+util::Event<void(int, const std::string &)> Application::on_error;
 
-Application::Application(const Config& conf) : 
-    m_window(nullptr), m_conf(conf), m_vg(nullptr), 
-    m_frame_time(Time::Zero), m_dt(Time::Zero), m_time(Time::Zero), m_time_scale(1)
-{
+Application::Application(const Config &conf) :
+    m_window(nullptr),
+    m_conf(conf),
+    m_vg(nullptr),
+    m_frame_time(Time::Zero),
+    m_dt(Time::Zero),
+    m_time(Time::Zero),
+    m_time_scale(1) {
     // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
     // initialize GLFW
@@ -73,11 +76,10 @@ Application::Application(const Config& conf) :
     // create GLFW window
     if (conf.fullscreen) {
         GLFWmonitor *monitor = nullptr;
-        if (conf.monitor == 0) 
+        if (conf.monitor == 0)
             monitor = glfwGetPrimaryMonitor();
-        else
-        {
-            int count;
+        else {
+            int  count;
             auto monitors = glfwGetMonitors(&count);
             if (conf.monitor < count)
                 monitor = monitors[conf.monitor];
@@ -86,15 +88,14 @@ Application::Application(const Config& conf) :
         }
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         if (!mode)
-            throw std::runtime_error("Failed to get Video Mode!");    
+            throw std::runtime_error("Failed to get Video Mode!");
         glfwWindowHint(GLFW_RED_BITS, mode->redBits);
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
         glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
         // glfwWindowHint(GLFW_AUTO_ICONIFY, false);
         m_window = glfwCreateWindow(mode->width, mode->height, conf.title.c_str(), monitor, NULL);
-    }
-    else {
+    } else {
         m_window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
     }
     if (m_window == NULL)
@@ -113,12 +114,12 @@ Application::Application(const Config& conf) :
         throw std::runtime_error("Failed to initialize GLAD OpenGL loader!");
     // enable MSAA and depth testing in OpenGL
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_MULTISAMPLE);  
+    glEnable(GL_MULTISAMPLE);
     // initialize NanoVG
     if (conf.nvg_aa)
         m_vg = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
     else
-        m_vg = nvgCreateGL3(NVG_STENCIL_STROKES); // | NVG_DEBUG
+        m_vg = nvgCreateGL3(NVG_STENCIL_STROKES);  // | NVG_DEBUG
     if (m_vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
     // configure ImGui
@@ -126,19 +127,19 @@ Application::Application(const Config& conf) :
 }
 
 Application::Application() :
-    Application(Config({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, Grays::Black})) 
-{}
+    Application(Config(
+        {"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, Grays::Black})) {}
 
 Application::Application(const std::string &title, int monitor) :
-    Application(Config({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true, Grays::Black})) 
-{}
+    Application(Config({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true,
+                        Grays::Black})) {}
 
-Application::Application(int width, int height, const std::string &title, bool resizable, int monitor) :
-    Application(Config({title, width, height, monitor, false, resizable, true, true, false, true, 4, true, true, Grays::Black})) 
-{}
+Application::Application(int width, int height, const std::string &title, bool resizable,
+                         int monitor) :
+    Application(Config({title, width, height, monitor, false, resizable, true, true, false, true, 4,
+                        true, true, Grays::Black})) {}
 
-Application::~Application()
-{
+Application::~Application() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -147,14 +148,12 @@ Application::~Application()
     glfwTerminate();
 }
 
-void Application::run()
-{
-    ImGuiIO &io = ImGui::GetIO();
+void Application::run() {
+    ImGuiIO &   io = ImGui::GetIO();
     util::Clock clock;
     util::Clock dt_clk;
-    while (!glfwWindowShouldClose(m_window))
-    {
-        Profile prof;
+    while (!glfwWindowShouldClose(m_window)) {
+        Profile     prof;
         util::Clock prof_clk;
         glfwPollEvents();
         prof.t_poll = prof_clk.restart();
@@ -173,28 +172,28 @@ void Application::run()
 
 #ifdef MAHI_COROUTINES
         // resume coroutines
-        if (!m_coroutines.empty())
-        {
+        if (!m_coroutines.empty()) {
             std::vector<util::Enumerator> temp;
             temp.swap(m_coroutines);
-            for (auto &coro : temp)
-            {
+            for (auto &coro : temp) {
                 if (coro.step())
                     m_coroutines.push_back(std::move(coro));
             }
         }
         prof.t_coroutines = prof_clk.restart();
-#endif 
+#endif
 
         // Clear frame, setup rendering
         int fbWidth, fbHeight;
         glfwGetFramebufferSize(m_window, &fbWidth, &fbHeight);
         glViewport(0, 0, fbWidth, fbHeight);
         if (!m_conf.transparent)
-            glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
+            glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b,
+                         m_conf.background.a);
         else {
-            if (m_conf.background.a != 1) // user wants a transparent fill
-                glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b, m_conf.background.a);
+            if (m_conf.background.a != 1)  // user wants a transparent fill
+                glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b,
+                             m_conf.background.a);
         }
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -218,8 +217,7 @@ void Application::run()
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             GLFWwindow *backup_current_context = glfwGetCurrentContext();
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
@@ -230,9 +228,8 @@ void Application::run()
         // VSync or Idle
 
         if (!m_conf.vsync && m_frame_time != util::Time::Inf) {
-            
-            util::sleep(m_frame_time - clock.get_elapsed_time());       
-            clock.restart();     
+            util::sleep(m_frame_time - clock.get_elapsed_time());
+            clock.restart();
         }
         prof.t_idle = prof_clk.restart();
 
@@ -248,41 +245,25 @@ void Application::run()
     on_application_quit.emit();
 }
 
-void Application::quit() {
-    glfwSetWindowShouldClose(m_window, 1);
-}
+void Application::quit() { glfwSetWindowShouldClose(m_window, 1); }
 
-util::Time Application::real_time() const {
-    return util::seconds(glfwGetTime());
-}
+util::Time Application::real_time() const { return util::seconds(glfwGetTime()); }
 
-util::Time Application::time() const {
-    return m_time;
-}
+util::Time Application::time() const { return m_time; }
 
-util::Time Application::delta_time() const {
-    return m_dt;
-}
+util::Time Application::delta_time() const { return m_dt; }
 
-void Application::set_time(util::Time t) {
-    m_time = t;
-}
+void Application::set_time(util::Time t) { m_time = t; }
 
-void Application::set_time_scale(float scale) {
-    m_time_scale = scale;
-}
+void Application::set_time_scale(float scale) { m_time_scale = scale; }
 
-void Application::set_background(const Color& color) {
-    m_conf.background = color;
-}
+void Application::set_background(const Color &color) { m_conf.background = color; }
 
-void Application::set_window_title(const std::string& title) {
+void Application::set_window_title(const std::string &title) {
     glfwSetWindowTitle(m_window, title.c_str());
 }
 
-void Application::set_window_pos(int xpos, int ypos) {
-    glfwSetWindowPos(m_window, xpos, ypos);
-}
+void Application::set_window_pos(int xpos, int ypos) { glfwSetWindowPos(m_window, xpos, ypos); }
 
 Vec2 Application::get_window_pos() const {
     int xpos, ypos;
@@ -300,17 +281,17 @@ Vec2 Application::get_window_size() const {
     return {(float)width, (float)height};
 }
 
-void Application::set_window_size_limits(int min_width, int min_height, int max_width, int max_height) {
+void Application::set_window_size_limits(int min_width, int min_height, int max_width,
+                                         int max_height) {
     glfwSetWindowSizeLimits(m_window, min_width, min_height, max_width, max_height);
 }
 
 void Application::center_window(int monitorIdx) {
     GLFWmonitor *monitor = nullptr;
-    if (monitorIdx == 0) 
+    if (monitorIdx == 0)
         monitor = glfwGetPrimaryMonitor();
-    else
-    {
-        int count;
+    else {
+        int  count;
         auto monitors = glfwGetMonitors(&count);
         if (monitorIdx < count)
             monitor = monitors[monitorIdx];
@@ -326,36 +307,23 @@ void Application::center_window(int monitorIdx) {
     glfwGetMonitorPos(monitor, &monitorX, &monitorY);
     int windowWidth, windowHeight;
     glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
-    glfwSetWindowPos(m_window, monitorX + (mode->width - windowWidth) / 2, monitorY + (mode->height - windowHeight) / 2);
+    glfwSetWindowPos(m_window, monitorX + (mode->width - windowWidth) / 2,
+                     monitorY + (mode->height - windowHeight) / 2);
 }
 
-void Application::minimize_window() {
-    glfwIconifyWindow(m_window);
-}
+void Application::minimize_window() { glfwIconifyWindow(m_window); }
 
-void Application::maximize_window() {
-    glfwMaximizeWindow(m_window);
-}
+void Application::maximize_window() { glfwMaximizeWindow(m_window); }
 
-void Application::restore_window() {
-    glfwRestoreWindow(m_window);
-}
+void Application::restore_window() { glfwRestoreWindow(m_window); }
 
-void Application::hide_window() {
-    glfwHideWindow(m_window);
-}
+void Application::hide_window() { glfwHideWindow(m_window); }
 
-void Application::show_window() {
-    glfwShowWindow(m_window);
-}
+void Application::show_window() { glfwShowWindow(m_window); }
 
-void Application::focus_window() {
-    glfwFocusWindow(m_window);
-}
+void Application::focus_window() { glfwFocusWindow(m_window); }
 
-void Application::request_window_attention() {
-    glfwRequestWindowAttention(m_window);
-}
+void Application::request_window_attention() { glfwRequestWindowAttention(m_window); }
 
 Vec2 Application::get_framebuffer_size() const {
     int w, h;
@@ -367,13 +335,12 @@ float Application::get_pixel_ratio() const {
     return get_framebuffer_size().x / get_window_size().x;
 }
 
-
 void Application::set_vsync(bool enabled) {
     m_conf.vsync = enabled;
     if (m_conf.vsync)
-        glfwSwapInterval(1); // Enable vsync
+        glfwSwapInterval(1);  // Enable vsync
     else
-        glfwSwapInterval(0); // Disable vsync
+        glfwSwapInterval(0);  // Disable vsync
 }
 
 void Application::set_frame_limit(util::Frequency freq) {
@@ -382,44 +349,32 @@ void Application::set_frame_limit(util::Frequency freq) {
 }
 
 Vec2 Application::get_mouse_pos() const {
-    double x,y;
+    double x, y;
     glfwGetCursorPos(m_window, &x, &y);
-    return {(float)x,(float)y};
+    return {(float)x, (float)y};
 }
-
 
 #ifdef MAHI_COROUTINES
 
-std::shared_ptr<util::Coroutine> Application::start_coroutine(util::Enumerator &&e)
-{
+std::shared_ptr<util::Coroutine> Application::start_coroutine(util::Enumerator &&e) {
     auto h = e.get_coroutine();
     m_coroutines.push_back(std::move(e));
     return h;
 }
 
-void Application::stop_coroutine(std::shared_ptr<util::Coroutine> routine)
-{
+void Application::stop_coroutine(std::shared_ptr<util::Coroutine> routine) {
     if (routine)
         routine->stop();
 }
 
-void Application::stop_coroutines()
-{
-    m_coroutines.clear();
-}
+void Application::stop_coroutines() { m_coroutines.clear(); }
 
-int Application::coroutine_count() const
-{
-    return static_cast<int>(m_coroutines.size());
-}
+int Application::coroutine_count() const { return static_cast<int>(m_coroutines.size()); }
 
-YieldTimeScaled::YieldTimeScaled(util::Time duration, Application* app) : 
-    m_end(app->time() + duration), m_app(app)
-{ }
+YieldTimeScaled::YieldTimeScaled(util::Time duration, Application *app) :
+    m_end(app->time() + duration), m_app(app) {}
 
-bool YieldTimeScaled::is_over() {
-    return m_app->time() >= m_end;
-}
+bool YieldTimeScaled::is_over() { return m_app->time() >= m_end; }
 
 std::shared_ptr<YieldTimeScaled> Application::yield_time_scaled(util::Time duration) {
     return ::mahi::gui::yield_time_scaled(duration, this);
@@ -427,38 +382,32 @@ std::shared_ptr<YieldTimeScaled> Application::yield_time_scaled(util::Time durat
 
 #endif
 
+const Application::Profile &Application::profile() const { return m_profile; }
 
-const Application::Profile& Application::profile() const {
-    return m_profile;
-}
-
-
-namespace
-{
+namespace {
 
 ///////////////////////////////////////////////////////////////////////////////
 // GLFW
 ///////////////////////////////////////////////////////////////////////////////
 
-static void glfw_context_version()
-{
+static void glfw_context_version() {
     // Decide GL+GLSL versions
 #if __APPLE__
     // GL 3.2 + GLSL 150
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // Required on Mac
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
 #else
     // GL 3.0 + GLSL 130
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
 }
 
-void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer) {
+void glfw_setup_window_callbacks(GLFWwindow *window, void *userPointer) {
     glfwSetWindowUserPointer(window, userPointer);
     glfwSetWindowPosCallback(window, glfw_pos_callback);
     glfwSetWindowSizeCallback(window, glfw_size_callback);
@@ -467,36 +416,34 @@ void glfw_setup_window_callbacks(GLFWwindow* window, void* userPointer) {
     glfwSetDropCallback(window, glfw_drop_callback);
 }
 
-static void glfw_error_callback(int error, const char *description)
-{
+static void glfw_error_callback(int error, const char *description) {
     static std::string dsc = description;
     Application::on_error.emit(error, dsc);
 }
 
-static void glfw_pos_callback(GLFWwindow* window, int xpos, int ypos) {
-    Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
+static void glfw_pos_callback(GLFWwindow *window, int xpos, int ypos) {
+    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
     app->on_window_moved.emit(xpos, ypos);
 }
 
-static void glfw_size_callback(GLFWwindow* window, int width, int height) {
+static void glfw_size_callback(GLFWwindow *window, int width, int height) {
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
     app->on_window_resized.emit(width, height);
 }
 
-static void glfw_close_callback(GLFWwindow* window) {
-    Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-    auto close = app->on_window_closing.emit();
-    if (!close) 
+static void glfw_close_callback(GLFWwindow *window) {
+    Application *app   = static_cast<Application *>(glfwGetWindowUserPointer(window));
+    auto         close = app->on_window_closing.emit();
+    if (!close)
         glfwSetWindowShouldClose(window, GLFW_FALSE);
 }
 
-static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void glfw_key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     Application *app = static_cast<Application *>(glfwGetWindowUserPointer(window));
-    app->on_keyboard.emit(key,scancode,action,mods);
+    app->on_keyboard.emit(key, scancode, action, mods);
 }
 
-static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths)
-{
+static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths) {
     static std::vector<std::string> pathsVec;
     pathsVec.resize(count);
     for (int i = 0; i < count; ++i)
@@ -508,50 +455,51 @@ static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths
 ///////////////////////////////////////////////////////////////////////////////
 // IMGUI
 ///////////////////////////////////////////////////////////////////////////////
-static void configureImGui(GLFWwindow *window)
-{
+static void configureImGui(GLFWwindow *window) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;  // Enable Multi-Viewport / Platform Windows
     // io.ConfigViewportsNoAutoMerge = true;
-    //io.ConfigViewportsNoTaskBarIcon = true;
+    // io.ConfigViewportsNoTaskBarIcon = true;
 
     // we are doing 4X MSAA with GLFW
     // ImGui::GetStyle().AntiAliasedFill = false;
     // ImGui::GetStyle().AntiAliasedLines = false;
-    
+
     // add fonts
     io.Fonts->Clear();
     ImFontConfig font_cfg;
-    font_cfg.PixelSnapH = true;
-    font_cfg.OversampleH = 1;
-    font_cfg.OversampleV = 1;
+    font_cfg.PixelSnapH           = true;
+    font_cfg.OversampleH          = 1;
+    font_cfg.OversampleV          = 1;
     font_cfg.FontDataOwnedByAtlas = false;
     strcpy(font_cfg.Name, "Roboto Mono Bold");
     io.Fonts->AddFontFromMemoryTTF(RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
 
     ImFontConfig icons_config;
-    icons_config.MergeMode        = true;
-    icons_config.PixelSnapH       = true;
-    icons_config.GlyphMinAdvanceX = 14.0f;
-    icons_config.GlyphOffset      = ImVec2(0, 0);
-    icons_config.OversampleH      = 1;
-    icons_config.OversampleV      = 1;
+    icons_config.MergeMode            = true;
+    icons_config.PixelSnapH           = true;
+    icons_config.GlyphMinAdvanceX     = 14.0f;
+    icons_config.GlyphOffset          = ImVec2(0, 0);
+    icons_config.OversampleH          = 1;
+    icons_config.OversampleV          = 1;
     icons_config.FontDataOwnedByAtlas = false;
 
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, 14.0f, &icons_config, fa_ranges);
+    io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, 14.0f, &icons_config,
+                                   fa_ranges);
 
     // merge in icons from font awesome 5 brands
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
-    io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, 14, &icons_config, fab_ranges);   
+    io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, 14, &icons_config,
+                                   fab_ranges);
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
 
@@ -579,11 +527,11 @@ static void configureImGui(GLFWwindow *window)
     // Setup Dear ImGui style
     ImGui::StyleColorsMahiDark4();
 
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look
+    // identical to regular ones.
     ImGuiStyle &style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        style.WindowRounding = 0.0f;
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        style.WindowRounding              = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
@@ -604,7 +552,7 @@ static void configureImGui(GLFWwindow *window)
     // ImGui::SetCurrentFont(ImGui::GetDefaultFont());
 }
 
-} // private namespace
+}  // namespace
 
-} // namespace gui
-} // namespace mahi
+}  // namespace gui
+}  // namespace mahi

@@ -26,7 +26,6 @@ namespace gui {
 template <typename T>
 class Sequence {
 public:
-
     /// Default constructor
     Sequence(T (*tween_func)(const T&, const T&, float) = Tween::Linear);
 
@@ -38,13 +37,12 @@ public:
 
     /// Sets the tweening function to be used
     void set_tween(T (*tween_func)(const T&, const T&, float));
-    
+
     /// Gets keyframe stops and values
     void get_keys(std::vector<float>& stops_out, std::vector<T>& values_out) const;
 
 private:
-
-    std::map<float, T> m_keys;                    ///< keyframes
+    std::map<float, T> m_keys;                     ///< keyframes
     T (*m_tween_func)(const T&, const T&, float);  ///< tweening function
 };
 
@@ -54,9 +52,7 @@ private:
 
 template <typename T>
 Sequence<T>::Sequence(T (*tween_func)(const T&, const T&, float)) :
-    m_keys(),
-    m_tween_func(tween_func)
-{}
+    m_keys(), m_tween_func(tween_func) {}
 
 template <typename T>
 T& Sequence<T>::operator[](float t) {
@@ -72,7 +68,7 @@ T Sequence<T>::operator()(float t) const {
     if (b->first == t)
         return b->second;
     auto a = std::prev(b);
-    t = (t - a->first) / (b->first - a->first);
+    t      = (t - a->first) / (b->first - a->first);
     return m_tween_func(a->second, b->second, t);
 }
 
@@ -83,14 +79,15 @@ void Sequence<T>::set_tween(T (*tween_func)(const T&, const T&, float)) {
 
 template <typename T>
 void Sequence<T>::get_keys(std::vector<float>& stops_out, std::vector<T>& values_out) const {
-    stops_out.clear(); stops_out.reserve(m_keys.size());
-    values_out.clear(); values_out.reserve(m_keys.size());   
+    stops_out.clear();
+    stops_out.reserve(m_keys.size());
+    values_out.clear();
+    values_out.reserve(m_keys.size());
     for (auto it = m_keys.begin(); it != m_keys.end(); ++it) {
         stops_out.push_back(it->first);
         values_out.push_back(it->second);
     }
-    
 }
 
-} // namespace gui
-} // namespace mahi
+}  // namespace gui
+}  // namespace mahi

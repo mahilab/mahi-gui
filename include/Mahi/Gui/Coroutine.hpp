@@ -29,25 +29,21 @@ class Application;
 
 /// Yield instruction which waits until a key is pressed (use GLFW enums)
 struct YieldKey : public util::YieldInstruction {
-    YieldKey(int key) : m_key(key) { }
-    bool is_over() override {
-        return ImGui::IsKeyPressed(m_key);
-    }
+    YieldKey(int key) : m_key(key) {}
+    bool is_over() override { return ImGui::IsKeyPressed(m_key); }
+
 private:
     int m_key;
 };
 
 /// Makes a YieldKey instruction
-inline std::shared_ptr<YieldKey> yield_key(int key) {
-    return std::make_shared<YieldKey>(key);
-}
+inline std::shared_ptr<YieldKey> yield_key(int key) { return std::make_shared<YieldKey>(key); }
 
 /// Yield instruction which waits until a mouse button is pressed (0=left, 1=right, 2=middle)
 struct YieldMouse : public util::YieldInstruction {
-    YieldMouse(int button) : m_button(button) { }
-    bool is_over() override {
-        return ImGui::IsMouseClicked(m_button);
-    }
+    YieldMouse(int button) : m_button(button) {}
+    bool is_over() override { return ImGui::IsMouseClicked(m_button); }
+
 private:
     int m_button;
 };
@@ -57,12 +53,14 @@ inline std::shared_ptr<YieldMouse> yield_mouse(int button) {
     return std::make_shared<YieldMouse>(button);
 }
 
-/// Yield instruction which waits for scaled Application time. Prefer this over mahi::util::yield_time.
+/// Yield instruction which waits for scaled Application time. Prefer this over
+/// mahi::util::yield_time.
 struct YieldTimeScaled : public util::YieldInstruction {
     YieldTimeScaled(util::Time duration, Application* app);
     bool is_over() override;
+
 private:
-    util::Time m_end;
+    util::Time   m_end;
     Application* m_app;
 };
 
@@ -71,5 +69,5 @@ inline std::shared_ptr<YieldTimeScaled> yield_time_scaled(util::Time duration, A
     return std::make_shared<YieldTimeScaled>(duration, app);
 }
 
-} // namespace gui
-} // namespace mahi
+}  // namespace gui
+}  // namespace mahi
