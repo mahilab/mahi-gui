@@ -470,39 +470,78 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         plot._dragging_y = true;
     
     // scroll zoom
-    if (frame_hovered && (xAxisRegion_hovered || yAxisRegion_hovered))
+    if (frame_hovered && (xAxisRegion_hovered || yAxisRegion_hovered) && IO.MouseWheel != 0)
     {
         float xRange = plot.x_axis.maximum - plot.x_axis.minimum;
         float yRange = plot.y_axis.maximum - plot.y_axis.minimum;
-        if (IO.MouseWheel < 0)
-        {
-            if (xAxisRegion_hovered) {
-                if (!plot.x_axis.lock_min)
-                    plot.x_axis.minimum -= plot.x_axis.zoom_rate * xRange;
-                if (!plot.x_axis.lock_max)
-                    plot.x_axis.maximum += plot.x_axis.zoom_rate * xRange;
-            }
-            if (yAxisRegion_hovered) {
-                if (!plot.y_axis.lock_min)
-                    plot.y_axis.minimum -= plot.y_axis.zoom_rate * yRange;
-                if (!plot.y_axis.lock_max)
-                    plot.y_axis.maximum += plot.y_axis.zoom_rate * yRange;
-            }
-        }
+        float xZoomRate = plot.x_axis.zoom_rate;
+        float yZoomRate = plot.y_axis.zoom_rate;
         if (IO.MouseWheel > 0)
         {
-            if (xAxisRegion_hovered) {
-                if (!plot.x_axis.lock_min)
-                    plot.x_axis.minimum += plot.x_axis.zoom_rate * xRange / (1.0f + 2.0f * plot.x_axis.zoom_rate);
-                if (!plot.x_axis.lock_max)
-                    plot.x_axis.maximum -= plot.x_axis.zoom_rate * xRange / (1.0f + 2.0f * plot.x_axis.zoom_rate);
+            xZoomRate = (-xZoomRate) / (1.0f + (2.0f * xZoomRate));
+            yZoomRate = (-yZoomRate) / (1.0f + (2.0f * yZoomRate));
+        }
+        // Determine center of zoom
+        float xCenter, yCenter;
+        if (xAxisRegion_hovered && yAxisRegion_hovered)
+        {
+            // Mouse pointer is in plot -> zoom in on mouse pointer
+            const ImRect pixZoom(plot.x_axis.flip ? grid_bb.Max.x : grid_bb.Min.x,
+                                 plot.y_axis.flip ? grid_bb.Min.y : grid_bb.Max.y,
+                                 plot.x_axis.flip ? grid_bb.Min.x : grid_bb.Max.x,
+                                 plot.y_axis.flip ? grid_bb.Max.y : grid_bb.Min.y);
+            xCenter = Remap(IO.MousePos.x, pixZoom.Min.x, pixZoom.Max.x, plot.x_axis.minimum,
+                            plot.x_axis.maximum);
+            yCenter = Remap(IO.MousePos.y, pixZoom.Min.y, pixZoom.Max.y, plot.y_axis.minimum,
+                            plot.y_axis.maximum);
+        }
+        else {
+            // Zoom in on center of plot
+            xCenter = 0.5f * (plot.x_axis.maximum + plot.x_axis.minimum);
+            yCenter = 0.5f * (plot.y_axis.maximum + plot.y_axis.minimum);
+        }
+
+        if (xAxisRegion_hovered && yAxisRegion_hovered)
+        {
+            // x axis
+            if (!plot.x_axis.lock_min && !plot.x_axis.lock_max)
+            {
+                // Zoom in on center
+                plot.x_axis.minimum =
+                    xCenter + ((plot.x_axis.minimum - xCenter) * (1.0f + (2.0f * xZoomRate)));
+                plot.x_axis.maximum =
+                    xCenter + ((plot.x_axis.maximum - xCenter) * (1.0f + (2.0f * xZoomRate)));
             }
-            if (yAxisRegion_hovered) {
-                if (!plot.y_axis.lock_min)
-                    plot.y_axis.minimum += plot.y_axis.zoom_rate * yRange / (1.0f + 2.0f * plot.y_axis.zoom_rate);
-                if (!plot.y_axis.lock_max)
-                    plot.y_axis.maximum -= plot.y_axis.zoom_rate * yRange / (1.0f + 2.0f * plot.y_axis.zoom_rate);
+            else if (!plot.x_axis.lock_min)
+                plot.x_axis.minimum -= xZoomRate * xRange;
+            else if (!plot.x_axis.lock_max)
+                plot.x_axis.maximum += xZoomRate * xRange;
+
+            // y axis
+            if (!plot.y_axis.lock_min && !plot.y_axis.lock_max)
+            {
+                // Zoom in on center
+                plot.y_axis.minimum =
+                    yCenter + (1.0f + (2.0f * yZoomRate)) * (plot.y_axis.minimum - yCenter);
+                plot.y_axis.maximum =
+                    yCenter + (1.0f + (2.0f * yZoomRate)) * (plot.y_axis.maximum - yCenter);
             }
+            else if (!plot.y_axis.lock_min)
+                plot.y_axis.minimum -= yZoomRate * yRange;
+            else if (!plot.y_axis.lock_max)
+                plot.y_axis.maximum += yZoomRate * yRange;
+        }
+        else if (xAxisRegion_hovered) {
+            if (!plot.x_axis.lock_min)
+                plot.x_axis.minimum -= xZoomRate * xRange;
+            if (!plot.x_axis.lock_max)
+                plot.x_axis.maximum += xZoomRate * xRange;
+        }
+        else {
+            if (!plot.y_axis.lock_min)
+                plot.y_axis.minimum -= yZoomRate * yRange;
+            if (!plot.y_axis.lock_max)
+                plot.y_axis.maximum += yZoomRate * yRange;
         }
     }
 
