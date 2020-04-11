@@ -11,6 +11,7 @@
 #include <Mahi/Gui/Sequence.hpp>
 #include <Mahi/Gui/Shape.hpp>
 #include <Mahi/Gui/Transform.hpp>
+#include <Mahi/Gui/Transformable.hpp>
 #include <Mahi/Gui/Tween.hpp>
 #include <Mahi/Gui/Fonts.hpp>
 #include <Mahi/Gui/imgui_custom.hpp>

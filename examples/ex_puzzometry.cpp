@@ -763,7 +763,7 @@ class Board
 // PIECE
 //==============================================================================
 
-class Piece
+class Piece : public Transformable
 {
   public:
 
@@ -772,10 +772,10 @@ class Piece
         shape = makeShape(matrix);
         shape = offset_shape(shape, -2.0f);
         perm = 0;
-        pos = Vec2(0,0);
-        origin = Vec2(0,0);
-        scale = Vec2(1,1);
-        rotation = 0;
+        set_pos({0,0});
+        set_origin({0,0});
+        set_scale({1,1});
+        set_rotation(0);
     }
 
     void updateMatrix(const Matrix &mat) {
@@ -800,10 +800,10 @@ class Piece
     }
 
     void place(const Coord& new_coord, int new_perm) {
-        pos = coordPosition(new_coord); 
-        origin = computeOrigin(new_perm);
-        scale  = computeScale(new_perm);
-        rotation = computeRotation(new_perm);
+        set_pos(coordPosition(new_coord)); 
+        set_origin(computeOrigin(new_perm));
+        set_scale(computeScale(new_perm));
+        set_rotation(computeRotation(new_perm));
         coord = new_coord;
         perm = new_perm;
     }
@@ -811,10 +811,10 @@ class Piece
     Enumerator transition(Coord to_coord, int perm, float duration) {
         transitioning = true;
         // start state
-        auto startPosition = pos;
-        auto startRotation = rotation;
-        auto startScale    = scale;
-        auto startOrigin   = origin;
+        auto startPosition = pos();
+        auto startRotation = rotation();
+        auto startScale    = scale();
+        auto startOrigin   = origin();
         // end state
         auto endPosition   = coordPosition(to_coord);
         auto endRotation   = computeRotation(perm);
@@ -824,10 +824,10 @@ class Piece
         float elapsedTime = 0.0f;
         while (elapsedTime < duration) {
             float t  = elapsedTime / duration;
-            pos = Tween::Smootherstep(startPosition, endPosition, t);
-            rotation = Tween::Smootherstep(startRotation, endRotation, t);
-            scale = Tween::Smootherstep(startScale, endScale, t);
-            origin = Tween::Smootherstep(startOrigin, endOrigin, t);
+            set_pos( Tween::Smootherstep(startPosition, endPosition, t) );
+            set_rotation( Tween::Smootherstep(startRotation, endRotation, t) );
+            set_scale( Tween::Smootherstep(startScale, endScale, t) );
+            set_origin( Tween::Smootherstep(startOrigin, endOrigin, t) );
             elapsedTime += (float)app->delta_time().as_seconds();
             co_yield nullptr;
         }        
@@ -837,16 +837,8 @@ class Piece
 
     void draw(NVGcontext* vg) {
 
-        float angle  = -rotation * (float)DEG2RAD;
-        float c = static_cast<float>(std::cos(angle));
-        float s   = static_cast<float>(std::sin(angle));
-        float sxc    = scale.x * c;
-        float syc    = scale.y * c;
-        float sxs    = scale.x * s;
-        float sys    = scale.y * s;
-        float tx     = -origin.x * sxc - origin.y * sys + pos.x;
-        float ty     =  origin.x * sxs - origin.y * syc + pos.y;
-        nvgTransform(vg, sxc, -sxs, sys, syc, tx, ty);
+
+        nvgTransform(vg, transform());
 
         float trans[6], inv[6];
         nvgCurrentTransform(vg, trans);
@@ -879,13 +871,6 @@ class Piece
         nvgStroke(vg);
     }
 
-    Enumerator test() {
-        while (true) {
-            print("{},{}",pos.x,pos.y);
-            co_yield nullptr;
-        }
-    }
-
     Application* app;
     Shape shape;
     bool transitioning = false;
@@ -893,10 +878,6 @@ class Piece
     Coord coord;
     Matrix matrix;
     Color color;
-    Vec2 origin;
-    Vec2 pos;
-    Vec2 scale;
-    float rotation;
 };
 
 //==============================================================================

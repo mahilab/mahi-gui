@@ -24,8 +24,10 @@ using namespace mahi::util;
 
 struct Dot {
     Dot(Application& application) : app(application) {
-        pos0.x = (float)random_range(0.0, 500.0);
-        pos0.y = (float)random_range(0.0, 500.0);
+        float r = random_range(0.0, 250.0);
+        float a = random_range(0.0, 2 * PI);
+        pos0.x = 300 + r * std::cos(a);
+        pos0.y = 300 + r * std::sin(a);
         seed   = random_range(0, 100000);
         speed  = (float)random_range(1.0f, 3.0f);
         color  = random_color();
@@ -61,7 +63,7 @@ struct Dot {
 
 class CoroDemo : public Application {
 public:
-    CoroDemo() : Application(500, 500, "Coroutine Benchmark", false) { 
+    CoroDemo(Config conf) : Application(conf) { 
         dots.reserve(5000);
         for (int i = 0; i < 5000; ++i)
             dots.emplace_back(*this);
@@ -70,7 +72,7 @@ public:
     }
 
     void update() {
-        ImGui::Begin("Coroutines Benchmark");
+        ImGui::Begin("Coroutines Benchmark", &open);
         if (ImGui::Checkbox("Use Coroutines", &use_coros)) {
             if (!use_coros)
                 stop_coroutines();
@@ -86,6 +88,9 @@ public:
             for (auto& dot : dots) 
                 dot.animate();            
         }
+
+        if (!open)
+            quit();
     }
 
     void draw(NVGcontext* vg) override {
@@ -95,10 +100,18 @@ public:
 
     std::vector<Dot> dots;
     bool use_coros = false;
+    bool open = true;
 };
 
 int main(int argc, char const* argv[]) {
-    CoroDemo demo;
+    Application::Config conf;
+    conf.height = 600;
+    conf.width = 600;
+    conf.title = "Coroutine Benchmark";
+    conf.resizable = false;
+    conf.transparent = true;
+    conf.decorated = false;
+    CoroDemo demo(conf);
     demo.run();
     return 0;
 }
