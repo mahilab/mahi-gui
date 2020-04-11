@@ -179,7 +179,7 @@ void Application::run()
             temp.swap(m_coroutines);
             for (auto &coro : temp)
             {
-                if (coro.move_next())
+                if (coro.step())
                     m_coroutines.push_back(std::move(coro));
             }
         }
