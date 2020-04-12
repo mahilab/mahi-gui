@@ -62,6 +62,7 @@ inline double NiceNum(double x, bool round) {
         nf = 10;
     return nf * std::pow(10., expv);
 }
+
 /// Draws vertical text. The position is the bottom left of the text rect.
 inline void AddTextVertical(ImDrawList *DrawList, const char *text, ImVec2 pos, ImU32 text_color) {
     pos.x                   = IM_ROUND(pos.x);
@@ -133,7 +134,7 @@ inline void TransformTicks(std::vector<Tick> &ticks, float tMin, float tMax, flo
     for (auto &tk : ticks)
         tk.pixels =
             (pMin + m * ((float)tk.plot -
-                         tMin));  // IM_ROUND used previoiusly, but causes distortion in moving plot
+                         tMin));  // IM_ROUND used previously, but causes distortion in moving plots
 }
 
 inline void RenderPlotItemLineAA(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
@@ -165,6 +166,7 @@ inline void RenderPlotItemLine(const PlotItem &item, const PlotInterface &plot, 
                                ImDrawList &DrawList) {
     if (item.data.size() < 2)
         return;
+    // std::cout << pix.Min.x << "," << pix.Min.y << "," << pix.Max.x << "," << pix.Max.y << std::endl;
     const ImU32  col = GetColorU32(item.color);
     const float  mx  = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float  my  = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
@@ -177,6 +179,8 @@ inline void RenderPlotItemLine(const PlotItem &item, const PlotInterface &plot, 
     DrawList.PrimReserve(idx_count, vtx_count);
     int    i1 = item.data_begin;
     ImVec2 p1, p2;
+    int segments_culled = 0;
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
     for (int s = 0; s < segments; ++s) {
         const int i2 = i1 + 1 == points_count ? 0 : i1 + 1;
         p1.x         = pix.Min.x + mx * (item.data[i1].x - plot.x_axis.minimum);
@@ -185,39 +189,46 @@ inline void RenderPlotItemLine(const PlotItem &item, const PlotInterface &plot, 
         p2.y         = pix.Min.y + my * (item.data[i2].y - plot.y_axis.minimum);
         i1           = i2;
 
-        float dx = p2.x - p1.x;
-        float dy = p2.y - p1.y;
-        IM_NORMALIZE2F_OVER_ZERO(dx, dy);
-        dx *= (thickness * 0.5f);
-        dy *= (thickness * 0.5f);
+        if (cull_area.Contains(p1) || cull_area.Contains(p2)) {
+            float dx = p2.x - p1.x;
+            float dy = p2.y - p1.y;
+            IM_NORMALIZE2F_OVER_ZERO(dx, dy);
+            dx *= (thickness * 0.5f);
+            dy *= (thickness * 0.5f);
+            
+            DrawList._VtxWritePtr[0].pos.x = p1.x + dy;
+            DrawList._VtxWritePtr[0].pos.y = p1.y - dx;
+            DrawList._VtxWritePtr[0].uv    = uv;
+            DrawList._VtxWritePtr[0].col   = col;
+            DrawList._VtxWritePtr[1].pos.x = p2.x + dy;
+            DrawList._VtxWritePtr[1].pos.y = p2.y - dx;
+            DrawList._VtxWritePtr[1].uv    = uv;
+            DrawList._VtxWritePtr[1].col   = col;
+            DrawList._VtxWritePtr[2].pos.x = p2.x - dy;
+            DrawList._VtxWritePtr[2].pos.y = p2.y + dx;
+            DrawList._VtxWritePtr[2].uv    = uv;
+            DrawList._VtxWritePtr[2].col   = col;
+            DrawList._VtxWritePtr[3].pos.x = p1.x - dy;
+            DrawList._VtxWritePtr[3].pos.y = p1.y + dx;
+            DrawList._VtxWritePtr[3].uv    = uv;
+            DrawList._VtxWritePtr[3].col   = col;
+            DrawList._VtxWritePtr += 4;
 
-        DrawList._VtxWritePtr[0].pos.x = p1.x + dy;
-        DrawList._VtxWritePtr[0].pos.y = p1.y - dx;
-        DrawList._VtxWritePtr[0].uv    = uv;
-        DrawList._VtxWritePtr[0].col   = col;
-        DrawList._VtxWritePtr[1].pos.x = p2.x + dy;
-        DrawList._VtxWritePtr[1].pos.y = p2.y - dx;
-        DrawList._VtxWritePtr[1].uv    = uv;
-        DrawList._VtxWritePtr[1].col   = col;
-        DrawList._VtxWritePtr[2].pos.x = p2.x - dy;
-        DrawList._VtxWritePtr[2].pos.y = p2.y + dx;
-        DrawList._VtxWritePtr[2].uv    = uv;
-        DrawList._VtxWritePtr[2].col   = col;
-        DrawList._VtxWritePtr[3].pos.x = p1.x - dy;
-        DrawList._VtxWritePtr[3].pos.y = p1.y + dx;
-        DrawList._VtxWritePtr[3].uv    = uv;
-        DrawList._VtxWritePtr[3].col   = col;
-        DrawList._VtxWritePtr += 4;
-
-        DrawList._IdxWritePtr[0] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
-        DrawList._IdxWritePtr[1] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 1);
-        DrawList._IdxWritePtr[2] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
-        DrawList._IdxWritePtr[3] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
-        DrawList._IdxWritePtr[4] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
-        DrawList._IdxWritePtr[5] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 3);
-        DrawList._IdxWritePtr += 6;
-        DrawList._VtxCurrentIdx += 4;
+            DrawList._IdxWritePtr[0] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
+            DrawList._IdxWritePtr[1] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 1);
+            DrawList._IdxWritePtr[2] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
+            DrawList._IdxWritePtr[3] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
+            DrawList._IdxWritePtr[4] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
+            DrawList._IdxWritePtr[5] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 3);
+            DrawList._IdxWritePtr += 6;
+            DrawList._VtxCurrentIdx += 4;
+        }
+        else {
+            segments_culled++;
+        }
     }
+    if (segments_culled > 0) 
+        DrawList.PrimUnreserve(segments_culled * 6, segments_culled * 4);   
 }
 
 inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plot,

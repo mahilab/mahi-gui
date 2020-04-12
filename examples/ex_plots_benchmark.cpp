@@ -14,7 +14,7 @@
 //
 // Author(s): Evan Pezent (epezent@rice.edu)
 
-#define MAHI_GUI_NO_CONSOLE
+// #define MAHI_GUI_NO_CONSOLE
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 
@@ -31,7 +31,6 @@ public:
             ImGui::PlotItem item;
             item.data.reserve(1000);
             item.color = random_color();
-            print_var(item.color.w);
             float y = i * 0.01f;
             for (int i = 0; i < 1000; ++i)
                 item.data.push_back(ImVec2(i*0.001f, y + (float)random_range(-0.01,0.01)));
@@ -59,8 +58,6 @@ public:
         ImGui::SameLine();
         if (ImGui::Button("VSync Off"))
             set_vsync(false);
-        ImGui::SameLine();
-        ImGui::Checkbox("Anti-Aliased", &ImGui::GetStyle().AntiAliasedLines);
         ImGui::SameLine();
         ImGui::Checkbox("Render", &render);
         ImGui::SameLine();
