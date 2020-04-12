@@ -62,14 +62,18 @@ inline void nvgStrokeShape(NVGcontext* vg, const Shape& shape, float width, cons
     nvgStroke(vg);
 }
 
-/// Draws an SVG file from a NSVGimage, created with nsvgParseFromFile
-void nvgDrawSvg(NVGcontext* vg, NSVGimage* svg);
-
 /// Premultiplies current coordinate system by specified Transformation matrix.
 inline void nvgTransform(NVGcontext* vg, const Transform& transform) {
     auto m = transform.matrix();
     nvgTransform(vg, m[0], m[1], m[4], m[5], m[12], m[13]);
 }
+
+/// Draws an SVG file from a NSVGimage, created with nsvgParseFromFile
+void nvgDrawSvg(NVGcontext* vg, NSVGimage* svg);
+
+/// Parses SVG from string
+NSVGimage* nsvgParseFromString(const std::string& str, const char* units, float dpi);
+
 
 } // namespace gui
 } // namespace mahi

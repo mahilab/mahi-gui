@@ -179,5 +179,17 @@ void nvgDrawSvg(NVGcontext* vg, NSVGimage* svg) {
     }
 }
 
+NSVGimage* nsvgParseFromString(const std::string& str, const char* units, float dpi) {
+    NSVGimage* image = nullptr;
+    char* data = (char*)malloc(str.length() + 1);
+    std::memcpy(data,str.c_str(),str.length());
+    data[str.length()] = '\0';
+    image = nsvgParse(data,units,dpi);
+    free(data);
+    return image;
+}
+
+
+
 }  // namespace gui
 }  // namespace mahi

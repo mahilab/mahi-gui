@@ -828,8 +828,6 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         }
     }
 
-    // AddTextVertical(&DrawList, "Hello, World", frame_bb.Min, color_ytxt);
-
     PushID(id);
     if (frame_hovered && grid_hovered && IO.MouseDoubleClicked[1] && plot.enable_controls &&
         !legend_hovered)
