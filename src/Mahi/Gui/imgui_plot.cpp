@@ -166,7 +166,6 @@ inline void RenderPlotItemLine(const PlotItem &item, const PlotInterface &plot, 
                                ImDrawList &DrawList) {
     if (item.data.size() < 2)
         return;
-    // std::cout << pix.Min.x << "," << pix.Min.y << "," << pix.Max.x << "," << pix.Max.y << std::endl;
     const ImU32  col = GetColorU32(item.color);
     const float  mx  = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float  my  = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
@@ -188,7 +187,6 @@ inline void RenderPlotItemLine(const PlotItem &item, const PlotInterface &plot, 
         p2.x         = pix.Min.x + mx * (item.data[i2].x - plot.x_axis.minimum);
         p2.y         = pix.Min.y + my * (item.data[i2].y - plot.y_axis.minimum);
         i1           = i2;
-
         if (cull_area.Contains(p1) || cull_area.Contains(p2)) {
             float dx = p2.x - p1.x;
             float dy = p2.y - p1.y;
@@ -236,11 +234,13 @@ inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plo
     const ImU32 col = GetColorU32(item.color);
     const float mx  = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my  = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
     for (std::size_t i = 0; i < item.data.size(); ++i) {
         ImVec2 c;
         c.x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
         c.y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
-        DrawList.AddCircleFilled(c, item.size, col, 10);
+        if (cull_area.Contains(c))
+            DrawList.AddCircleFilled(c, item.size, col, 10);
     }
 }
 
