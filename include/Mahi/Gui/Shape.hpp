@@ -213,6 +213,7 @@ inline Shape make_cross_shape(float width, float height, float thickness) {
     shape.set_point(9, -halfWidth, -halfThickness);
     shape.set_point(10, -halfWidth, halfThickness);
     shape.set_point(11, -halfThickness, halfThickness);
+    return shape;
 }
 
 // TODO: Import more make_xxx_shape functions from carnot and ShapeRenderer

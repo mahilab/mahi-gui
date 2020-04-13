@@ -67,7 +67,7 @@ public:
             }
         }
         ImGui::SameLine();
-        ImGui::Text(path.c_str());
+        ImGui::TextUnformatted(path.c_str());
         ImGui::BeginDisabled(svg == nullptr);
         if (ImGui::Button("Rasterize"))
             rasterize();

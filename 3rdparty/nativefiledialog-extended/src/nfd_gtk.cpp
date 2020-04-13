@@ -128,7 +128,7 @@ namespace {
                         *p_extnBufEnd++ = '.';
                         p_extnBufEnd = copy(p_extensionStart, p_spec, p_extnBufEnd);
                         *p_extnBufEnd++ = '\0';
-                        assert(p_extnBufEnd - extnBuf == sizeof(nfdnchar_t) * (p_spec - p_extensionStart + 3));
+                        assert((unsigned int)(p_extnBufEnd - extnBuf) == sizeof(nfdnchar_t) * (p_spec - p_extensionStart + 3));
                         gtk_file_filter_add_pattern(filter, extnBuf);
                         NFDi_Free(extnBuf);
 
@@ -147,7 +147,7 @@ namespace {
                 }
                 *p_nameBuf++ = ')';
                 *p_nameBuf++ = '\0';
-                assert(p_nameBuf - nameBuf == sizeof(nfdnchar_t) * nameSize);
+                assert((unsigned int)(p_nameBuf - nameBuf) == sizeof(nfdnchar_t) * nameSize);
 
                 // add to the filter
                 gtk_file_filter_set_name(filter, nameBuf);
@@ -224,7 +224,7 @@ namespace {
                         *p_extnBufEnd++ = '.';
                         p_extnBufEnd = copy(p_extensionStart, p_spec, p_extnBufEnd);
                         *p_extnBufEnd++ = '\0';
-                        assert(p_extnBufEnd - extnBuf == sizeof(nfdnchar_t) * (p_spec - p_extensionStart + 3));
+                        assert((unsigned int)(p_extnBufEnd - extnBuf) == sizeof(nfdnchar_t) * (p_spec - p_extensionStart + 3));
                         gtk_file_filter_add_pattern(filter, extnBuf);
                         NFDi_Free(extnBuf);
                         
@@ -248,7 +248,7 @@ namespace {
                 }
                 *p_nameBuf++ = ')';
                 *p_nameBuf++ = '\0';
-                assert(p_nameBuf - nameBuf == sizeof(nfdnchar_t) * nameSize);
+                assert((unsigned int)(p_nameBuf - nameBuf) == sizeof(nfdnchar_t) * nameSize);
                 
                 // add to the filter
                 gtk_file_filter_set_name(filter, nameBuf);

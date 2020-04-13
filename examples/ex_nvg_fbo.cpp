@@ -38,15 +38,12 @@ public:
 
     void draw(NVGcontext* vg) override {
         float t = time().as_seconds();
-        auto [w,h] = get_window_size();
-        auto [bw,bh] = get_framebuffer_size();
-        auto pxRatio = get_pixel_ratio();
 		if (m_fb != NULL) {
 			NVGpaint img = nvgImagePattern(vg, 0, 0, 100, 100, 0, m_fb->image, 1.0f);
 			nvgSave(vg);
 			for (int i = 0; i < 20; i++) {
 				nvgBeginPath(vg);
-				nvgRect(vg, 10 + i*30,10, 10, h-20);
+				nvgRect(vg, 10 + i*30,10, 10, get_window_size().y - 20);
 				nvgFillColor(vg, nvgHSLA(i/19.0f, 0.5f, 0.5f, 255));
 				nvgFill(vg);
 			}

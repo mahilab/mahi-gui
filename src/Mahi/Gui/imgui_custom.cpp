@@ -78,8 +78,8 @@ bool ButtonColored(const char *label, const ImVec4 &color, const ImVec2 &size) {
 
 bool ModeSelector(int *currentMode, const std::vector<std::string> &modes, bool horizontal) {
     bool changed = false;
-    for (unsigned int i = 0; i < modes.size(); ++i) {
-        if (ImGui::RadioButton(modes[i].c_str(), *currentMode == i)) {
+    for (std::size_t i = 0; i < modes.size(); ++i) {
+        if (ImGui::RadioButton(modes[i].c_str(), (std::size_t)*currentMode == i)) {
             *currentMode = i;
             changed      = true;
         }

@@ -39,7 +39,7 @@ inline void nvgShape(NVGcontext* vg, const Shape& shape) {
 /// Creates an NVG path from a Shape that contains holes
 inline void nvgShapeWithHoles(NVGcontext* vg, const Shape& shape) {
     nvgShape(vg, shape);
-    for (int i = 0; i < shape.hole_count(); ++i) {
+    for (std::size_t i = 0; i < shape.hole_count(); ++i) {
         nvgShape(vg, shape.hole(i));
         nvgPathWinding(vg, NVG_HOLE);
     }

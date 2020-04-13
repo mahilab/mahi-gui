@@ -54,8 +54,8 @@ util::Event<void(int, const std::string &)> Application::on_error;
 
 Application::Application(const Config &conf) :
     m_window(nullptr),
-    m_conf(conf),
     m_vg(nullptr),
+    m_conf(conf),
     m_frame_time(Time::Zero),
     m_dt(Time::Zero),
     m_time(Time::Zero),

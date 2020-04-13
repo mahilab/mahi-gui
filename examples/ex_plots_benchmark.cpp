@@ -67,6 +67,8 @@ public:
         if (render)
             ImGui::Plot("plot", plot, items);
         ImGui::End();
+
+        ImGui::ShowMetricsWindow();
     }
 
     ImGui::PlotInterface plot;

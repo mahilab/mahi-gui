@@ -8,6 +8,12 @@
 #define NANOSVG_IMPLEMENTATION
 #include <nanosvg.h>
 
+#ifdef __linux__
+#include <string.h>
+#else
+using std::memcpy;
+#endif
+
 namespace mahi {
 namespace gui {
 
@@ -182,7 +188,7 @@ void nvgDrawSvg(NVGcontext* vg, NSVGimage* svg) {
 NSVGimage* nsvgParseFromString(const std::string& str, const char* units, float dpi) {
     NSVGimage* image = nullptr;
     char* data = (char*)malloc(str.length() + 1);
-    std::memcpy(data,str.c_str(),str.length());
+    memcpy(data,str.c_str(),str.length());
     data[str.length()] = '\0';
     image = nsvgParse(data,units,dpi);
     free(data);
