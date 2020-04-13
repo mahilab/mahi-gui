@@ -640,7 +640,7 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     DrawList.AddRectFilled(grid_bb.Min, grid_bb.Max, color_bg);
 
     // render axes
-    DrawList.PushClipRect(grid_bb.Min, grid_bb.Max);
+    ImGui::PushClipRect(grid_bb.Min, grid_bb.Max, true);
 
     // transform ticks
     if (renderX)
@@ -759,7 +759,7 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         DrawList.AddText(pos, color_txt, buffer);
     }
 
-    DrawList.PopClipRect();
+    ImGui::PopClipRect();
 
     // render border
     DrawList.AddRect(grid_bb.Min, grid_bb.Max, color_border);
@@ -773,11 +773,11 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
 
     // render labels
     if (plot.x_axis.show_tick_labels) {
-        DrawList.PushClipRect(frame_bb.Min, frame_bb.Max);
+        ImGui::PushClipRect(frame_bb.Min, frame_bb.Max, true);
         for (auto &xt : xTicks)
             DrawList.AddText({xt.pixels - xt.size.x * 0.5f, grid_bb.Max.y + textOffset}, color_xtxt,
                              xt.txt.c_str());
-        DrawList.PopClipRect();
+        ImGui::PopClipRect();
     }
     if (plot.x_axis.label != "") {
         const ImVec2 xLabel_size = CalcTextSize(plot.x_axis.label.c_str());
@@ -786,11 +786,11 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         DrawList.AddText(xLabel_pos, color_xtxt, plot.x_axis.label.c_str());
     }
     if (plot.y_axis.show_tick_labels) {
-        DrawList.PushClipRect(frame_bb.Min, frame_bb.Max);
+        ImGui::PushClipRect(frame_bb.Min, frame_bb.Max, true);
         for (auto &yt : yTicks)
             DrawList.AddText({grid_bb.Min.x - textOffset - yt.size.x, yt.pixels - 0.5f * yt.size.y},
                              color_ytxt, yt.txt.c_str());
-        DrawList.PopClipRect();
+        ImGui::PopClipRect();
     }
     if (plot.y_axis.label != "") {
         const ImVec2 yLabel_size = CalcTextSizeVertical(plot.y_axis.label.c_str());
