@@ -528,10 +528,6 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
 
     // scroll zoom
     if (frame_hovered && (xAxisRegion_hovered || yAxisRegion_hovered) && IO.MouseWheel != 0) {
-
-        auto old_flags = Window->Flags;
-        Window->Flags != ImGuiWindowFlags_NoScrollWithMouse;
-
         float xRange    = plot.x_axis.maximum - plot.x_axis.minimum;
         float yRange    = plot.y_axis.maximum - plot.y_axis.minimum;
         float xZoomRate = plot.x_axis.zoom_rate;
@@ -593,8 +589,6 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             if (!plot.y_axis.lock_max)
                 plot.y_axis.maximum += yZoomRate * yRange;
         }
-
-        Window->Flags = old_flags;
     }
 
     // get pixels for transforms
