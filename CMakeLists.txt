@@ -55,15 +55,24 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(3rdparty/glfw)
-install(TARGETS glfw EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS glfw EXPORT mahi-gui-targets 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 # GLAD
 add_subdirectory(3rdparty/glad)
-install(TARGETS glad EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS glad EXPORT mahi-gui-targets 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 # NATIVE FILE DIALOG
 add_subdirectory(3rdparty/nativefiledialog-extended)
-install(TARGETS nfd EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS nfd EXPORT mahi-gui-targets 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 # IMGUI
 set(IMGUI_HEADERS
@@ -91,14 +100,20 @@ set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 
 # NANOVG
 add_subdirectory(3rdparty/nanovg)
-install(TARGETS nanovg EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS nanovg EXPORT mahi-gui-targets 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 # NANOSVG
 set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
 
 # CLIPPER
 add_subdirectory(3rdparty/clipper)
-install(TARGETS clipper EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS clipper EXPORT mahi-gui-targets 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 #===============================================================================
 # MAHI UTIL
@@ -117,7 +132,10 @@ add_library(gui "")
 add_library(mahi::gui ALIAS gui)
 set_target_properties(gui PROPERTIES DEBUG_POSTFIX -d)
 target_compile_features(gui PUBLIC cxx_std_17)
-install(TARGETS gui EXPORT mahi-gui-targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS gui EXPORT mahi-gui-targets 
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
 # defines

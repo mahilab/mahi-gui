@@ -62,13 +62,12 @@ Application::Application(const Config &conf) :
     m_time_scale(1) 
 
 {
-    int err;
     const char* err_msg;
     // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
     // initialize GLFW
     if (!glfwInit()) {
-        err = glfwGetError(&err_msg);
+        glfwGetError(&err_msg);
         throw std::runtime_error(err_msg);
     }
     // setup GLFW context version
@@ -94,7 +93,7 @@ Application::Application(const Config &conf) :
         }
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         if (!mode) {
-            err = glfwGetError(&err_msg);
+            glfwGetError(&err_msg);
             throw std::runtime_error(err_msg);
         }
         glfwWindowHint(GLFW_RED_BITS, mode->redBits);
@@ -107,7 +106,7 @@ Application::Application(const Config &conf) :
         m_window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
     }
     if (m_window == NULL) {
-        err = glfwGetError(&err_msg);
+        glfwGetError(&err_msg);
         throw std::runtime_error(err_msg);
     }
     // Make OpenGL context current
