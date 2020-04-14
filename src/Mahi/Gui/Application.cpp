@@ -59,12 +59,18 @@ Application::Application(const Config &conf) :
     m_frame_time(Time::Zero),
     m_dt(Time::Zero),
     m_time(Time::Zero),
-    m_time_scale(1) {
+    m_time_scale(1) 
+
+{
+    int err;
+    const char* err_msg;
     // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
     // initialize GLFW
-    if (!glfwInit())
-        throw std::runtime_error("Failed to initialize GLFW!");
+    if (!glfwInit()) {
+        err = glfwGetError(&err_msg);
+        throw std::runtime_error(err_msg);
+    }
     // setup GLFW context version
     glfw_context_version();
     // GLFW window hints
@@ -87,8 +93,10 @@ Application::Application(const Config &conf) :
                 monitor = glfwGetPrimaryMonitor();
         }
         const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        if (!mode)
-            throw std::runtime_error("Failed to get Video Mode!");
+        if (!mode) {
+            err = glfwGetError(&err_msg);
+            throw std::runtime_error(err_msg);
+        }
         glfwWindowHint(GLFW_RED_BITS, mode->redBits);
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -98,8 +106,10 @@ Application::Application(const Config &conf) :
     } else {
         m_window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
     }
-    if (m_window == NULL)
-        throw std::runtime_error("Failed to create Window!");
+    if (m_window == NULL) {
+        err = glfwGetError(&err_msg);
+        throw std::runtime_error(err_msg);
+    }
     // Make OpenGL context current
     glfwMakeContextCurrent(m_window);
     // Enabel VSync
