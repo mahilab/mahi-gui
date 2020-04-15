@@ -322,6 +322,7 @@ PlotInterface::PlotInterface() :
     show_legend(true),
     enable_selection(true),
     enable_controls(true),
+    enable_x_axis_tracking(true),
     title(""),
     _dragging_x(false),
     _dragging_y(false),
@@ -497,6 +498,8 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                 plot.x_axis.minimum -= delX;
             if (!plot.x_axis.lock_max)
                 plot.x_axis.maximum -= delX;
+            // disable x axis tracking
+            plot.enable_x_axis_tracking = false;
         }
         bool yLocked = plot.y_axis.lock_min && plot.y_axis.lock_max;
         if (!yLocked && plot._dragging_y) {
@@ -536,6 +539,8 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             xZoomRate = (-xZoomRate) / (1.0f + (2.0f * xZoomRate));
             yZoomRate = (-yZoomRate) / (1.0f + (2.0f * yZoomRate));
         }
+        // disable x axis tracking
+        if (xAxisRegion_hovered) plot.enable_x_axis_tracking = false;
         // Determine center of zoom
         float xCenter, yCenter;
         if (xAxisRegion_hovered && yAxisRegion_hovered) {
@@ -620,6 +625,8 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
             plot.x_axis.maximum = ImMax(p1.x, p2.x);
             plot.y_axis.minimum = ImMin(p1.y, p2.y);
             plot.y_axis.maximum = ImMax(p1.y, p2.y);
+            // disable x axis tracking
+            plot.enable_x_axis_tracking = false;
         }
         plot._selecting = false;
     }
