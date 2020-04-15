@@ -633,8 +633,9 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
         plot._selecting    = true;
     }
     // focus window
-    if (IO.MouseClicked[0] || IO.MouseClicked[1]) FocusWindow(GetCurrentWindow());
-    
+    if ((IO.MouseClicked[0] || IO.MouseClicked[1]) && frame_hovered)
+        FocusWindow(GetCurrentWindow());
+            
     // RENDER
 
     // grid bg
