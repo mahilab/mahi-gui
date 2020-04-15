@@ -8,6 +8,7 @@ target_sources(gui
     Transformable.cpp
     imgui_custom.cpp
     imgui_plot.cpp
+    imgui_plot_old.cpp
     nanovg_custom.cpp
 )
 

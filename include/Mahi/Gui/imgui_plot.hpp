@@ -19,8 +19,55 @@
 #include <vector>
 #include <string>
 
-namespace ImGui {
+typedef int ImGuiLineSpec;
+typedef int ImGuiPlotCol;
+typedef int ImGuiPlotFlags;
+typedef int ImGuiAxisFlags;
 
+enum ImGuiLineSpec_ {
+    ImGuiLineSpec_Solid    = 1 << 0,
+    ImGuiLineSpec_Asterisk = 1 << 1,
+    ImGuiLineSpec_Circle   = 1 << 2,
+    ImGuiLineSpec_Cross    = 1 << 3,
+    ImGuiLineSpec_Square   = 1 << 5,
+    ImGuiLineSpec_Diamond  = 1 << 6,
+    ImGuiLineSpec_Up       = 1 << 7,
+    ImGuiLineSpec_Down     = 1 << 8,
+    ImGuiLineSpec_Left     = 1 << 9,
+    ImGuiLineSpec_Right    = 1 << 10
+};
+
+enum ImGuiPlotCol_ {
+    ImGuiPlotCol_XAxis,
+    ImGuiPlotCol_YAxis,
+    ImGuiPlotCol_FrameBg,
+    ImGuiPlotCol_PlotBg,
+    ImGuiPlotCol_PlotBorder,
+    ImGuiPlotCol_Selection
+};
+
+enum ImGuiPlotFlags_ {
+    ImGuiPlotFlags_CursorLabel = 1 << 0,
+    ImGuiPlotFlags_Legend      = 1 << 1,
+    ImGuiPlotFlags_Selection   = 1 << 2,
+    ImGuiPlotFlags_ContextMenu = 1 << 3,
+    ImGuiPlotFlags_Crosshairs  = 1 << 4,
+    ImGuiPlotFlags_Default     = ImGuiPlotFlags_CursorLabel | ImGuiPlotFlags_Legend | ImGuiPlotFlags_Selection | ImGuiPlotFlags_ContextMenu
+};
+
+enum ImGuiAxisFlags_ {
+    ImGuiAxisFlags_Grid       = 1 << 0,
+    ImGuiAxisFlags_TickMarks  = 1 << 1,
+    ImGuiAxisFlags_TickLabels = 1 << 2,
+    ImGuiAxisFlags_Flip       = 1 << 3,
+    ImGuiAxisFlags_LockMin    = 1 << 4,
+    ImGuiAxisFlags_LockMax    = 1 << 5,
+    ImGuiAxisFlags_Adaptive   = 1 << 6,
+    ImGuiAxisFlags_Default    = ImGuiAxisFlags_Grid | ImGuiAxisFlags_TickMarks | ImGuiAxisFlags_TickLabels | ImGuiAxisFlags_Adaptive
+};
+
+
+namespace ImGui {
 ///////////////////////////////////////////////////////////////////////////////
 // STRUCTS
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,8 +91,8 @@ struct PlotItem {
     std::vector<ImVec2> data;
     /// The item color.
     ImVec4 color;
-    /// The size of the item (Line = pixel width, Scatter = pixel diameter, XBar/YBar = bar width in
-    /// plot units).
+    /// The size of the item (Line = pixel width, Scatter = pixel diameter, XBar/YBar = bar
+    /// width in plot units).
     float size;
     /// The label to be displayed in any legends.
     std::string label;
@@ -128,11 +175,21 @@ struct PlotInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Renders a Plot and PlotItems
-bool Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items,
-          const ImVec2& size = {-1, -1});
+bool Plot(const char* label_id, PlotInterface* plot, PlotItem* items, int num_items, const ImVec2& size = {-1, -1});
 /// Renders a Plot and PlotItems (STL version)
-bool Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items,
-          const ImVec2& size = {-1, -1});
+bool Plot(const char* label_id, PlotInterface& plot, std::vector<PlotItem>& items, const ImVec2& size = {-1, -1});
+
+bool BeginPlot(const char* title, PlotInterface* plot, const ImVec2& size = {-1, -1}, ImGuiPlotFlags flags = ImGuiPlotFlags_Default);
+void EndPlot();
+
+void Plot(const char* label, const float* xs, const float* ys, bool* show, ImGuiLineSpec spec,
+          const ImVec4& outline_col = {0, 0, 0, -1}, const ImVec4& fill_col = {0, 0, 0, -1},
+          int offset = 0, int stride = 1);
+
+void Axis(const char* label, float* min_val, float* max_val, const ImVec4& col = {0,0,0,-1}, ImGuiAxisFlags flags = ImGuiAxisFlags_Default, int divisions = 3, int subdivisions = 10);
+
+void PushPlotColor(ImGuiPlotCol idx, const ImVec4& col);
+void PopPlotColor();
 
 ///////////////////////////////////////////////////////////////////////////////
 // REAL-TIME UTILS
