@@ -106,6 +106,8 @@ struct PlotInterface {
     bool enable_selection;
     /// Should middle-click open the controls pop-up?
     bool enable_controls;
+    /// Enable X tracking
+    bool enable_x_axis_tracking;
     /// The color of the plot frame (i.e. outer background)
     ImVec4 frame_color;
     /// The color of the grid background (i.e. inner background)
