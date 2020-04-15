@@ -287,6 +287,12 @@ bool BeginPlot(const char* label_id, PlotInterface* plot_ptr, const ImVec2& size
 
     // TODO
 
+    // focus window
+    if ((IO.MouseClicked[0] || IO.MouseClicked[1]) && g_plt.hov_frame)
+        FocusWindow(GetCurrentWindow());
+            
+    // RENDER
+
     // grid bg
     DrawList.AddRectFilled(g_plt.bb_grid.Min, g_plt.bb_grid.Max, g_plt.col_bg);
 
