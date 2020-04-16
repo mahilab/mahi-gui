@@ -2,7 +2,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
 
-#include <Mahi/Gui/imgui_plot.hpp>
+#include <Mahi/Gui/imgui_plot_old.hpp>
 #include <imgui_internal.h>
 #include <sstream>
 #include <cmath>

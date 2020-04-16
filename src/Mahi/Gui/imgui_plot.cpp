@@ -26,6 +26,11 @@ namespace ImGui {
 
 namespace {
 
+template <typename TFlag, typename TEnum>
+inline bool Flagged(TFlag f, TEnum e) {
+    return (f & e) == e;
+}
+
 /// Linearly remaps float x from [x0 x1] to [y0 y1].
 inline float Remap(float x, float x0, float x1, float y0, float y1) {
     return y0 + (x - x0) * (y1 - y0) / (x1 - x0);
@@ -132,14 +137,14 @@ inline void TransformTicks(std::vector<ImTick> &ticks, float tMin, float tMax, f
 }
 
 /// Holds Plot state information in between calls to BeginPlot()/EndPlot()
-struct ImPlot {
-    ImPlot() {
+struct ImPlotContext {
+    ImPlotContext() {
         active = false;
         x_ticks.reserve(50);
         y_ticks.reserve(50);
     }
     /// Current Plot
-    PlotInterface* plot;
+    ImPlot* plot;
     /// True if we are between calls to BeginPlot()/EndPlot()
     bool active;
     // Bounding regions
@@ -158,22 +163,45 @@ struct ImPlot {
           col_y1, col_y2, col_y_txt;     
     // Tick marks     
     std::vector<ImTick> x_ticks, y_ticks;
+    // Transformation
+    ImRect xform;
+    float mx, my;
+    ImRect cull_rect;
     // Render flags
     bool rend_x, rend_y;
     // Mouse pos
     ImVec2 mouse_pos;
 };
 
-/// Current Plot state information
-static ImPlot g_plt;
+/// Global plot context
+static ImPlotContext GPlt;
+
+ImU32 NextColor() {
+    static std::vector<ImVec4> default_colors = {
+        {(0.0F), (0.7490196228F), (1.0F), (1.0F)},                    // Blues::DeepSkyBlue,
+        {(1.0F), (0.0F), (0.0F), (1.0F)},                             // Reds::Red,
+        {(0.4980392158F), (1.0F), (0.0F), (1.0F)},                    // Greens::Chartreuse,
+        {(1.0F), (1.0F), (0.0F), (1.0F)},                             // Yellows::Yellow,
+        {(0.0F), (1.0F), (1.0F), (1.0F)},                             // Cyans::Cyan,
+        {(1.0F), (0.6470588446F), (0.0F), (1.0F)},                    // Oranges::Orange,
+        {(1.0F), (0.0F), (1.0F), (1.0F)},                             // Purples::Magenta,
+        {(0.5411764979F), (0.1686274558F), (0.8862745166F), (1.0F)},  // Purples::BlueViolet,
+        {(0.8784313798F), (1.0F), (1.0F), (1.0F)},                    // Cyans::LightCyan,
+        {(0.8235294223F), (0.7058823705F), (0.5490196347F), (1.0F)}   // Browns::Tan
+    };
+    static int next_color = 0;
+    ImU32 col  = GetColorU32(default_colors[next_color]);
+    next_color = (next_color + 1) % default_colors.size();
+    return col;
+}
 
 } // private namespace
 
-bool BeginPlot(const char* label_id, PlotInterface* plot_ptr, const ImVec2& size, ImGuiPlotFlags flags) {
-    IM_ASSERT_USER_ERROR(g_plt.active == false, "Mismatched BeginPlot()/EndPlot()!");
+bool BeginPlot(const char* title, ImPlot* plot_ptr, const char* x_label, const char* y_label, const ImVec2& size) {
+    IM_ASSERT_USER_ERROR(GPlt.active == false, "Mismatched BeginPlot()/EndPlot()!");
 
-    g_plt.plot = plot_ptr;
-    PlotInterface &plot = *plot_ptr;
+    GPlt.plot = plot_ptr;
+    ImPlot &plot = *plot_ptr;
 
     // ImGui front matter
     ImGuiContext &G      = *GImGui;
@@ -183,192 +211,201 @@ bool BeginPlot(const char* label_id, PlotInterface* plot_ptr, const ImVec2& size
     const ImGuiStyle &Style    = G.Style;
     const ImGuiIO &   IO       = GetIO();
     ImDrawList &      DrawList = *Window->DrawList;
-    const ImGuiID     id       = Window->GetID(label_id);
+    const ImGuiID     id       = Window->GetID(title);
 
     // get colors
-    g_plt.col_frame = plot.frame_color.w == -1 ? GetColorU32(ImGuiCol_FrameBg) : GetColorU32(plot.frame_color);
-    g_plt.col_bg = plot.background_color.w == -1 ? GetColorU32(ImGuiCol_WindowBg) : GetColorU32(plot.background_color);
-    g_plt.col_border = plot.border_color.w == -1 ? GetColorU32(ImGuiCol_Text, 0.5f) : GetColorU32(plot.border_color);
+    // GPlt.col_frame = plot.frame_color.w == -1 ? GetColorU32(ImGuiCol_FrameBg) : GetColorU32(plot.frame_color);
+    // GPlt.col_bg = plot.background_color.w == -1 ? GetColorU32(ImGuiCol_WindowBg) : GetColorU32(plot.background_color);
+    // GPlt.col_border = plot.border_color.w == -1 ? GetColorU32(ImGuiCol_Text, 0.5f) : GetColorU32(plot.border_color);
 
-    const ImVec4 col_xAxis = plot.x_axis.color.w == -1 ? ImGui::GetStyle().Colors[ImGuiCol_Text] * ImVec4(1, 1, 1, 0.25f) : plot.x_axis.color;
-    g_plt.col_x1   = GetColorU32(col_xAxis);
-    g_plt.col_x2   = GetColorU32(col_xAxis * ImVec4(1, 1, 1, 0.25f));
-    g_plt.col_x_txt = GetColorU32({col_xAxis.x, col_xAxis.y, col_xAxis.z, 1});
+    GPlt.col_frame = GetColorU32(ImGuiCol_FrameBg);
+    GPlt.col_bg = GetColorU32(ImGuiCol_WindowBg);
+    GPlt.col_border = GetColorU32(ImGuiCol_Text, 0.5f);
 
-    const ImVec4 col_yAxis = plot.y_axis.color.w == -1 ? ImGui::GetStyle().Colors[ImGuiCol_Text] * ImVec4(1, 1, 1, 0.25f) : plot.y_axis.color;
-    g_plt.col_y1   = GetColorU32(col_yAxis);
-    g_plt.col_y2   = GetColorU32(col_yAxis * ImVec4(1, 1, 1, 0.25f));
-    g_plt.col_y_txt = GetColorU32({col_yAxis.x, col_yAxis.y, col_yAxis.z, 1});
+    const ImVec4 col_xAxis = plot.XAxis.Col.w == -1 ? ImGui::GetStyle().Colors[ImGuiCol_Text] * ImVec4(1, 1, 1, 0.25f) : plot.XAxis.Col;
+    GPlt.col_x1   = GetColorU32(col_xAxis);
+    GPlt.col_x2   = GetColorU32(col_xAxis * ImVec4(1, 1, 1, 0.25f));
+    GPlt.col_x_txt = GetColorU32({col_xAxis.x, col_xAxis.y, col_xAxis.z, 1});
 
-    g_plt.col_txt     = GetColorU32(ImGuiCol_Text);
-    g_plt.col_txt_dis = GetColorU32(ImGuiCol_TextDisabled);
-    g_plt.col_slct_bg  = GetColorU32(plot.selection_color);
-    g_plt.col_slct_bd =  GetColorU32({plot.selection_color.x, plot.selection_color.y, plot.selection_color.z, 1});
+    const ImVec4 col_yAxis = plot.YAxis.Col.w == -1 ? ImGui::GetStyle().Colors[ImGuiCol_Text] * ImVec4(1, 1, 1, 0.25f) : plot.YAxis.Col;
+    GPlt.col_y1   = GetColorU32(col_yAxis);
+    GPlt.col_y2   = GetColorU32(col_yAxis * ImVec4(1, 1, 1, 0.25f));
+    GPlt.col_y_txt = GetColorU32({col_yAxis.x, col_yAxis.y, col_yAxis.z, 1});
+
+    GPlt.col_txt     = GetColorU32(ImGuiCol_Text);
+    GPlt.col_txt_dis = GetColorU32(ImGuiCol_TextDisabled);
+    GPlt.col_slct_bg  = GetColorU32({.118f, .565f, 1, 0.25f});
+    GPlt.col_slct_bd =  GetColorU32({.118f, .565f, 1, 1.00f});
 
     // frame
     const ImVec2 frame_size = CalcItemSize(size, 100, 100);
-    g_plt.bb_frame = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
-    ItemSize(g_plt.bb_frame);
-    if (!ItemAdd(g_plt.bb_frame, 0, &g_plt.bb_frame))
+    GPlt.bb_frame = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
+    ItemSize(GPlt.bb_frame);
+    if (!ItemAdd(GPlt.bb_frame, 0, &GPlt.bb_frame))
         return false;
-    g_plt.hov_frame = ItemHoverable(g_plt.bb_frame, id);
-    RenderFrame(g_plt.bb_frame.Min, g_plt.bb_frame.Max, g_plt.col_frame, true, Style.FrameRounding);
+    GPlt.hov_frame = ItemHoverable(GPlt.bb_frame, id);
+    RenderFrame(GPlt.bb_frame.Min, GPlt.bb_frame.Max, GPlt.col_frame, true, Style.FrameRounding);
 
     // canvas bb
-    g_plt.bb_canvas = ImRect(g_plt.bb_frame.Min + Style.WindowPadding, g_plt.bb_frame.Max - Style.WindowPadding);
+    GPlt.bb_canvas = ImRect(GPlt.bb_frame.Min + Style.WindowPadding, GPlt.bb_frame.Max - Style.WindowPadding);
 
     // constrain axes
-    if (plot.x_axis.maximum <= plot.x_axis.minimum)
-        plot.x_axis.maximum = plot.x_axis.minimum + FLT_EPSILON;
-    if (plot.y_axis.maximum <= plot.y_axis.minimum)
-        plot.y_axis.maximum = plot.y_axis.minimum + FLT_EPSILON;
+    if (plot.XAxis.Max <= plot.XAxis.Min)
+        plot.XAxis.Max = plot.XAxis.Min + FLT_EPSILON;
+    if (plot.YAxis.Max <= plot.YAxis.Min)
+        plot.YAxis.Max = plot.YAxis.Min + FLT_EPSILON;
 
     // adaptive divisions
-    if (plot.x_axis.adaptive) {
-        plot.x_axis.divisions = (int)std::round(0.003 * g_plt.bb_canvas.GetWidth());
-        if (plot.x_axis.divisions < 2)
-            plot.x_axis.divisions = 2;
+    if (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_Adaptive)) {
+        plot.XAxis.Divisions = (int)std::round(0.003 * GPlt.bb_canvas.GetWidth());
+        if (plot.XAxis.Divisions < 2)
+            plot.XAxis.Divisions = 2;
     }
-    if (plot.y_axis.adaptive) {
-        plot.y_axis.divisions = (int)std::round(0.003 * g_plt.bb_canvas.GetHeight());
-        if (plot.y_axis.divisions < 2)
-            plot.y_axis.divisions = 2;
+    if (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_Adaptive)) {
+        plot.YAxis.Divisions = (int)std::round(0.003 * GPlt.bb_canvas.GetHeight());
+        if (plot.YAxis.Divisions < 2)
+            plot.YAxis.Divisions = 2;
     }
 
-    g_plt.rend_x = (plot.x_axis.show_grid || plot.x_axis.show_tick_marks || plot.x_axis.show_tick_labels) &&  plot.x_axis.divisions > 1;
-    g_plt.rend_y = (plot.y_axis.show_grid || plot.y_axis.show_tick_marks || plot.y_axis.show_tick_labels) &&  plot.y_axis.divisions > 1;
+    GPlt.rend_x = (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_Grid) || Flagged(plot.XAxis.Flags, ImPlotAxisFlags_TickMarks) || Flagged(plot.XAxis.Flags, ImPlotAxisFlags_TickLabels)) &&  plot.XAxis.Divisions > 1;
+    GPlt.rend_y = (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_Grid) || Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickMarks) || Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickLabels)) &&  plot.XAxis.Divisions > 1;
 
     // get ticks
-    if (g_plt.rend_x)
-        GetTicks(plot.x_axis.minimum, plot.x_axis.maximum, plot.x_axis.divisions, plot.x_axis.subdivisions, g_plt.x_ticks);
-    if (g_plt.rend_y)
-        GetTicks(plot.y_axis.minimum, plot.y_axis.maximum, plot.y_axis.divisions, plot.y_axis.subdivisions, g_plt.y_ticks);
+    if (GPlt.rend_x)
+        GetTicks(plot.XAxis.Min, plot.XAxis.Max, plot.XAxis.Divisions, plot.XAxis.Subdivisions, GPlt.x_ticks);
+    if (GPlt.rend_y)
+        GetTicks(plot.YAxis.Min, plot.YAxis.Max, plot.YAxis.Divisions, plot.YAxis.Subdivisions, GPlt.y_ticks);
 
     // label ticks
-    if (plot.x_axis.show_tick_labels)
-        LabelTicks(g_plt.x_ticks);
-    if (plot.y_axis.show_tick_labels)
-        LabelTicks(g_plt.y_ticks);
+    if (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_TickLabels))
+        LabelTicks(GPlt.x_ticks);
+    if (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickLabels))
+        LabelTicks(GPlt.y_ticks);
 
     // get max y-tick width
     float maxLabelWidth = 0;
-    if (plot.y_axis.show_tick_labels) {
-        for (auto &yt : g_plt.y_ticks)
+    if (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickLabels)) {
+        for (auto &yt : GPlt.y_ticks)
             maxLabelWidth = yt.size.x > maxLabelWidth ? yt.size.x : maxLabelWidth;
     }
 
     // grid bb
+    const ImVec2 title_size = CalcTextSize(title, NULL, true);
     const float txt_off    = 5;
     const float txt_height = GetTextLineHeight();
-    const float pad_top    = plot.title != "" ? txt_height + txt_off : 0;
-    const float pad_bot    = (plot.x_axis.show_tick_labels ? txt_height + txt_off : 0) + (plot.x_axis.label != "" ? txt_height + txt_off : 0);
-    const float pad_left   = (plot.y_axis.show_tick_labels ? maxLabelWidth + txt_off : 0) + (plot.y_axis.label != "" ? txt_height + txt_off : 0);
-    g_plt.bb_grid          = ImRect(g_plt.bb_canvas.Min + ImVec2(pad_left, pad_top), g_plt.bb_canvas.Max - ImVec2(0, pad_bot));
-    g_plt.hov_grid         = g_plt.bb_grid.Contains(IO.MousePos);
+    const float pad_top    = title_size.x > 0.0f ? txt_height + txt_off : 0;
+    const float pad_bot    = (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_TickLabels) ? txt_height + txt_off : 0) + (x_label ? txt_height + txt_off : 0);
+    const float pad_left   = (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickLabels) ? maxLabelWidth + txt_off : 0) + (y_label ? txt_height + txt_off : 0);
+    GPlt.bb_grid          = ImRect(GPlt.bb_canvas.Min + ImVec2(pad_left, pad_top), GPlt.bb_canvas.Max - ImVec2(0, pad_bot));
+    GPlt.hov_grid         = GPlt.bb_grid.Contains(IO.MousePos);
 
     // axis region bbs
-    const ImRect xAxisRegion_bb(g_plt.bb_grid.Min + ImVec2(10, 0), {g_plt.bb_grid.Max.x, g_plt.bb_frame.Max.y});
+    const ImRect xAxisRegion_bb(GPlt.bb_grid.Min + ImVec2(10, 0), {GPlt.bb_grid.Max.x, GPlt.bb_frame.Max.y});
     const bool   xAxisRegion_hovered = xAxisRegion_bb.Contains(IO.MousePos);
-    const ImRect yAxisRegion_bb({g_plt.bb_frame.Min.x, g_plt.bb_grid.Min.y}, g_plt.bb_grid.Max - ImVec2(0, 10));
+    const ImRect yAxisRegion_bb({GPlt.bb_frame.Min.x, GPlt.bb_grid.Min.y}, GPlt.bb_grid.Max - ImVec2(0, 10));
     const bool   yAxisRegion_hovered = yAxisRegion_bb.Contains(IO.MousePos);
 
     // TODO
 
     // get pixels for transforms
-    const ImRect pix(plot.x_axis.flip ? g_plt.bb_grid.Max.x : g_plt.bb_grid.Min.x,
-                     plot.y_axis.flip ? g_plt.bb_grid.Min.y : g_plt.bb_grid.Max.y,
-                     plot.x_axis.flip ? g_plt.bb_grid.Min.x : g_plt.bb_grid.Max.x,
-                     plot.y_axis.flip ? g_plt.bb_grid.Max.y : g_plt.bb_grid.Min.y);
+    GPlt.xform = ImRect(Flagged(plot.XAxis.Flags, ImPlotAxisFlags_Flip) ? GPlt.bb_grid.Max.x : GPlt.bb_grid.Min.x,
+                        Flagged(plot.YAxis.Flags, ImPlotAxisFlags_Flip) ? GPlt.bb_grid.Min.y : GPlt.bb_grid.Max.y,
+                        Flagged(plot.XAxis.Flags, ImPlotAxisFlags_Flip) ? GPlt.bb_grid.Min.x : GPlt.bb_grid.Max.x,
+                        Flagged(plot.YAxis.Flags, ImPlotAxisFlags_Flip) ? GPlt.bb_grid.Max.y : GPlt.bb_grid.Min.y);
+
+    GPlt.mx        = (GPlt.xform.Max.x - GPlt.xform.Min.x) / (plot.XAxis.Max - plot.XAxis.Min);
+    GPlt.my        = (GPlt.xform.Max.y - GPlt.xform.Min.y) / (plot.YAxis.Max - plot.YAxis.Min);
+    GPlt.cull_rect = ImRect(ImMin(GPlt.xform.Min.x, GPlt.xform.Max.x), ImMin(GPlt.xform.Min.y, GPlt.xform.Max.y), 
+                             ImMax(GPlt.xform.Min.x, GPlt.xform.Max.x), ImMax(GPlt.xform.Min.y, GPlt.xform.Max.y));
     
     // set mouse position
-    g_plt.mouse_pos.x = Remap(IO.MousePos.x, pix.Min.x, pix.Max.x, plot.x_axis.minimum, plot.x_axis.maximum);
-    g_plt.mouse_pos.y = Remap(IO.MousePos.y, pix.Min.y, pix.Max.y, plot.y_axis.minimum, plot.y_axis.maximum);
+    GPlt.mouse_pos.x = Remap(IO.MousePos.x, GPlt.xform.Min.x, GPlt.xform.Max.x, plot.XAxis.Min, plot.XAxis.Max);
+    GPlt.mouse_pos.y = Remap(IO.MousePos.y, GPlt.xform.Min.y, GPlt.xform.Max.y, plot.YAxis.Min, plot.YAxis.Max);
 
 
     // TODO
 
     // focus window
-    if ((IO.MouseClicked[0] || IO.MouseClicked[1]) && g_plt.hov_frame)
+    if ((IO.MouseClicked[0] || IO.MouseClicked[1]) && GPlt.hov_frame)
         FocusWindow(GetCurrentWindow());
             
     // RENDER
 
     // grid bg
-    DrawList.AddRectFilled(g_plt.bb_grid.Min, g_plt.bb_grid.Max, g_plt.col_bg);
+    DrawList.AddRectFilled(GPlt.bb_grid.Min, GPlt.bb_grid.Max, GPlt.col_bg);
 
     // render axes
-    ImGui::PushClipRect(g_plt.bb_grid.Min, g_plt.bb_grid.Max, true);
+    ImGui::PushClipRect(GPlt.bb_grid.Min, GPlt.bb_grid.Max, true);
 
     // transform ticks
-    if (g_plt.rend_x)
-        TransformTicks(g_plt.x_ticks, plot.x_axis.minimum, plot.x_axis.maximum, pix.Min.x, pix.Max.x);
-    if (g_plt.rend_y)
-        TransformTicks(g_plt.y_ticks, plot.y_axis.minimum, plot.y_axis.maximum, pix.Min.y, pix.Max.y);
+    if (GPlt.rend_x)
+        TransformTicks(GPlt.x_ticks, plot.XAxis.Min, plot.XAxis.Max, GPlt.xform.Min.x, GPlt.xform.Max.x);
+    if (GPlt.rend_y)
+        TransformTicks(GPlt.y_ticks, plot.YAxis.Min, plot.YAxis.Max, GPlt.xform.Min.y, GPlt.xform.Max.y);
 
     // render grid
-    if (plot.x_axis.show_grid) {
-        for (auto &xt : g_plt.x_ticks)
-            DrawList.AddLine({xt.pixels, g_plt.bb_grid.Min.y}, {xt.pixels, g_plt.bb_grid.Max.y}, xt.major ? g_plt.col_x1 : g_plt.col_x2, 1);
+    if (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_Grid)) {
+        for (auto &xt : GPlt.x_ticks)
+            DrawList.AddLine({xt.pixels, GPlt.bb_grid.Min.y}, {xt.pixels, GPlt.bb_grid.Max.y}, xt.major ? GPlt.col_x1 : GPlt.col_x2, 1);
     }
 
-    if (plot.y_axis.show_grid) {
-        for (auto &yt : g_plt.y_ticks)
-            DrawList.AddLine({g_plt.bb_grid.Min.x, yt.pixels}, {g_plt.bb_grid.Max.x, yt.pixels}, yt.major ? g_plt.col_y1 : g_plt.col_y2, 1);
+    if (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_Grid)) {
+        for (auto &yt : GPlt.y_ticks)
+            DrawList.AddLine({GPlt.bb_grid.Min.x, yt.pixels}, {GPlt.bb_grid.Max.x, yt.pixels}, yt.major ? GPlt.col_y1 : GPlt.col_y2, 1);
     }
 
     // render ticks
-    if (plot.x_axis.show_tick_marks) {
-        for (auto &xt : g_plt.x_ticks)
-            DrawList.AddLine({xt.pixels, g_plt.bb_grid.Max.y},{xt.pixels, g_plt.bb_grid.Max.y - (xt.major ? 10.0f : 5.0f)}, g_plt.col_border, 1);
+    if (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_TickMarks)) {
+        for (auto &xt : GPlt.x_ticks)
+            DrawList.AddLine({xt.pixels, GPlt.bb_grid.Max.y},{xt.pixels, GPlt.bb_grid.Max.y - (xt.major ? 10.0f : 5.0f)}, GPlt.col_border, 1);
     }
-    if (plot.y_axis.show_tick_marks) {
-        for (auto &yt : g_plt.y_ticks)
-            DrawList.AddLine({g_plt.bb_grid.Min.x, yt.pixels}, {g_plt.bb_grid.Min.x + (yt.major ? 10.0f : 5.0f), yt.pixels}, g_plt.col_border, 1);
+    if (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickMarks)) {
+        for (auto &yt : GPlt.y_ticks)
+            DrawList.AddLine({GPlt.bb_grid.Min.x, yt.pixels}, {GPlt.bb_grid.Min.x + (yt.major ? 10.0f : 5.0f), yt.pixels}, GPlt.col_border, 1);
     }
 
     ImGui::PopClipRect();
 
     // render title
-    if (plot.title != "") {
-        const ImVec2 title_size = CalcTextSize(plot.title.c_str());
-        DrawList.AddText(ImVec2(g_plt.bb_canvas.GetCenter().x - title_size.x * 0.5f, g_plt.bb_canvas.Min.y), g_plt.col_txt, plot.title.c_str());
+    if (title_size.x > 0.0f) {
+        RenderText(ImVec2(GPlt.bb_canvas.GetCenter().x - title_size.x * 0.5f, GPlt.bb_canvas.Min.y), title, NULL, true);
     }
 
     // render labels
-    if (plot.x_axis.show_tick_labels) {
-        ImGui::PushClipRect(g_plt.bb_frame.Min, g_plt.bb_frame.Max, true);
-        for (auto &xt : g_plt.x_ticks)
-            DrawList.AddText({xt.pixels - xt.size.x * 0.5f, g_plt.bb_grid.Max.y + txt_off}, g_plt.col_x_txt,
+    if (Flagged(plot.XAxis.Flags, ImPlotAxisFlags_TickLabels)) {
+        ImGui::PushClipRect(GPlt.bb_frame.Min, GPlt.bb_frame.Max, true);
+        for (auto &xt : GPlt.x_ticks)
+            DrawList.AddText({xt.pixels - xt.size.x * 0.5f, GPlt.bb_grid.Max.y + txt_off}, GPlt.col_x_txt,
                              xt.txt.c_str());
         ImGui::PopClipRect();
     }
-    if (plot.x_axis.label != "") {
-        const ImVec2 xLabel_size = CalcTextSize(plot.x_axis.label.c_str());
-        const ImVec2 xLabel_pos(g_plt.bb_grid.GetCenter().x - xLabel_size.x * 0.5f,
-                                g_plt.bb_grid.Max.y - txt_height);
-        DrawList.AddText(xLabel_pos, g_plt.col_x_txt, plot.x_axis.label.c_str());
+    if (x_label) {
+        const ImVec2 xLabel_size = CalcTextSize(x_label);
+        const ImVec2 xLabel_pos(GPlt.bb_grid.GetCenter().x - xLabel_size.x * 0.5f,
+                                GPlt.bb_canvas.Max.y - txt_height);
+        DrawList.AddText(xLabel_pos, GPlt.col_x_txt, x_label);
     }
-    if (plot.y_axis.show_tick_labels) {
-        ImGui::PushClipRect(g_plt.bb_frame.Min, g_plt.bb_frame.Max, true);
-        for (auto &yt : g_plt.y_ticks)
-            DrawList.AddText({g_plt.bb_grid.Min.x - txt_off - yt.size.x, yt.pixels - 0.5f * yt.size.y},
-                             g_plt.col_y_txt, yt.txt.c_str());
+    if (Flagged(plot.YAxis.Flags, ImPlotAxisFlags_TickLabels)) {
+        ImGui::PushClipRect(GPlt.bb_frame.Min, GPlt.bb_frame.Max, true);
+        for (auto &yt : GPlt.y_ticks)
+            DrawList.AddText({GPlt.bb_grid.Min.x - txt_off - yt.size.x, yt.pixels - 0.5f * yt.size.y},
+                             GPlt.col_y_txt, yt.txt.c_str());
         ImGui::PopClipRect();
     }
-    if (plot.y_axis.label != "") {
-        const ImVec2 yLabel_size = CalcTextSizeVertical(plot.y_axis.label.c_str());
-        const ImVec2 yLabel_pos(g_plt.bb_grid.Min.x, g_plt.bb_grid.GetCenter().y + yLabel_size.y * 0.5f);
-        AddTextVertical(&DrawList, plot.y_axis.label.c_str(), yLabel_pos, g_plt.col_y_txt);
+    if (y_label) {
+        const ImVec2 yLabel_size = CalcTextSizeVertical(y_label);
+        const ImVec2 yLabel_pos(GPlt.bb_canvas.Min.x, GPlt.bb_grid.GetCenter().y + yLabel_size.y * 0.5f);
+        AddTextVertical(&DrawList, y_label, yLabel_pos, GPlt.col_y_txt);
     }
 
 
-    g_plt.active = true;
+    GPlt.active = true;
     return true;
 }
 
 void EndPlot() {
-    IM_ASSERT_USER_ERROR(g_plt.active == false, "Mismatched BeginPlot()/EndPlot()!");
-    PlotInterface &plot = *g_plt.plot;
+    IM_ASSERT_USER_ERROR(GPlt.active == true, "Mismatched BeginPlot()/EndPlot()!");
+    ImPlot &plot = *GPlt.plot;
 
     ImGuiContext &G      = *GImGui;
     ImGuiWindow * Window = G.CurrentWindow;
@@ -376,28 +413,137 @@ void EndPlot() {
     const ImGuiIO &   IO       = GetIO();
     ImDrawList &      DrawList = *Window->DrawList;
 
-    ImGui::PushClipRect(g_plt.bb_grid.Min, g_plt.bb_grid.Max, true);
+    ImGui::PushClipRect(GPlt.bb_grid.Min, GPlt.bb_grid.Max, true);
 
 
     // render selection
 
 
     // render mouse pos
-    if (plot.show_mouse_pos && g_plt.hov_grid) {
+    if (Flagged(plot.Flags, ImPlotFlags_CursorLabel) && GPlt.hov_grid) {
         static char buffer[32];
-        sprintf(buffer, "%.2f,%.2f", g_plt.mouse_pos.x, g_plt.mouse_pos.y);
+        sprintf(buffer, "%.2f,%.2f", GPlt.mouse_pos.x, GPlt.mouse_pos.y);
         ImVec2 size = CalcTextSize(buffer);
-        ImVec2 pos  = g_plt.bb_grid.Max - size - ImVec2(5, 5);
-        DrawList.AddText(pos, g_plt.col_txt, buffer);
+        ImVec2 pos  = GPlt.bb_grid.Max - size - ImVec2(5, 5);
+        DrawList.AddText(pos, GPlt.col_txt, buffer);
     }
 
     ImGui::PopClipRect();
 
-    DrawList.AddRect(g_plt.bb_grid.Min, g_plt.bb_grid.Max, g_plt.col_border);
+    // render border
+    DrawList.AddRect(GPlt.bb_grid.Min, GPlt.bb_grid.Max, GPlt.col_border);
 
 
-    g_plt.active = false;
+    GPlt.active = false;
 }
+
+
+
+void PlotLine(const char* label, const float* xs, const float* ys, int size, 
+              ImPlotSpec spec, const ImVec4& color_line, const ImVec4& color_fill, 
+              bool* show, int offset, int stride)
+{
+    IM_ASSERT_USER_ERROR(GPlt.active == true, "PlotLine must be called between BeginPlot()/EndPlot()!");
+
+    // TODO: Push label for legend
+
+    if (show != nullptr && *show == false)
+        return;
+
+    ImDrawList & DrawList = *ImGui::GetWindowDrawList();
+
+    const bool rend_line = color_line.w != 0;
+    const bool rend_fill = color_fill.w != 0;
+
+    ImU32 col_line = color_line.w == -1 ? NextColor() : GetColorU32(color_line);
+    ImU32 col_fill = color_fill.w == -1 ? col_line    : GetColorU32(color_fill);
+
+    ImGui::PushClipRect(GPlt.bb_grid.Min, GPlt.bb_grid.Max, true);
+
+    // render line segments
+    if (size > 1 && rend_line && Flagged(spec, ImPlotSpec_Solid)) {
+        const float  thickness = 1.0f;
+        const int    segments  = size - 1;
+        const int    idx_count = segments * 6;
+        const int    vtx_count = segments * 4;
+        const ImVec2 uv        = DrawList._Data->TexUvWhitePixel;
+        DrawList.PrimReserve(idx_count, vtx_count);
+        int    i1 = offset;
+        ImVec2 p1, p2;
+        int segments_culled = 0;
+        for (int s = 0; s < segments; ++s) {
+            const int i2 = i1 + 1 == size ? 0 : i1 + 1;
+            p1.x         = GPlt.xform.Min.x + GPlt.mx * (xs[i1] - GPlt.plot->XAxis.Min);
+            p1.y         = GPlt.xform.Min.y + GPlt.my * (ys[i1] - GPlt.plot->YAxis.Min);
+            p2.x         = GPlt.xform.Min.x + GPlt.mx * (xs[i2] - GPlt.plot->XAxis.Min);
+            p2.y         = GPlt.xform.Min.y + GPlt.my * (ys[i2] - GPlt.plot->YAxis.Min);
+            i1           = i2;
+            if (GPlt.cull_rect.Contains(p1) || GPlt.cull_rect.Contains(p2)) {
+                float dx = p2.x - p1.x;
+                float dy = p2.y - p1.y;
+                IM_NORMALIZE2F_OVER_ZERO(dx, dy);
+                dx *= (thickness * 0.5f);
+                dy *= (thickness * 0.5f);
+                
+                DrawList._VtxWritePtr[0].pos.x = p1.x + dy;
+                DrawList._VtxWritePtr[0].pos.y = p1.y - dx;
+                DrawList._VtxWritePtr[0].uv    = uv;
+                DrawList._VtxWritePtr[0].col   = col_line;
+                DrawList._VtxWritePtr[1].pos.x = p2.x + dy;
+                DrawList._VtxWritePtr[1].pos.y = p2.y - dx;
+                DrawList._VtxWritePtr[1].uv    = uv;
+                DrawList._VtxWritePtr[1].col   = col_line;
+                DrawList._VtxWritePtr[2].pos.x = p2.x - dy;
+                DrawList._VtxWritePtr[2].pos.y = p2.y + dx;
+                DrawList._VtxWritePtr[2].uv    = uv;
+                DrawList._VtxWritePtr[2].col   = col_line;
+                DrawList._VtxWritePtr[3].pos.x = p1.x - dy;
+                DrawList._VtxWritePtr[3].pos.y = p1.y + dx;
+                DrawList._VtxWritePtr[3].uv    = uv;
+                DrawList._VtxWritePtr[3].col   = col_line;
+                DrawList._VtxWritePtr += 4;
+
+                DrawList._IdxWritePtr[0] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
+                DrawList._IdxWritePtr[1] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 1);
+                DrawList._IdxWritePtr[2] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
+                DrawList._IdxWritePtr[3] = (ImDrawIdx)(DrawList._VtxCurrentIdx);
+                DrawList._IdxWritePtr[4] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 2);
+                DrawList._IdxWritePtr[5] = (ImDrawIdx)(DrawList._VtxCurrentIdx + 3);
+                DrawList._IdxWritePtr += 6;
+                DrawList._VtxCurrentIdx += 4;
+            }
+            else {
+                segments_culled++;
+            }
+        }
+        if (segments_culled > 0) 
+            DrawList.PrimUnreserve(segments_culled * 6, segments_culled * 4); 
+    }
+
+    // render markers
+    // TODO: Coarse check for any marker flags
+    for (int i = 0; i < size; ++i) {
+        ImVec2 c;
+        c.x = GPlt.xform.Min.x + GPlt.mx * (xs[i] - GPlt.plot->XAxis.Min);
+        c.y = GPlt.xform.Min.y + GPlt.my * (ys[i] - GPlt.plot->YAxis.Min);
+        if (GPlt.cull_rect.Contains(c)) {
+            if (Flagged(spec, ImPlotSpec_Circle)) {
+                if (rend_fill)
+                    DrawList.AddCircleFilled(c, 4, col_fill, 10);
+                if (rend_line)
+                    DrawList.AddCircle(c, 4, col_line, 10);
+            }
+            if (Flagged(spec, ImPlotSpec_Diamond)) {
+                if (rend_fill)
+                    DrawList.AddCircleFilled(c, 4, col_fill, 4);
+                if (rend_line)
+                    DrawList.AddCircle(c, 4, col_line, 4);     
+           }
+        }
+    }    
+    ImGui::PopClipRect();
+}
+
 
 
 }  // namespace ImGui
