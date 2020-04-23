@@ -245,15 +245,13 @@ inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plo
 }
 
 inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
-                               ImDrawList &DrawList)
-{
+                               ImDrawList &DrawList) {
     const ImU32 col = GetColorU32(item.color);
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
     const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
-    for (std::size_t i = 0; i < item.data.size(); ++i)
-    {
+    for (std::size_t i = 0; i < item.data.size(); ++i) {
         if (item.data[i].y == 0)
             continue;
         float y1 = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
@@ -271,15 +269,13 @@ inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, 
 }
 
 inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
-                               ImDrawList &DrawList)
-{
+                               ImDrawList &DrawList) {
     const ImU32 col = GetColorU32(item.color);
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
     const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
-    for (std::size_t i = 0; i < item.data.size(); ++i)
-    {
+    for (std::size_t i = 0; i < item.data.size(); ++i) {
         if (item.data[i].x == 0)
             continue;
         float x1 = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
