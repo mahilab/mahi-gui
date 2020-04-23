@@ -930,8 +930,6 @@ void PlotAxisScroll(PlotAxis &axis, double current_time, double history) {
     axis.minimum = static_cast<float>(current_time - history);
 }
 
-bool IsPlotHovered() { return g_plot_area_hovered; }
 
-ImVec2 GetPlotMousePos() { return g_plot_mouse_pos; }
 
 }  // namespace ImGui

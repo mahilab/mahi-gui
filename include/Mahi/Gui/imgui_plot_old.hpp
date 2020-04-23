@@ -143,13 +143,6 @@ void PlotItemBufferPoint(PlotItem& item, double x, double y, int max_points);
 /// Call before rendering a plot to scroll the axis in time, displaying #history seconds
 void PlotAxisScroll(PlotAxis& axis, double current_time, double history);
 
-////////////////////////////////////////////////////////////////////////////////
-// MISC UTIL
-////////////////////////////////////////////////////////////////////////////////
 
-/// Returns true if the plot in the last call to ImGui::Plot is hovered
-bool IsPlotHovered();
-/// Returns the mouse position in x,y coordinates of the last ImGui::Plot
-ImVec2 GetPlotMousePos();
 
 }

@@ -511,7 +511,7 @@ static void configureImGui(GLFWwindow *window) {
                                    fab_ranges);
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
-
+    
     // Main
     imStyle->WindowPadding    = ImVec2(8, 8);
     imStyle->FramePadding     = ImVec2(3, 2);
@@ -520,7 +520,6 @@ static void configureImGui(GLFWwindow *window) {
     imStyle->IndentSpacing    = 20.0f;
     imStyle->ScrollbarSize    = 15.0f;
     imStyle->GrabMinSize      = 5.0f;
-
     // Rounding
     imStyle->WindowRounding    = 2.0f;
     imStyle->ChildRounding     = 2.0f;
@@ -529,10 +528,8 @@ static void configureImGui(GLFWwindow *window) {
     imStyle->ScrollbarRounding = 10.0f;
     imStyle->GrabRounding      = 2.0f;
     imStyle->TabRounding       = 2.0f;
-
     // Alignment
     imStyle->WindowMenuButtonPosition = ImGuiDir_Right;
-
     // Setup Dear ImGui style
     ImGui::StyleColorsMahiDark4();
 

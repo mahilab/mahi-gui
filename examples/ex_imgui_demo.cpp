@@ -27,15 +27,10 @@ public:
 
     virtual void update() override {
         // Official ImGui demo (see imgui_demo.cpp for full example)
-        ImGui::ShowDemoWindow();
-        // A custom Window
-        ImGui::Begin("My ImGui Window");
-        if (ImGui::Button(ICON_FA_HOME))
-            open_url("https://mahilab.rice.edu/");
-        ImGui::SameLine();
-        if (ImGui::Button("Quit Demo", ImVec2(-1,0)))
+        static bool open = true;
+        ImGui::ShowDemoWindow(&open);
+        if (!open)
             quit();
-        ImGui::End();
     }
 };
 

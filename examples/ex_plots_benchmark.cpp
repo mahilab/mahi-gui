@@ -36,6 +36,8 @@ public:
                 item.data.push_back(ImVec2(i*0.001f, y + (float)random_range(-0.01,0.01)));
             items.emplace_back(std::move(item));
         }
+        // plot.show_legend = false;
+        // plt.Flags &= ~ImPlotFlags_Legend;
     };
     void update() override {
 
@@ -64,12 +66,23 @@ public:
         ImGui::Checkbox("Animate", &animate);
 
         ImGui::Text("%lu lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
-        if (render)
-            ImGui::Plot("plot", plot, items);
+        if (render) {            
+            // ImGui::Plot("plot", plot, items);
+
+            if (ImGui::BeginPlot("##Plot")) {
+                for (int i = 0; i < 100; ++i) {
+                    ImGui::SetPlotLineStyle(1, items[i].color);
+                    ImGui::Plot(items[i].label.c_str(), &items[i].data[0].x, &items[i].data[0].y, items[i].data.size(), 0, 8);
+                }
+                ImGui::EndPlot();
+            }
+        }
         ImGui::End();
 
         // ImGui::ShowMetricsWindow();
     }
+
+    float v[2] = {1,2};
 
     ImGui::PlotInterface plot;
     std::vector<ImGui::PlotItem> items;
