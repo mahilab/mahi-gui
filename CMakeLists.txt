@@ -98,6 +98,10 @@ set(IMGUI_SRC
 )
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 
+set(IMPLOT_HEADERS 3rdparty/implot/implot.h)
+set(IMPLOT_SRC     3rdparty/implot/implot.cpp)
+set(IMPLOT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/implot)
+
 # NANOVG
 add_subdirectory(3rdparty/nanovg)
 install(TARGETS nanovg EXPORT mahi-gui-targets 
@@ -145,6 +149,7 @@ target_compile_definitions(gui PUBLIC MAHI_GUI IMGUI_IMPL_OPENGL_LOADER_GLAD)
 add_subdirectory(src/Mahi/Gui)
 
 target_sources(gui PRIVATE ${IMGUI_SRC} ${IMGUI_HEADERS})
+target_sources(gui PRIVATE ${IMPLOT_SRC} ${IMPLOT_HEADERS})
 
 # add include files
 file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
@@ -154,6 +159,7 @@ target_include_directories(gui
 		$<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${IMGUI_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${IMPLOT_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${NANOSVG_INCLUDE_DIR}>
 	PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -196,6 +202,7 @@ set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}${MAHI_GUI_INSTALL_POSTFIX}")
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(DIRECTORY 3rdparty/glad/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${IMGUI_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${IMPLOT_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanovg/src/nanovg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/nanosvg/src/nanosvg.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES 3rdparty/clipper/clipper.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
