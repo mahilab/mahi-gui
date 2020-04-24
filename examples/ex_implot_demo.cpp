@@ -34,24 +34,26 @@ void ShowImPlotDemoWindow(bool* p_open = NULL) {
 
     }
 
-
     if (ImGui::CollapsingHeader("Log Plots")) {
-        static float xs[1000], ys[1000];
+        static float xs[1000], ys1[1000], ys2[1000], ys3[1000];
         for (int i = 0; i < 1000; ++i) {
-            xs[i] = (float)(i*0.1f)+.1f;
-            ys[i] = sin(xs[i]);
+            xs[i] = (float)(i*0.1f);
+            ys1[i] = sin(xs[i]);
+            ys2[i] = log(xs[i]);
+            ys3[i] = pow(10, xs[i]);
         }
+        ImGui::SetNextPlotAxes(0.1, 100, 0.1, 100);
         if (ImGui::BeginPlot("Log Plot")) {
-            ImGui::Plot("Sin", xs, ys, 1000);
+            ImGui::PushPlotColor(ImPlotCol_Line, Blues::Navy);
+            ImGui::Plot("f(x) = x",      xs, xs,  1000);
+            ImGui::PopPlotColor();
+            ImGui::Plot("f(x) = sin(x)", xs, ys1, 1000);
+            ImGui::Plot("f(x) = log(x)", xs, ys2, 1000);
+            ImGui::Plot("f(x) = 10^x",   xs, ys3, 1000);
             ImGui::EndPlot();
         }
     }
 
-
-    ImGui::End();
-
-    ImGui::Begin("Style");
-    ImGui::ShowStyleEditor();
     ImGui::End();
 }
 

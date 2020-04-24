@@ -24,6 +24,7 @@
 typedef int ImPlotFlags;
 typedef int ImPlotAxisFlags;
 typedef int ImPlotCol;
+typedef int ImPlotStyleVar;
 typedef int ImPlotSpec;
 
 // Options for plots
@@ -65,6 +66,12 @@ enum ImPlotCol_ {
     ImPlotCol_COUNT
 };
 
+enum ImPlotStyleVar_ {
+    ImPlotStyleVar_MarkerSize,  /// marker size in pixels (roughly the marker's "radius")
+    ImPlotStyleVar_LineWeight,  /// line weight in pixels
+    ImPlotStyleVar_COUNT
+};
+
 // Plot item appearance specification
 enum ImPlotSpec_ {
     ImPlotSpec_SolidLine   = 1 << 0,  // solid lines will be rendered between consecutive points
@@ -83,9 +90,8 @@ enum ImPlotSpec_ {
 // Plot style structure
 struct ImPlotStyle {
     ImPlotSpec Spec;
-    float MarkerSize;
-    float LineWeight;
-    ImVec4 Colors[ImPlotCol_COUNT];
+    float      Variables[ImPlotStyleVar_COUNT];
+    ImVec4     Colors[ImPlotCol_COUNT];
     ImPlotStyle();
 };
 
@@ -113,7 +119,7 @@ bool BeginPlot(const char* title_id,
 void EndPlot();
 
 /// Set the axes ranges of the next plot. Call right before BeginPlot().
-void SetNextPlotAxes(float xmin, float xmax, float ymin, float ymax, ImGuiCond cond = ImGuiCond_Once);
+void SetNextPlotAxes(float x_min, float x_max, float y_min, float y_max, ImGuiCond cond = ImGuiCond_Once);
 /// Returns true if the plot in the current or most recent plot is hovered
 bool IsPlotHovered();
 /// Returns the mouse position in x,y coordinates of the current or most recent plot.
@@ -146,10 +152,11 @@ void PlotLabel(const char* text, float x, float y, const ImVec2& pixel_offset = 
 // Special Color used to specific that a plot item color should set determined automatically.
 #define IM_COL_AUTO ImVec4(0,0,0,-1)
 
-// Provides access to plot style structure (colors, sizes, etc.)
+// Provides access to plot style structure for permanant modifications (colors, sizes, etc.)
 ImPlotStyle& GetPlotStyle();
 // TODO
 void SetPlotColorMap(const ImVec4* colors, int num_colors);
+
 // Sets the plot line and marker specification to be used on subsequent plot items.
 void SetPlotSpec(ImPlotSpec spec);
 // Sets plot line styling variables to be used on subsequent plot items.
@@ -158,11 +165,12 @@ void SetPlotLineStyle(float line_weight, const ImVec4& line_color = IM_COL_AUTO)
 void SetPlotMarkerStyle(float marker_size, const ImVec4& fill_color = ImVec4(0,0,0,0));
 // Sets the complete style to be used on subsequent plot items. The special color {0,0,0,-1} generates automatic colors.
 void SetPlotStyle(ImPlotSpec spec, float line_weight, const ImVec4& line_color, float marker_size, const ImVec4& fill_color);
-// TODO
+
+// Temporarily modify a plot color. Pair with succeeding call to PopPlotColor.
 void PushPlotColor(ImPlotCol idx, ImU32 col);
-// TODO
+// Temporarily modify a plot color. Pair with succeeding call to PopPlotColor.
 void PushPlotColor(ImPlotCol idx, const ImVec4& col);
-// TODO
-void PopPlotColor(int count);
+// Undo temporary color modification. Pair with preceeding call to PushPlotColor.
+void PopPlotColor(int count = 1);
 
 }  // namespace ImGui
