@@ -138,26 +138,34 @@ inline void TransformTicks(std::vector<Tick> &ticks, float tMin, float tMax, flo
 }
 
 inline void RenderPlotItemLineAA(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
-                                 ImDrawList &DrawList) {
+                                 ImDrawList &DrawList)
+{
     if (item.data.size() < 2)
         return;
-    static std::vector<ImVec2> pointsPx(10000);  // up front allocation
+    static std::vector<ImVec2> pointsPx(10000); // up front allocation
     pointsPx.resize(item.data.size());
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
-    // transform data
-    for (std::size_t i = 0; i < item.data.size(); ++i) {
-        pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
-        pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
-    }
-    const ImU32 color    = GetColorU32(item.color);
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
+    const ImU32 color = GetColorU32(item.color);
     std::size_t segments = item.data.size() - 1;
-    std::size_t i        = (std::size_t)item.data_begin;
-    for (std::size_t s = 0; s < segments; ++s) {
+    std::size_t i = (std::size_t)item.data_begin;
+    for (std::size_t s = 0; s < segments; ++s)
+    {
         std::size_t j = i + 1;
         if (j == item.data.size())
             j = 0;
-        DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size);
+        pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
+        pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
+        pointsPx[j].x = pix.Min.x + mx * (item.data[j].x - plot.x_axis.minimum);
+        pointsPx[j].y = pix.Min.y + my * (item.data[j].y - plot.y_axis.minimum);
+        ImVec2 ci, cj;
+        ci.x = pointsPx[i].x;
+        ci.y = pointsPx[i].y;
+        cj.x = pointsPx[j].x;
+        cj.y = pointsPx[j].y;
+        if (cull_area.Contains(ci) || cull_area.Contains(cj))
+            DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size + (item.highlited ? 1.5 : 0.0));
         i = j;
     }
 }
@@ -245,15 +253,13 @@ inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plo
 }
 
 inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
-                               ImDrawList &DrawList)
-{
+                               ImDrawList &DrawList) {
     const ImU32 col = GetColorU32(item.color);
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
     const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
-    for (std::size_t i = 0; i < item.data.size(); ++i)
-    {
+    for (std::size_t i = 0; i < item.data.size(); ++i) {
         if (item.data[i].y == 0)
             continue;
         float y1 = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
@@ -271,15 +277,13 @@ inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, 
 }
 
 inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
-                               ImDrawList &DrawList)
-{
+                               ImDrawList &DrawList) {
     const ImU32 col = GetColorU32(item.color);
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
     const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
-    for (std::size_t i = 0; i < item.data.size(); ++i)
-    {
+    for (std::size_t i = 0; i < item.data.size(); ++i) {
         if (item.data[i].x == 0)
             continue;
         float x1 = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
@@ -295,6 +299,32 @@ inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, 
             DrawList.AddRectFilled({ImMin(x1, x2), t}, {ImMax(x1, x2), b}, col);
     }
 }
+	
+inline void RenderPlotItemDigital(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
+                               ImDrawList &DrawList, int chIdx)
+{
+    const ImU32 col = GetColorU32(item.color);
+    const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
+    for (std::size_t i = 1; i < item.data.size(); ++i)
+    {
+        int pixY_0 = item.size;
+        int pixY_1 = item.size * 7.0;
+        int pixY_Offset = 20;
+        int pixY_chOffset = pixY_1 + 3;
+        float y1 = (pix.Min.y) + ((-pixY_chOffset * chIdx) - ((item.data[i].y == 0) ? pixY_0 : pixY_1) - pixY_Offset);
+        float y2 = (pix.Min.y) + ((-pixY_chOffset * chIdx) - pixY_Offset);
+        float l = pix.Min.x + mx * (item.data[i-1].x - plot.x_axis.minimum);
+        float r = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
+        ImVec2 cl, cr;
+        cl.x = l;
+        cl.y = y1;
+        cr.x = r;
+        cr.y = y2;
+        if (cull_area.Contains(cl) || cull_area.Contains(cr))
+            DrawList.AddRectFilled({l, y1}, {r, y2}, col);
+    }
+}	
 
 }  // namespace
 
@@ -682,6 +712,7 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render plot items
+	int digitalCnt = 0;
     for (int i = 0; i < nItems; ++i) {
         if (items[i].show && items[i].data.size() > 0) {
             if (items[i].type == PlotItem::Line)
@@ -696,6 +727,8 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                 RenderPlotItemXBar(items[i], plot, pix, DrawList);
             else if (items[i].type == PlotItem::YBar)
                 RenderPlotItemYBar(items[i], plot, pix, DrawList);
+            else if (items[i].type == PlotItem::Digital)
+                RenderPlotItemDigital(items[i], plot, pix, DrawList, digitalCnt++);			
         }
     }
 
