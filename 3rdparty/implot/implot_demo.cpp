@@ -17,8 +17,11 @@
 #include <implot.h>
 
 namespace ImGui {
+    
 
 void ShowImPlotDemoWindow(bool* p_open) {
+
+/*
     ImVec2 main_viewport_pos = ImGui::GetMainViewport()->Pos;
     ImGui::SetNextWindowPos(ImVec2(main_viewport_pos.x + 650, main_viewport_pos.y + 20), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
@@ -130,6 +133,7 @@ void ShowImPlotDemoWindow(bool* p_open) {
     }
 
     ImGui::End();
+    */
 }
 
 } // namespace ImGui

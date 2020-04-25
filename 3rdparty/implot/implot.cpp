@@ -151,21 +151,6 @@ inline ImVec2 CalcTextSizeVertical(const char *text) {
 // Structs
 //=============================================================================
 
-/// Copied directly from ImGui proper
-struct ImPlotColorMod {
-    ImPlotCol Col;
-    ImVec4    BackupValue;
-};
-
-/// Copied directly from ImGui proper
-struct ImPlotStyleMod {
-    ImGuiStyleVar   VarIdx;
-    union           { int BackupInt[2]; float BackupFloat[2]; };
-    ImPlotStyleMod(ImPlotStyleVar idx, int v)     { VarIdx = idx; BackupInt[0]   = v; }
-    ImPlotStyleMod(ImPlotStyleVar idx, float v)   { VarIdx = idx; BackupFloat[0] = v; }
-    ImPlotStyleMod(ImPlotStyleVar idx, ImVec2 v)  { VarIdx = idx; BackupFloat[0] = v.x; BackupFloat[1] = v.y; }
-};
-
 /// Tick mark info
 struct ImTick {
     ImTick(double value, bool major, bool render_label = true) { 
@@ -370,7 +355,7 @@ struct ImPlotContext {
     // Style
     ImVector<ImVec4> ColorMap;
     ImPlotStyle Style;
-    ImVector<ImPlotColorMod> ColorModifiers;
+    ImVector<ImGuiColorMod> ColorModifiers;
     ImNextPlotData NextPlotData;        
 };
 
@@ -1077,7 +1062,7 @@ void RestorePlotColorMap() {
 }
 
 void PushPlotColor(ImPlotCol idx, ImU32 col) {
-    ImPlotColorMod backup;
+    ImGuiColorMod backup;
     backup.Col = idx;
     backup.BackupValue = gp.Style.Colors[idx];
     gp.ColorModifiers.push_back(backup);
@@ -1085,7 +1070,7 @@ void PushPlotColor(ImPlotCol idx, ImU32 col) {
 }
 
 void PushPlotColor(ImPlotCol idx, const ImVec4& col) {
-    ImPlotColorMod backup;
+    ImGuiColorMod backup;
     backup.Col = idx;
     backup.BackupValue = gp.Style.Colors[idx];
     gp.ColorModifiers.push_back(backup);
@@ -1095,7 +1080,7 @@ void PushPlotColor(ImPlotCol idx, const ImVec4& col) {
 void PopPlotColor(int count) {
     while (count > 0)
     {
-        ImPlotColorMod& backup = gp.ColorModifiers.back();
+        ImGuiColorMod& backup = gp.ColorModifiers.back();
         gp.Style.Colors[backup.Col] = backup.BackupValue;
         gp.ColorModifiers.pop_back();
         count--;
