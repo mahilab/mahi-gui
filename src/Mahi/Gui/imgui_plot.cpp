@@ -246,35 +246,49 @@ inline void RenderPlotItemScatter(const PlotItem &item, const PlotInterface &plo
 
 inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
                                ImDrawList &DrawList) {
-    const ImU32 col      = GetColorU32(item.color);
-    const float mx       = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
-    const float my       = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
+    const ImU32 col = GetColorU32(item.color);
+    const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
+    const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
     for (std::size_t i = 0; i < item.data.size(); ++i) {
         if (item.data[i].y == 0)
             continue;
         float y1 = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
         float y2 = pix.Min.y + my * (-plot.y_axis.minimum);
-        float l  = pix.Min.x + mx * (item.data[i].x - halfSize - plot.x_axis.minimum);
-        float r  = pix.Min.x + mx * (item.data[i].x + halfSize - plot.x_axis.minimum);
-        DrawList.AddRectFilled({l, ImMin(y1, y2)}, {r, ImMax(y1, y2)}, col);
+        float l = pix.Min.x + mx * (item.data[i].x - halfSize - plot.x_axis.minimum);
+        float r = pix.Min.x + mx * (item.data[i].x + halfSize - plot.x_axis.minimum);
+        ImVec2 cl, cr;
+        cl.x = l;
+        cl.y = ImMin(y1, y2);
+        cr.x = r;
+        cr.y = ImMax(y1, y2);
+        if (cull_area.Contains(cl) || cull_area.Contains(cr))
+            DrawList.AddRectFilled({l, ImMin(y1, y2)}, {r, ImMax(y1, y2)}, col);
     }
 }
 
 inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
                                ImDrawList &DrawList) {
-    const ImU32 col      = GetColorU32(item.color);
-    const float mx       = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
-    const float my       = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
+    const ImU32 col = GetColorU32(item.color);
+    const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
+    const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
     const float halfSize = 0.5f * item.size;
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
     for (std::size_t i = 0; i < item.data.size(); ++i) {
         if (item.data[i].x == 0)
             continue;
         float x1 = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
         float x2 = pix.Min.x + mx * (0 - plot.x_axis.minimum);
-        float t  = pix.Min.y + my * (item.data[i].y + halfSize - plot.y_axis.minimum);
-        float b  = pix.Min.y + my * (item.data[i].y - halfSize - plot.y_axis.minimum);
-        DrawList.AddRectFilled({ImMin(x1, x2), t}, {ImMax(x1, x2), b}, col);
+        float t = pix.Min.y + my * (item.data[i].y + halfSize - plot.y_axis.minimum);
+        float b = pix.Min.y + my * (item.data[i].y - halfSize - plot.y_axis.minimum);
+        ImVec2 ct, cb;
+        ct.x = ImMin(x1, x2);
+        ct.y = t;
+        cb.x = ImMax(x1, x2);
+        cb.y = b;
+        if (cull_area.Contains(ct) || cull_area.Contains(cb))
+            DrawList.AddRectFilled({ImMin(x1, x2), t}, {ImMax(x1, x2), b}, col);
     }
 }
 
