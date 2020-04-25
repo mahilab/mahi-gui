@@ -32,7 +32,8 @@ struct PlotItem {
         Line,     // Data plotted as a solid line.
         Scatter,  // Data plotted as discontinuous circles.
         XBar,     // Data plotted as centered bars plot emanating from X-axis.
-        YBar      // Data plotted as centered bars plot emanating from Y axis.
+        YBar,     // Data plotted as centered bars plot emanating from Y axis.
+        Digital   // Data plotted as digital data recording.
     };
     /// Default constructor.
     PlotItem();
