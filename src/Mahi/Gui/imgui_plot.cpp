@@ -138,26 +138,34 @@ inline void TransformTicks(std::vector<Tick> &ticks, float tMin, float tMax, flo
 }
 
 inline void RenderPlotItemLineAA(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
-                                 ImDrawList &DrawList) {
+                                 ImDrawList &DrawList)
+{
     if (item.data.size() < 2)
         return;
-    static std::vector<ImVec2> pointsPx(10000);  // up front allocation
+    static std::vector<ImVec2> pointsPx(10000); // up front allocation
     pointsPx.resize(item.data.size());
     const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
     const float my = (pix.Max.y - pix.Min.y) / (plot.y_axis.maximum - plot.y_axis.minimum);
-    // transform data
-    for (std::size_t i = 0; i < item.data.size(); ++i) {
-        pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
-        pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
-    }
-    const ImU32 color    = GetColorU32(item.color);
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
+    const ImU32 color = GetColorU32(item.color);
     std::size_t segments = item.data.size() - 1;
-    std::size_t i        = (std::size_t)item.data_begin;
-    for (std::size_t s = 0; s < segments; ++s) {
+    std::size_t i = (std::size_t)item.data_begin;
+    for (std::size_t s = 0; s < segments; ++s)
+    {
         std::size_t j = i + 1;
         if (j == item.data.size())
             j = 0;
-        DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size);
+        pointsPx[i].x = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
+        pointsPx[i].y = pix.Min.y + my * (item.data[i].y - plot.y_axis.minimum);
+        pointsPx[j].x = pix.Min.x + mx * (item.data[j].x - plot.x_axis.minimum);
+        pointsPx[j].y = pix.Min.y + my * (item.data[j].y - plot.y_axis.minimum);
+        ImVec2 ci, cj;
+        ci.x = pointsPx[i].x;
+        ci.y = pointsPx[i].y;
+        cj.x = pointsPx[j].x;
+        cj.y = pointsPx[j].y;
+        if (cull_area.Contains(ci) || cull_area.Contains(cj))
+            DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size + (item.highlited ? 1.5 : 0.0));
         i = j;
     }
 }
