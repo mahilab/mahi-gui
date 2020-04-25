@@ -299,6 +299,32 @@ inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, 
             DrawList.AddRectFilled({ImMin(x1, x2), t}, {ImMax(x1, x2), b}, col);
     }
 }
+	
+inline void RenderPlotItemDigital(const PlotItem &item, const PlotInterface &plot, const ImRect &pix,
+                               ImDrawList &DrawList, int chIdx)
+{
+    const ImU32 col = GetColorU32(item.color);
+    const float mx = (pix.Max.x - pix.Min.x) / (plot.x_axis.maximum - plot.x_axis.minimum);
+    const ImRect cull_area(ImMin(pix.Min.x, pix.Max.x), ImMin(pix.Min.y, pix.Max.y), ImMax(pix.Min.x, pix.Max.x), ImMax(pix.Min.y, pix.Max.y));
+    for (std::size_t i = 1; i < item.data.size(); ++i)
+    {
+        int pixY_0 = item.size;
+        int pixY_1 = item.size * 7.0;
+        int pixY_Offset = 20;
+        int pixY_chOffset = pixY_1 + 3;
+        float y1 = (pix.Min.y) + ((-pixY_chOffset * chIdx) - ((item.data[i].y == 0) ? pixY_0 : pixY_1) - pixY_Offset);
+        float y2 = (pix.Min.y) + ((-pixY_chOffset * chIdx) - pixY_Offset);
+        float l = pix.Min.x + mx * (item.data[i-1].x - plot.x_axis.minimum);
+        float r = pix.Min.x + mx * (item.data[i].x - plot.x_axis.minimum);
+        ImVec2 cl, cr;
+        cl.x = l;
+        cl.y = y1;
+        cr.x = r;
+        cr.y = y2;
+        if (cull_area.Contains(cl) || cull_area.Contains(cr))
+            DrawList.AddRectFilled({l, y1}, {r, y2}, col);
+    }
+}	
 
 }  // namespace
 
@@ -686,6 +712,7 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
     }
 
     // render plot items
+	int digitalCnt = 0;
     for (int i = 0; i < nItems; ++i) {
         if (items[i].show && items[i].data.size() > 0) {
             if (items[i].type == PlotItem::Line)
@@ -700,6 +727,8 @@ bool Plot(const char *label_id, PlotInterface *plot_ptr, PlotItem *items, int nI
                 RenderPlotItemXBar(items[i], plot, pix, DrawList);
             else if (items[i].type == PlotItem::YBar)
                 RenderPlotItemYBar(items[i], plot, pix, DrawList);
+            else if (items[i].type == PlotItem::Digital)
+                RenderPlotItemDigital(items[i], plot, pix, DrawList, digitalCnt++);			
         }
     }
 
