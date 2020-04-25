@@ -25,7 +25,7 @@ typedef int ImPlotFlags;
 typedef int ImPlotAxisFlags;
 typedef int ImPlotCol;
 typedef int ImPlotStyleVar;
-typedef int ImPlotSpec;
+typedef int ImPlotMarker;
 
 // Options for plots
 enum ImPlotFlags_ {
@@ -40,60 +40,64 @@ enum ImPlotFlags_ {
 };
 
 // Options for plot axes (X and Y)
-enum ImPlotAxisFlags_ {
-    ImPlotAxisFlags_GridLines  = 1 << 0, // grid lines will be displayed
-    ImPlotAxisFlags_TickMarks  = 1 << 1, // tick marks will be displayed for each grid line
-    ImPlotAxisFlags_TickLabels = 1 << 2, // text labels will be displayed for each grid line
-    ImPlotAxisFlags_Invert     = 1 << 3, // the axis will be inverted
-    ImPlotAxisFlags_LockMin    = 1 << 4, // the axis minimum value will be locked when panning/zooming
-    ImPlotAxisFlags_LockMax    = 1 << 5, // the axis maximum value will be locked when panning/zooming
-    ImPlotAxisFlags_Adaptive   = 1 << 6, // grid divisions will adapt to the current pixel size the axis
-    ImPlotAxisFlags_LogScale   = 1 << 7, // a logartithmic (base 10) axis scale will be used
-    ImPlotAxisFlags_Scientific = 1 << 8, // scientific notation will be used for tick labels if displayed
-    ImPlotAxisFlags_Default    = ImPlotAxisFlags_GridLines | ImPlotAxisFlags_TickMarks | ImPlotAxisFlags_TickLabels | ImPlotAxisFlags_Adaptive
+enum ImAxisFlags_ {
+    ImAxisFlags_GridLines  = 1 << 0, // grid lines will be displayed
+    ImAxisFlags_TickMarks  = 1 << 1, // tick marks will be displayed for each grid line
+    ImAxisFlags_TickLabels = 1 << 2, // text labels will be displayed for each grid line
+    ImAxisFlags_Invert     = 1 << 3, // the axis will be inverted
+    ImAxisFlags_LockMin    = 1 << 4, // the axis minimum value will be locked when panning/zooming
+    ImAxisFlags_LockMax    = 1 << 5, // the axis maximum value will be locked when panning/zooming
+    ImAxisFlags_Adaptive   = 1 << 6, // grid divisions will adapt to the current pixel size the axis
+    ImAxisFlags_LogScale   = 1 << 7, // a logartithmic (base 10) axis scale will be used
+    ImAxisFlags_Scientific = 1 << 8, // scientific notation will be used for tick labels if displayed (WIP)
+    ImAxisFlags_Default    = ImAxisFlags_GridLines | ImAxisFlags_TickMarks | ImAxisFlags_TickLabels | ImAxisFlags_Adaptive
 };
 
 // Plot styling colors 
 enum ImPlotCol_ {
-    ImPlotCol_Line,        // plot item line/outline color (defaults to a rotating color set)
-    ImPlotCol_Fill,        // plot item marker/bar fill color (defaults to a rotating color set)
-    ImPlotCol_FrameBg,     // plot frame background color (defaults to ImGuiCol_FrameBg)
-    ImPlotCol_PlotBg,      // plot area background color (defaults to ImGuiCol_WindowBg)
-    ImPlotCol_PlotBorder,  // plot area border color (defaults to ImGuiCol_Text)
-    ImPlotCol_XAxis,       // x-axis grid/label color (defaults to ImGuiCol_Text)
-    ImPlotCol_YAxis,       // x-axis grid/label color (defaults to ImGuiCol_Text)
-    ImPlotCol_Selection,   // box-selection color (defaults to yellow)
+    ImPlotCol_Line,          // plot item line/outline color (defaults to a rotating color set)
+    ImPlotCol_Fill,          // plot item bar fill color (defaults to a rotating color set)
+    ImPlotCol_MarkerOutline, // plot item marker outline color
+    ImPlotCol_MarkerFill,    // plot item marker fill color
+    ImPlotCol_FrameBg,       // plot frame background color (defaults to ImGuiCol_FrameBg)
+    ImPlotCol_PlotBg,        // plot area background color (defaults to ImGuiCol_WindowBg)
+    ImPlotCol_PlotBorder,    // plot area border color (defaults to ImGuiCol_Text)
+    ImPlotCol_XAxis,         // x-axis grid/label color (defaults to ImGuiCol_Text)
+    ImPlotCol_YAxis,         // x-axis grid/label color (defaults to ImGuiCol_Text)
+    ImPlotCol_Selection,     // box-selection color (defaults to yellow)
     ImPlotCol_COUNT
 };
 
 enum ImPlotStyleVar_ {
-    ImPlotStyleVar_MarkerSize,  /// marker size in pixels (roughly the marker's "radius")
-    ImPlotStyleVar_LineWeight,  /// line weight in pixels
+    ImPlotStyleVar_LineWeight,   /// float, line weight in pixels
+    ImPlotStyleVar_Marker,       /// int, marker specification
+    ImPlotStyleVar_MarkerSize,   /// float, marker size in pixels (roughly the marker's "radius")
+    ImPlotStyleVar_MarkerWeight, /// float, outline weight of markers
     ImPlotStyleVar_COUNT
 };
 
 // Marker specification
-enum ImPlotMaker_ {
-    ImPlotMaker_None         = 1 << 0,  // no marker
-    ImPlotMarker_Circle      = 1 << 1,  // a circle marker will be rendered at each point 
-    ImPlotMarker_Square      = 1 << 2,  // a square maker will be rendered at each point
-    ImPlotMarker_Diamond     = 1 << 3,  // a diamond marker will be rendered at each point
-    ImPlotMarker_Up          = 1 << 4,  // an upward-pointing triangle marker will up rendered at each point
-    ImPlotMarker_Down        = 1 << 5,  // an downward-pointing triangle marker will up rendered at each point
-    ImPlotMarker_Left        = 1 << 6,  // an leftward-pointing triangle marker will up rendered at each point
-    ImPlotMarker_Right       = 1 << 7,  // an rightward-pointing triangle marker will up rendered at each point
-    ImPlotMarker_Cross       = 1 << 8,  // a cross marker will be rendered at each point (not filled)
-    ImPlotMarker_Plus        = 1 << 9,  // a plus marker will be rendered at each point (not filled)
-    ImPlotMarker_Asterisk    = 1 << 10, // a asterisk marker will be rendered at each point (not filled)
+enum ImMarker_ {
+    ImMarker_None        = 1 << 0,  // no marker
+    ImMarker_Circle      = 1 << 1,  // a circle marker will be rendered at each point 
+    ImMarker_Square      = 1 << 2,  // a square maker will be rendered at each point
+    ImMarker_Diamond     = 1 << 3,  // a diamond marker will be rendered at each point
+    ImMarker_Up          = 1 << 4,  // an upward-pointing triangle marker will up rendered at each point
+    ImMarker_Down        = 1 << 5,  // an downward-pointing triangle marker will up rendered at each point
+    ImMarker_Left        = 1 << 6,  // an leftward-pointing triangle marker will up rendered at each point
+    ImMarker_Right       = 1 << 7,  // an rightward-pointing triangle marker will up rendered at each point
+    ImMarker_Cross       = 1 << 8,  // a cross marker will be rendered at each point (not filled)
+    ImMarker_Plus        = 1 << 9,  // a plus marker will be rendered at each point (not filled)
+    ImMarker_Asterisk    = 1 << 10, // a asterisk marker will be rendered at each point (not filled)
 };
 
 // Plot style structure
 struct ImPlotStyle {
-    ImPlotSpec Spec;
-    float      LineWeight;
-    float      MarkerSize;
-    float      Variables[ImPlotStyleVar_COUNT];
-    ImVec4     Colors[ImPlotCol_COUNT];
+    ImPlotMarker Marker;
+    float        MarkerSize;
+    float        MarkerWeight;
+    float        LineWeight;
+    ImVec4       Colors[ImPlotCol_COUNT];
     ImPlotStyle();
 };
 
@@ -114,8 +118,8 @@ bool BeginPlot(const char* title_id,
                const char* y_label     = NULL, 
                const ImVec2& size      = ImVec2(-1,-1), 
                ImPlotFlags flags       = ImPlotFlags_Default, 
-               ImPlotAxisFlags x_flags = ImPlotAxisFlags_Default, 
-               ImPlotAxisFlags y_flags = ImPlotAxisFlags_Default);
+               ImPlotAxisFlags x_flags = ImAxisFlags_Default, 
+               ImPlotAxisFlags y_flags = ImAxisFlags_Default);
 // Only call EndPlot() if BeginPlot() returns true! Typically called at the end
 // of an if statement conditioned on BeginPlot().
 void EndPlot();
@@ -154,27 +158,46 @@ void PlotLabel(const char* text, float x, float y, const ImVec2& pixel_offset = 
 // Special Color used to specific that a plot item color should set determined automatically.
 #define IM_COL_AUTO ImVec4(0,0,0,-1)
 
-// Provides access to plot style structure for permanant modifications (colors, sizes, etc.)
+// Provides access to plot style structure for permanant modifications to colors, sizes, etc.
 ImPlotStyle& GetPlotStyle();
+
 // Sets the color map to be used for plot items 
 void SetPlotColorMap(const ImVec4* colors, int num_colors);
 // Restores the default ImPlot color map 
 void RestorePlotColorMap();
 
-// Sets the plot line and marker specification to be used on subsequent plot items.
-void SetPlotSpec(ImPlotSpec spec);
-// Sets plot line styling variables to be used on subsequent plot items.
-void SetPlotLineStyle(ImPlotSpec spec, float line_weight, const ImVec4& line_color = IM_COL_AUTO);
-// Sets plot marker styling variables to be used on subsequent plot items.
-void SetPlotMarkerStyle(float marker_size, const ImVec4& fill_color = ImVec4(0,0,0,0));
-// Sets the complete style to be used on subsequent plot items. The special color {0,0,0,-1} generates automatic colors.
-void SetPlotStyle(ImPlotSpec spec, float line_weight, const ImVec4& line_color, float marker_size, const ImVec4& fill_color);
-
-// Temporarily modify a plot color. Pair with succeeding call to PopPlotColor.
+// Temporarily modify a plot color.
 void PushPlotColor(ImPlotCol idx, ImU32 col);
-// Temporarily modify a plot color. Pair with succeeding call to PopPlotColor.
+// Temporarily modify a plot color.
 void PushPlotColor(ImPlotCol idx, const ImVec4& col);
-// Undo temporary color modification. Pair with preceeding call to PushPlotColor.
+// Undo temporary color modification. 
 void PopPlotColor(int count = 1);
+
+// Temporarily modify a style variable
+void PushPlotStyleVar(ImPlotStyleVar idx, float value);
+// Undo temporary style modification.
+void PopPlotStyleVar(int count = 1);
+
+// Temporarily modify styling variables associated with plot line style. 
+void PushLineStyle(float line_weight, const ImVec4& line_color);
+// Undo temporary line style modification. 
+void PopLineStyle(int count = 1);
+
+// Sets plot marker styling variables to be used on subsequent plot items.
+void PushMarkerStyle(ImPlotMarker marker, float marker_size, const ImVec4& marker_fill, const ImVec4& marker_outline);
+// Undo temporary marker modification. 
+void PopMarkerStyle(int count = 1);
+
+// Sets bar plot styling variables to be used on subsequent bar plot items.
+void PushBarStyle(float outline_weight, const ImVec4& bar_fill, const ImVec4& bar_outline);
+// Undo temporary bar modification
+void PopBarStyle(int count = 1);
+
+//-----------------------------------------------------------------------------
+// Demo
+//-----------------------------------------------------------------------------
+
+// Shows the ImPlot demo. Add implot_demo.cpp to your sources!
+void ShowImPlotDemoWindow(bool* p_open = NULL);
 
 }  // namespace ImGui

@@ -99,7 +99,7 @@ set(IMGUI_SRC
 set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/imgui)
 
 set(IMPLOT_HEADERS 3rdparty/implot/implot.h)
-set(IMPLOT_SRC     3rdparty/implot/implot.cpp)
+set(IMPLOT_SRC     3rdparty/implot/implot.cpp 3rdparty/implot/implot_demo.cpp)
 set(IMPLOT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/implot)
 
 # NANOVG
