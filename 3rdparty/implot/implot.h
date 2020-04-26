@@ -22,10 +22,10 @@
 //-----------------------------------------------------------------------------
 
 typedef int ImPlotFlags;
-typedef int ImPlotAxisFlags;
+typedef int ImAxisFlags;
 typedef int ImPlotCol;
 typedef int ImPlotStyleVar;
-typedef int ImPlotMarker;
+typedef int ImMarker;
 
 // Options for plots
 enum ImPlotFlags_ {
@@ -49,16 +49,17 @@ enum ImAxisFlags_ {
     ImAxisFlags_LockMax    = 1 << 5, // the axis maximum value will be locked when panning/zooming
     ImAxisFlags_Adaptive   = 1 << 6, // grid divisions will adapt to the current pixel size the axis
     ImAxisFlags_LogScale   = 1 << 7, // a logartithmic (base 10) axis scale will be used
-    ImAxisFlags_Scientific = 1 << 8, // scientific notation will be used for tick labels if displayed (WIP)
+    ImAxisFlags_Scientific = 1 << 8, // scientific notation will be used for tick labels if displayed (WIP, not very good yet)
     ImAxisFlags_Default    = ImAxisFlags_GridLines | ImAxisFlags_TickMarks | ImAxisFlags_TickLabels | ImAxisFlags_Adaptive
 };
 
 // Plot styling colors 
 enum ImPlotCol_ {
-    ImPlotCol_Line,          // plot item line/outline color (defaults to a rotating color set)
-    ImPlotCol_Fill,          // plot item bar fill color (defaults to a rotating color set)
-    ImPlotCol_MarkerOutline, // plot item marker outline color
-    ImPlotCol_MarkerFill,    // plot item marker fill color
+    ImPlotCol_Line,          // plot line/outline color (defaults to a rotating color set)
+    ImPlotCol_Fill,          // plot fill color for bars (defaults to a rotating color set)
+    ImPlotCol_MarkerOutline, // marker outline color
+    ImPlotCol_MarkerFill,    // marker fill color
+    ImPlotCol_ErrorBar,      // error bar color
     ImPlotCol_FrameBg,       // plot frame background color (defaults to ImGuiCol_FrameBg)
     ImPlotCol_PlotBg,        // plot area background color (defaults to ImGuiCol_WindowBg)
     ImPlotCol_PlotBorder,    // plot area border color (defaults to ImGuiCol_Text)
@@ -94,7 +95,7 @@ enum ImMarker_ {
 // Plot style structure
 struct ImPlotStyle {
     float        LineWeight;
-    ImPlotMarker Marker;
+    ImMarker Marker;
     float        MarkerSize;
     float        MarkerWeight;
     ImVec4       Colors[ImPlotCol_COUNT];
@@ -118,14 +119,18 @@ bool BeginPlot(const char* title_id,
                const char* y_label     = NULL, 
                const ImVec2& size      = ImVec2(-1,-1), 
                ImPlotFlags flags       = ImPlotFlags_Default, 
-               ImPlotAxisFlags x_flags = ImAxisFlags_Default, 
-               ImPlotAxisFlags y_flags = ImAxisFlags_Default);
+               ImAxisFlags x_flags = ImAxisFlags_Default, 
+               ImAxisFlags y_flags = ImAxisFlags_Default);
 // Only call EndPlot() if BeginPlot() returns true! Typically called at the end
 // of an if statement conditioned on BeginPlot().
 void EndPlot();
 
 /// Set the axes ranges of the next plot. Call right before BeginPlot().
-void SetNextPlotAxes(float x_min, float x_max, float y_min, float y_max, ImGuiCond cond = ImGuiCond_Once);
+void SetNextPlotRange(float x_min, float x_max, float y_min, float y_max, ImGuiCond cond = ImGuiCond_Once);
+/// Set the X axis range of the next plot. Call right before BeginPlot().
+void SetNextPlotRangeX(float x_min, float x_max, ImGuiCond cond = ImGuiCond_Once);
+/// Set the X axis range of the next plot. Call right before BeginPlot().
+void SetNextPlotRangeY(float y_min, float y_max, ImGuiCond cond = ImGuiCond_Once);
 /// Returns true if the plot in the current or most recent plot is hovered
 bool IsPlotHovered();
 /// Returns the mouse position in x,y coordinates of the current or most recent plot.
@@ -136,14 +141,17 @@ ImVec2 GetPlotMousePos();
 //-----------------------------------------------------------------------------
 
 // Plots a standard 2D line and/or scatter plot 
+void Plot(const char* label_id, const float* values, int count, int offset = 0, int stride = sizeof(float));
 void Plot(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
 void Plot(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
 // Plots vertical bars
-void PlotBar(const char* label_id, float width, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
-void PlotBar(const char* label_id, float width, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
-// Plots horizontal bars (TODO)
-void PlotBarH(const char* label_id, float height, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
-void PlotBarH(const char* label_id, float height, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
+void PlotBar(const char* label_id, const float* values, int count, float width = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
+void PlotBar(const char* label_id, const float* xs, const float* ys, int count, float width, int offset = 0, int stride = sizeof(float));
+void PlotBar(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float width, int offset = 0);
+// Plots horizontal bars
+void PlotBarH(const char* label_id, const float* values, int count, float width = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
+void PlotBarH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset = 0, int stride = sizeof(float));
+void PlotBarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset = 0);
 // Plots vertical stems (TODO)
 void PlotStem(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
 // Plots error bars
@@ -179,21 +187,6 @@ void PushPlotStyleVar(ImPlotStyleVar idx, float val);
 void PushPlotStyleVar(ImPlotStyleVar idx, int val);
 // Undo temporary style modification.
 void PopPlotStyleVar(int count = 1);
-
-// Temporarily modify styling variables associated with plot line style. 
-void PushLineStyle(float line_weight, const ImVec4& line_color);
-// Undo temporary line style modification. 
-void PopLineStyle(int count = 1);
-
-// Temporarily modify styling variables associated with marker style. 
-void PushMarkerStyle(ImPlotMarker marker, float marker_size, const ImVec4& marker_fill, const ImVec4& marker_outline);
-// Undo temporary marker modification. 
-void PopMarkerStyle(int count = 1);
-
-// Temporarily modify styling variables associated with bar plot style. 
-void PushBarStyle(float outline_weight, const ImVec4& bar_fill, const ImVec4& bar_outline);
-// Undo temporary bar modification
-void PopBarStyle(int count = 1);
 
 //-----------------------------------------------------------------------------
 // Demo

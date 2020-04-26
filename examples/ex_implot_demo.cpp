@@ -5,13 +5,11 @@
 using namespace mahi::gui;
 using namespace mahi::util;
 
-class PlotApi : public Application {
+class PlotDemo : public Application {
 public:
-    PlotApi() : Application() { 
+    PlotDemo() : Application() { 
         // ImGui::StyleColorsDark();
-        // ImGui::StyleColorsLight();
     }
-
     void update() {
         static bool p_open = true;
         ImGui::ShowImPlotDemoWindow(&p_open);
@@ -22,8 +20,7 @@ public:
 
 int main(int argc, char const *argv[])
 {
-
-    PlotApi api;
-    api.run();
+    PlotDemo demo;
+    demo.run();
     return 0;
 }

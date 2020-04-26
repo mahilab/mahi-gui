@@ -16,17 +16,48 @@
 
 #include <implot.h>
 #include <imgui_internal.h>
+#include <iostream>
 
-namespace ImGui {
+namespace {
+
+struct ScrollingData {
+    int MaxSize = 1000;
+    int Offset  = 0;
+    ImVector<ImVec2> Data;
+    ScrollingData() { Data.reserve(MaxSize); }
+    void AddPoint(float x, float y) {
+        if (Data.size() < MaxSize)
+            Data.push_back(ImVec2(x,y));
+        else {
+            Data[Offset] = ImVec2(x,y);
+            Offset =  (Offset + 1) % MaxSize;
+        }
+    }
+};
+
+struct RollingData {
+    float Span = 10.0f;
+    ImVector<ImVec2> Data;
+    RollingData() { Data.reserve(1000); }
+    void AddPoint(float x, float y) {
+        float xmod = ImFmod(x, Span);
+        if (!Data.empty() && xmod < Data.back().x)
+            Data.shrink(0);
+        Data.push_back(ImVec2(xmod, y));
+    }
+};
+
+}
+
+namespace ImGui {   
     
-
 void ShowImPlotDemoWindow(bool* p_open) {
 
     ImVec2 main_viewport_pos = ImGui::GetMainViewport()->Pos;
     ImGui::SetNextWindowPos(ImVec2(main_viewport_pos.x + 650, main_viewport_pos.y + 20), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
     ImGui::Begin("ImPlot Demo", p_open);
-    ImGui::Text("implot says hello. (0.1 WIP)");
+    ImGui::Text("ImPlot says hello. (0.1 WIP)");
     if (ImGui::CollapsingHeader("Help")) {
         ImGui::Text("USER GUIDE:");
         ImGui::BulletText("Left click and drag within the plot area to pan X and Y axes.");
@@ -38,7 +69,6 @@ void ShowImPlotDemoWindow(bool* p_open) {
         ImGui::BulletText("Double right click to open the plot context menu.");
         ImGui::BulletText("Click legend label icons to show/hide plot items.");
     }
-
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Line Plots")) {
         static float xs1[1001], ys1[1001];
@@ -53,11 +83,12 @@ void ShowImPlotDemoWindow(bool* p_open) {
         }
         if (ImGui::BeginPlot("Lines", "x", "f(x)", {-1,300})) {
             ImGui::Plot("sin(50*x)", xs1, ys1, 1001);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle);
             ImGui::Plot("x^2", xs2, ys2, 11);
+            ImGui::PopPlotStyleVar();
             ImGui::EndPlot();
         }
     }
-
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Scatter Plots")) {
         srand(0);
@@ -85,10 +116,52 @@ void ShowImPlotDemoWindow(bool* p_open) {
             ImGui::EndPlot();
         }
     }
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Bar Plots")) {
+        ImGui::BulletText("This plot can't be zoomed/panned because ImGuiCond_Always is passed to SetNextPlotRange()");
+        ImGui::SetNextPlotRange(-0.5f, 9.5f, 0, 110, ImGuiCond_Always);
+        if (ImGui::BeginPlot("Bar Plot", "Student", "Score", {-1, 300})) {
+            static float midtm[10] = {83, 67, 23, 89, 83, 78, 91, 82, 85, 90};
+            static float final[10] = {80, 62, 56, 99, 55, 78, 88, 78, 90, 100};
+            static float grade[10] = {80, 69, 52, 92, 72, 78, 75, 76, 89, 95};
+            ImGui::PlotBar("Midterm Exam", midtm, 10, 0.2f, -0.2f);
+            ImGui::PlotBar("Final Exam", final, 10, 0.2f,  0);
+            ImGui::PlotBar("Course Grade", grade, 10, 0.2f, 0.2f);
+            ImGui::EndPlot();
+        }
+    }
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Realtime Plots")) {
+        static bool paused = false;
+        static ScrollingData sdata1, sdata2;
+        static RollingData   rdata1, rdata2;
+        ImVec2 mouse = ImGui::GetMousePos();
+        static float t = 0;
+        if (!paused) {
+            t += ImGui::GetIO().DeltaTime;
+            sdata1.AddPoint(t, mouse.x * 0.0005f);
+            rdata1.AddPoint(t, mouse.x * 0.0005f);
+            sdata2.AddPoint(t, mouse.y * 0.0005f);
+            rdata2.AddPoint(t, mouse.y * 0.0005f);
+        }
+        ImGui::SetNextPlotRangeX(t - 10, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
+        static int rt_axis = ImAxisFlags_Default & ~ImAxisFlags_TickLabels;
+        if (ImGui::BeginPlot("##Scrolling", NULL, NULL, {-1,150}, ImPlotFlags_Default, rt_axis, rt_axis)) {
+            ImGui::Plot("Data 1", &sdata1.Data[0].x, &sdata1.Data[0].y, sdata1.Data.size(), sdata1.Offset, 2 * sizeof(float));
+            ImGui::Plot("Data 2", &sdata2.Data[0].x, &sdata2.Data[0].y, sdata2.Data.size(), sdata2.Offset, 2 * sizeof(float));
+            ImGui::EndPlot();
+        }
+        ImGui::SetNextPlotRangeX(0, 10, ImGuiCond_Always);
+        if (ImGui::BeginPlot("##Rolling", NULL, NULL, {-1,150}, ImPlotFlags_Default, rt_axis, rt_axis)) {
+            ImGui::Plot("Data 1", &rdata1.Data[0].x, &rdata1.Data[0].y, rdata1.Data.size(), 0, 2 * sizeof(float));
+            ImGui::Plot("Data 2", &rdata2.Data[0].x, &rdata2.Data[0].y, rdata2.Data.size(), 0, 2 * sizeof(float));
+            ImGui::EndPlot();
+        }
+    }
 
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Marker Styles")) {
-        ImGui::SetNextPlotAxes(0, 10, 0, 12);
+        ImGui::SetNextPlotRange(0, 10, 0, 12);
         if (ImGui::BeginPlot("##MarkerStyles", NULL, NULL, ImVec2(-1,300), 0, 0, 0)) {
             float xs[2] = {1,4};
             float ys[2] = {10,11};
@@ -158,16 +231,17 @@ void ShowImPlotDemoWindow(bool* p_open) {
             ImGui::EndPlot();
         }
     }
-
+    //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Log Scale")) {
+        ImGui::BulletText("Open the plot context menu (double right click) to switch between linear and log scale.");
         static float xs[1001], ys1[1001], ys2[1001], ys3[1001];
         for (int i = 0; i < 1001; ++i) {
             xs[i] = (float)(i*0.1f);
             ys1[i] = sin(xs[i]);
             ys2[i] = log(xs[i]);
-            ys3[i] = pow(10, xs[i]);
+            ys3[i] = pow(10.0f, xs[i]);
         }
-        ImGui::SetNextPlotAxes(0.1, 100, -1, 10);
+        ImGui::SetNextPlotRange(0.1f, 100, -1, 10);
         if (ImGui::BeginPlot("Log Plot", NULL, NULL, ImVec2(-1,300), ImPlotFlags_Default, ImAxisFlags_Default | ImAxisFlags_LogScale )) {
             ImGui::Plot("f(x) = x",      xs, xs,  1001);
             ImGui::Plot("f(x) = sin(x)", xs, ys1, 1001);
@@ -176,7 +250,81 @@ void ShowImPlotDemoWindow(bool* p_open) {
             ImGui::EndPlot();
         }
     }
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Querying")) {
+        ImGui::BulletText("Click in the plot area to draw");
+        static ImVector<ImVec2> data;
+        if (ImGui::BeginPlot("##Drawing", NULL, NULL, ImVec2(-1,300), ImPlotFlags_Default, 0, 0)) {
+            if (ImGui::IsPlotHovered() && ImGui::IsMouseClicked(0)) 
+                data.push_back(ImGui::GetPlotMousePos());
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Diamond);
+            ImGui::Plot("Art", &data[0].x, &data[0].y, data.size(), 0, 2 * sizeof(float));
+            ImGui::PopPlotStyleVar();
+            ImGui::EndPlot();
+        }
+    }
 
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Drag and Drop")) {
+        static bool paused = false;
+        static bool init = true;
+        static ScrollingData data[10];
+        static bool show[10];
+        if (init) {
+            for (int i = 0; i < 10; ++i) {
+                show[i] = false;
+                data[i].AddPoint(0, 0.25f + 0.5f * (float)rand() / float(RAND_MAX));
+            }
+            init = false;
+        }
+        ImGui::BulletText("Drag data items from the left column onto the plot.");
+        ImGui::BeginGroup();
+        if (ImGui::Button("Clear", {100, 0})) {
+            for (int i = 0; i < 10; ++i)
+                show[i] = false;
+        }
+        if (ImGui::Button(paused ? "Resume" : "Pause", {100,0}))
+            paused = !paused;
+        ImGui::Separator();
+        for (int i = 0; i < 10; ++i) {
+            char label[8];
+            sprintf(label, "data_%d", i);
+            ImGui::Selectable(label, false, 0, {100, 0});
+            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+                ImGui::SetDragDropPayload("DND_PLOT", &i, sizeof(int));
+                ImGui::TextUnformatted(label);
+                ImGui::EndDragDropSource();
+            }
+        }
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        static float t = 0;
+        if (!paused) {
+            t += ImGui::GetIO().DeltaTime;
+            for (int i = 0; i < 10; ++i) {
+                data[i].AddPoint(t, data[i].Data.back().y + (0.005f + 0.0002f * (float)rand() / float(RAND_MAX)) * (-1 + 2 * (float)rand() / float(RAND_MAX)));
+            }
+        }
+        ImGui::SetNextPlotRangeX(t - 10, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
+        if (ImGui::BeginPlot("##DND", NULL, NULL, ImVec2(-1,300), ImPlotFlags_Default)) {
+            for (int i = 0; i < 10; ++i) {
+                if (show[i]) {
+                    char label[8];
+                    sprintf(label, "data_%d", i);
+                    ImGui::Plot(label, &data[i].Data[0].x, &data[i].Data[0].y, data[i].Data.size(), data[i].Offset, 2 * sizeof(float));
+                }
+            }
+            ImGui::EndPlot();
+        }
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_PLOT")) {
+                int i = *(int*)payload->Data;
+                show[i] = true;
+            }
+            ImGui::EndDragDropTarget();
+        }
+    }
+    //-------------------------------------------------------------------------
     ImGui::End();
     
 }
