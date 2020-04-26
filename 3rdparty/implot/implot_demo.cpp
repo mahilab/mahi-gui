@@ -120,10 +120,10 @@ void ShowImPlotDemoWindow(bool* p_open) {
     if (ImGui::CollapsingHeader("Bar Plots")) {
         static bool horz = false;
         ImGui::Checkbox("Horizontal",&horz);
-        // if (horz)
-        //     ImGui::SetNextPlotRange(0, 110, -0.5f, 9.5f, ImGuiCond_Always);
-        // else
-        //     ImGui::SetNextPlotRange(-0.5f, 9.5f, 0, 110, ImGuiCond_Always);
+        if (horz)
+            ImGui::SetNextPlotRange(0, 110, -0.5f, 9.5f, ImGuiCond_Always);
+        else
+            ImGui::SetNextPlotRange(-0.5f, 9.5f, 0, 110, ImGuiCond_Always);
         if (ImGui::BeginPlot("Bar Plot", horz ? "Score":  "Student", horz ? "Student" : "Score", {-1, 300})) {
             static float midtm[10] = {83, 67, 23, 89, 83, 78, 91, 82, 85, 90};
             static float final[10] = {80, 62, 56, 99, 55, 78, 88, 78, 90, 100};
@@ -244,18 +244,18 @@ void ShowImPlotDemoWindow(bool* p_open) {
     }
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Log Scale")) {
-        ImGui::BulletText("Open the plot context menu (double right click) to switch between linear and log scale.");
+        ImGui::BulletText("Open the plot context menu (double right click) to scales.");
         static float xs[1001], ys1[1001], ys2[1001], ys3[1001];
         for (int i = 0; i < 1001; ++i) {
             xs[i] = (float)(i*0.1f);
-            ys1[i] = sin(xs[i]);
+            ys1[i] = sin(xs[i]) + 1;
             ys2[i] = log(xs[i]);
             ys3[i] = pow(10.0f, xs[i]);
         }
-        ImGui::SetNextPlotRange(0.1f, 100, -1, 10);
+        ImGui::SetNextPlotRange(0.1f, 100, 0, 10);
         if (ImGui::BeginPlot("Log Plot", NULL, NULL, ImVec2(-1,300), ImPlotFlags_Default, ImAxisFlags_Default | ImAxisFlags_LogScale )) {
             ImGui::Plot("f(x) = x",      xs, xs,  1001);
-            ImGui::Plot("f(x) = sin(x)", xs, ys1, 1001);
+            ImGui::Plot("f(x) = sin(x)+1", xs, ys1, 1001);
             ImGui::Plot("f(x) = log(x)", xs, ys2, 1001);
             ImGui::Plot("f(x) = 10^x",   xs, ys3, 21);
             ImGui::EndPlot();
@@ -334,6 +334,10 @@ void ShowImPlotDemoWindow(bool* p_open) {
             }
             ImGui::EndDragDropTarget();
         }
+    }
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Custom Styles")) {
+        
     }
     //-------------------------------------------------------------------------
     ImGui::End();

@@ -1645,7 +1645,7 @@ void PlotBarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void*
         ImVec2 p;
         p = getter(data, idx);
         idx = (idx + 1) % count;
-        if (p.y == 0)
+        if (p.x == 0)
             continue;
         ImVec2 a = gp.ToPixels(0, p.y - half_height);
         ImVec2 b = gp.ToPixels(p.x, p.y + half_height);
