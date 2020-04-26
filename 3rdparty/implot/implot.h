@@ -56,10 +56,10 @@ enum ImAxisFlags_ {
 // Plot styling colors 
 enum ImPlotCol_ {
     ImPlotCol_Line,          // plot line/outline color (defaults to a rotating color set)
-    ImPlotCol_Fill,          // plot fill color for bars (defaults to a rotating color set)
-    ImPlotCol_MarkerOutline, // marker outline color
-    ImPlotCol_MarkerFill,    // marker fill color
-    ImPlotCol_ErrorBar,      // error bar color
+    ImPlotCol_Fill,          // plot fill color for bars (defaults to the current line color)
+    ImPlotCol_MarkerOutline, // marker outline color (defaults to the current line color)
+    ImPlotCol_MarkerFill,    // marker fill color (defaults to the current line color)
+    ImPlotCol_ErrorBar,      // error bar color (defaults to ImGuiCol_Text)
     ImPlotCol_FrameBg,       // plot frame background color (defaults to ImGuiCol_FrameBg)
     ImPlotCol_PlotBg,        // plot area background color (defaults to ImGuiCol_WindowBg)
     ImPlotCol_PlotBorder,    // plot area border color (defaults to ImGuiCol_Text)
@@ -70,10 +70,11 @@ enum ImPlotCol_ {
 };
 
 enum ImPlotStyleVar_ {
-    ImPlotStyleVar_LineWeight,   /// float, line weight in pixels
-    ImPlotStyleVar_Marker,       /// int, marker specification
-    ImPlotStyleVar_MarkerSize,   /// float, marker size in pixels (roughly the marker's "radius")
-    ImPlotStyleVar_MarkerWeight, /// float, outline weight of markers
+    ImPlotStyleVar_LineWeight,   // float, line weight in pixels
+    ImPlotStyleVar_Marker,       // int,   marker specification
+    ImPlotStyleVar_MarkerSize,   // float, marker size in pixels (roughly the marker's "radius")
+    ImPlotStyleVar_MarkerWeight, // float, outline weight of markers in pixels
+    ImPlotStyleVar_ErrorBarSize, // float, error bar whisker width in pixels
     ImPlotStyleVar_COUNT
 };
 
@@ -94,11 +95,12 @@ enum ImMarker_ {
 
 // Plot style structure
 struct ImPlotStyle {
-    float        LineWeight;
-    ImMarker Marker;
-    float        MarkerSize;
-    float        MarkerWeight;
-    ImVec4       Colors[ImPlotCol_COUNT];
+    float    LineWeight;              // = 1, line weight in pixels
+    ImMarker Marker;                  // = ImMarker_None, marker specification
+    float    MarkerSize;              // = 5, marker size in pixels (roughly the marker's "radius")
+    float    MarkerWeight;            // = 1, outline weight of markers in pixels
+    float    ErrorBarSize;            // = 5, error bar whisker width in pixels
+    ImVec4   Colors[ImPlotCol_COUNT]; // array of plot specific colors
     ImPlotStyle();
 };
 
@@ -154,8 +156,10 @@ void PlotBarH(const char* label_id, const float* xs, const float* ys, int count,
 void PlotBarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset = 0);
 // Plots vertical stems (TODO)
 void PlotStem(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
-// Plots error bars
-void PlotErrorBars();
+// Plots vertical error bars
+void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* err, int count, int offset = 0, int stride = sizeof(float));
+void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* neg, const float* pos, int count, int offset = 0, int stride = sizeof(float));
+void PlotErrorBars(const char* label_id, ImVec4 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
 // Plots a text label at point x,y
 void PlotLabel(const char* text, float x, float y, const ImVec2& pixel_offset = ImVec2(0,0));
 
