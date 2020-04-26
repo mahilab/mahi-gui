@@ -1548,11 +1548,14 @@ void PlotBar(const char* label_id,  ImVec2 (*getter)(void* data, int idx), void*
 
     ImDrawList & DrawList = *ImGui::GetWindowDrawList();
 
-    const bool rend_line = gp.Style.Colors[ImPlotCol_Line].w != 0 && gp.Style.LineWeight > 0;
-    const bool rend_fill = gp.Style.Colors[ImPlotCol_Fill].w != 0;
+    bool rend_line = gp.Style.Colors[ImPlotCol_Line].w != 0 && gp.Style.LineWeight > 0;
+    bool rend_fill = gp.Style.Colors[ImPlotCol_Fill].w != 0;
 
     ImU32 col_line = gp.Style.Colors[ImPlotCol_Line].w == -1 ? GetColorU32(item->Color) : GetColorU32(gp.Style.Colors[ImPlotCol_Line]);
     ImU32 col_fill = gp.Style.Colors[ImPlotCol_Fill].w == -1 ? col_line                 : GetColorU32(gp.Style.Colors[ImPlotCol_Fill]);
+
+    if (rend_fill && col_line == col_fill)
+        rend_line = false;
 
     if (gp.Style.Colors[ImPlotCol_Line].w != -1)
         item->Color = gp.Style.Colors[ImPlotCol_Line];
@@ -1565,9 +1568,7 @@ void PlotBar(const char* label_id,  ImVec2 (*getter)(void* data, int idx), void*
     if (gp.FitThisFrame) {
         for (int i = 0; i < count; ++i) {
             ImVec2 p = getter(data, i);
-            gp.FitPoint(p - ImVec2(half_width, 0));
-            gp.FitPoint(p + ImVec2(half_width, 0));
-            gp.FitPoint(ImVec2(p.x - half_width, 0));
+            gp.FitPoint(ImVec2(p.x - half_width, p.y));
             gp.FitPoint(ImVec2(p.x + half_width, 0));
         }
     }
@@ -1581,6 +1582,73 @@ void PlotBar(const char* label_id,  ImVec2 (*getter)(void* data, int idx), void*
             continue;
         ImVec2 a = gp.ToPixels(p.x - half_width, p.y);
         ImVec2 b = gp.ToPixels(p.x + half_width, 0);
+        if (rend_fill)
+            DrawList.AddRectFilled(a, b, col_fill);
+        if (rend_line)
+            DrawList.AddRect(a, b, col_line);
+    }
+    ImGui::PopClipRect();
+}
+
+static ImVec2 ImPlotGetterBarH(void* data, int idx) {
+    ImPlotGetterData* data_1d = (ImPlotGetterData*)data;
+    return ImVec2(ImStrideIndex(data_1d->Xs, idx, data_1d->Stride), (float)idx + data_1d->YShift);
+}
+
+void PlotBarH(const char* label_id, const float* values, int count, float height, float shift, int offset, int stride) {
+    ImPlotGetterData data(values, NULL, stride, 0, shift);
+    PlotBarH(label_id, &ImPlotGetterBarH, (void*)&data, count, height, offset);
+}
+
+void PlotBarH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset, int stride) {
+    ImPlotGetterData data(xs,ys,stride);
+    PlotBarH(label_id, &ImPlotGetter2D, (void*)&data, count, height, offset);
+}
+
+void PlotBarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset) {
+
+    IM_ASSERT_USER_ERROR(gp.CurrentPlot != NULL, "PlotBarH() Needs to be called between BeginPlot() and EndPlot()!");
+
+    ImPlotItem* item = gp.RegisterItem(label_id);
+    if (!item->Show)
+        return;
+
+    ImDrawList & DrawList = *ImGui::GetWindowDrawList();
+
+    bool rend_line = gp.Style.Colors[ImPlotCol_Line].w != 0 && gp.Style.LineWeight > 0;
+    bool rend_fill = gp.Style.Colors[ImPlotCol_Fill].w != 0;
+
+    ImU32 col_line = gp.Style.Colors[ImPlotCol_Line].w == -1 ? GetColorU32(item->Color) : GetColorU32(gp.Style.Colors[ImPlotCol_Line]);
+    ImU32 col_fill = gp.Style.Colors[ImPlotCol_Fill].w == -1 ? col_line                 : GetColorU32(gp.Style.Colors[ImPlotCol_Fill]);
+
+    if (rend_fill && col_line == col_fill)
+        rend_line = false;
+
+    if (gp.Style.Colors[ImPlotCol_Line].w != -1)
+        item->Color = gp.Style.Colors[ImPlotCol_Line];
+
+    ImGui::PushClipRect(gp.BB_Grid.Min, gp.BB_Grid.Max, true);
+
+    float half_height = height * 0.5f;
+
+    // find data extents
+    if (gp.FitThisFrame) {
+        for (int i = 0; i < count; ++i) {
+            ImVec2 p = getter(data, i);
+            gp.FitPoint(ImVec2(0, p.y - half_height));
+            gp.FitPoint(ImVec2(p.x, p.y + half_height));
+        }
+    }
+
+    int idx = offset;
+    for (int i = 0; i < count; ++i) {      
+        ImVec2 p;
+        p = getter(data, idx);
+        idx = (idx + 1) % count;
+        if (p.y == 0)
+            continue;
+        ImVec2 a = gp.ToPixels(0, p.y - half_height);
+        ImVec2 b = gp.ToPixels(p.x, p.y + half_height);
         if (rend_fill)
             DrawList.AddRectFilled(a, b, col_fill);
         if (rend_line)

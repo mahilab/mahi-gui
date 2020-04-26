@@ -149,7 +149,7 @@ void PlotBar(const char* label_id, const float* values, int count, float width =
 void PlotBar(const char* label_id, const float* xs, const float* ys, int count, float width, int offset = 0, int stride = sizeof(float));
 void PlotBar(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float width, int offset = 0);
 // Plots horizontal bars
-void PlotBarH(const char* label_id, const float* values, int count, float width = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
+void PlotBarH(const char* label_id, const float* values, int count, float height = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
 void PlotBarH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset = 0, int stride = sizeof(float));
 void PlotBarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset = 0);
 // Plots vertical stems (TODO)

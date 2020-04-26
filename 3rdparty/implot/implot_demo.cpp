@@ -118,15 +118,26 @@ void ShowImPlotDemoWindow(bool* p_open) {
     }
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Bar Plots")) {
-        ImGui::BulletText("This plot can't be zoomed/panned because ImGuiCond_Always is passed to SetNextPlotRange()");
-        ImGui::SetNextPlotRange(-0.5f, 9.5f, 0, 110, ImGuiCond_Always);
-        if (ImGui::BeginPlot("Bar Plot", "Student", "Score", {-1, 300})) {
+        static bool horz = false;
+        ImGui::Checkbox("Horizontal",&horz);
+        // if (horz)
+        //     ImGui::SetNextPlotRange(0, 110, -0.5f, 9.5f, ImGuiCond_Always);
+        // else
+        //     ImGui::SetNextPlotRange(-0.5f, 9.5f, 0, 110, ImGuiCond_Always);
+        if (ImGui::BeginPlot("Bar Plot", horz ? "Score":  "Student", horz ? "Student" : "Score", {-1, 300})) {
             static float midtm[10] = {83, 67, 23, 89, 83, 78, 91, 82, 85, 90};
             static float final[10] = {80, 62, 56, 99, 55, 78, 88, 78, 90, 100};
             static float grade[10] = {80, 69, 52, 92, 72, 78, 75, 76, 89, 95};
-            ImGui::PlotBar("Midterm Exam", midtm, 10, 0.2f, -0.2f);
-            ImGui::PlotBar("Final Exam", final, 10, 0.2f,  0);
-            ImGui::PlotBar("Course Grade", grade, 10, 0.2f, 0.2f);
+            if (horz) {
+                ImGui::PlotBarH("Midterm Exam", midtm, 10, 0.2f, -0.2f);
+                ImGui::PlotBarH("Final Exam", final, 10, 0.2f,  0);
+                ImGui::PlotBarH("Course Grade", grade, 10, 0.2f, 0.2f);
+            }
+            else {
+                ImGui::PlotBar("Midterm Exam", midtm, 10, 0.2f, -0.2f);
+                ImGui::PlotBar("Final Exam", final, 10, 0.2f,  0);
+                ImGui::PlotBar("Course Grade", grade, 10, 0.2f, 0.2f);
+            }
             ImGui::EndPlot();
         }
     }
