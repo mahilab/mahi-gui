@@ -165,7 +165,7 @@ inline void RenderPlotItemLineAA(const PlotItem &item, const PlotInterface &plot
         cj.x = pointsPx[j].x;
         cj.y = pointsPx[j].y;
         if (cull_area.Contains(ci) || cull_area.Contains(cj))
-            DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size + (item.highlited ? 1.5 : 0.0));
+            DrawList.AddLine(pointsPx[i], pointsPx[j], color, item.size);
         i = j;
     }
 }
@@ -271,7 +271,7 @@ inline void RenderPlotItemXBar(const PlotItem &item, const PlotInterface &plot, 
         cl.y = ImMin(y1, y2);
         cr.x = r;
         cr.y = ImMax(y1, y2);
-        if (cull_area.Contains(cl) || cull_area.Contains(cr))
+        // if (cull_area.Contains(cl) || cull_area.Contains(cr))
             DrawList.AddRectFilled({l, ImMin(y1, y2)}, {r, ImMax(y1, y2)}, col);
     }
 }
@@ -295,7 +295,7 @@ inline void RenderPlotItemYBar(const PlotItem &item, const PlotInterface &plot, 
         ct.y = t;
         cb.x = ImMax(x1, x2);
         cb.y = b;
-        if (cull_area.Contains(ct) || cull_area.Contains(cb))
+        // if (cull_area.Contains(ct) || cull_area.Contains(cb))
             DrawList.AddRectFilled({ImMin(x1, x2), t}, {ImMax(x1, x2), b}, col);
     }
 }
