@@ -7,7 +7,10 @@ using namespace mahi::util;
 
 class PlotApi : public Application {
 public:
-    PlotApi() : Application() { }
+    PlotApi() : Application() { 
+        // ImGui::StyleColorsDark();
+        // ImGui::StyleColorsLight();
+    }
 
     void update() {
         static bool p_open = true;

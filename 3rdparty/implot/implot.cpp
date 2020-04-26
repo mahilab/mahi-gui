@@ -33,10 +33,11 @@
     }
 
 ImPlotStyle::ImPlotStyle() {
+    LineWeight = 1;
     Marker = ImMarker_None;
     MarkerSize = 5;
     MarkerWeight = 1;
-    LineWeight = 1;
+
     Colors[ImPlotCol_Line]          = IM_COL_AUTO;
     Colors[ImPlotCol_Fill]          = IM_COL_AUTO;
     Colors[ImPlotCol_MarkerOutline] = IM_COL_AUTO;
@@ -232,7 +233,7 @@ struct ImPlotContext {
         RestorePlotColorMap();
     }
     /// ALl Plots    
-    ImPool<ImPlot> PlotData;
+    ImPool<ImPlot> Plots;
     /// Current Plot
     ImPlot* CurrentPlot;
 
@@ -355,7 +356,8 @@ struct ImPlotContext {
     // Style
     ImVector<ImVec4> ColorMap;
     ImPlotStyle Style;
-    ImVector<ImGuiColorMod> ColorModifiers;
+    ImVector<ImGuiColorMod> ColorModifiers;  // Stack for PushStyleColor()/PopStyleColor()
+    ImVector<ImGuiStyleMod> StyleModifiers;  // Stack for PushStyleVar()/PopStyleVar()
     ImNextPlotData NextPlotData;        
 };
 
@@ -435,15 +437,21 @@ bool BeginPlot(const char* title, const char* x_label, const char* y_label, cons
 
     ImGuiContext &G      = *GImGui;
     ImGuiWindow * Window = G.CurrentWindow;
-    if (Window->SkipItems)
+    if (Window->SkipItems) {
+        gp.NextPlotData = ImNextPlotData();
         return false;
+    }
+
+    ImGui::BeginChild(title, size);
+    Window = ImGui::GetCurrentWindow();
+    Window->ScrollMax.y = 1.0f;
+    const ImGuiID     ID       = Window->GetID(title);
+    ImDrawList &      DrawList = *Window->DrawList;
     const ImGuiStyle &Style    = G.Style;
     const ImGuiIO &   IO       = GetIO();
-    ImDrawList &      DrawList = *Window->DrawList;
-    const ImGuiID     ID       = Window->GetID(title);
-    
-    bool just_created = gp.PlotData.GetByKey(ID) == NULL;    
-    gp.CurrentPlot = gp.PlotData.GetOrAddByKey(ID);
+
+    bool just_created = gp.Plots.GetByKey(ID) == NULL;    
+    gp.CurrentPlot = gp.Plots.GetOrAddByKey(ID);
     ImPlot &plot = *gp.CurrentPlot;
 
     if (just_created) {
@@ -543,7 +551,9 @@ bool BeginPlot(const char* title, const char* x_label, const char* y_label, cons
     gp.BB_Frame = ImRect(Window->DC.CursorPos, Window->DC.CursorPos + frame_size);
     ItemSize(gp.BB_Frame);
     if (!ItemAdd(gp.BB_Frame, 0, &gp.BB_Frame)) {
+        gp.NextPlotData = ImNextPlotData();
         gp.CurrentPlot = NULL;
+        ImGui::EndChild();
         return false;
     }
     gp.Hov_Frame = ItemHoverable(gp.BB_Frame, ID);
@@ -860,6 +870,17 @@ void PlotContextMenu(ImPlot& plot) {
     if (ImGui::MenuItem("Crosshairs",NULL,HasFlag(plot.Flags, ImPlotFlags_Crosshairs))) {
         FlipFlag(plot.Flags, ImPlotFlags_Crosshairs);
     }
+#if 1
+    if (ImGui::BeginMenu("Metrics")) {
+        ImGui::PushItemWidth(75);
+        ImGui::LabelText("Plots", "%d", gp.Plots.GetSize());
+        ImGui::LabelText("Color Modifiers", "%d", gp.ColorModifiers.size());
+        ImGui::LabelText("Style Modifiers", "%d", gp.StyleModifiers.size());
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
+    }
+#endif
+
 }
 
 //=============================================================================
@@ -1006,11 +1027,12 @@ void EndPlot() {
     gp._LegendIndices.shrink(0);
     // Null current plot/data
     gp.CurrentPlot = NULL;
-    gp.CurrentPlot = NULL;
     // Reset next plot data
     gp.NextPlotData = ImNextPlotData();
     // Pop PushID at the end of BeginPlot
     PopID(); 
+    // End child window
+    ImGui::EndChild();
 }
 
 //=============================================================================
@@ -1036,6 +1058,32 @@ ImVec2 GetPlotMousePos() { return gp.LastMousePos; }
 // STYLING
 //=============================================================================
 
+struct ImPlotStyleVarInfo {
+    ImGuiDataType   Type;
+    ImU32           Count;
+    ImU32           Offset;
+    void*           GetVarPtr(ImPlotStyle* style) const { return (void*)((unsigned char*)style + Offset); }
+};
+
+static const ImPlotStyleVarInfo GPlotStyleVarInfo[] = 
+{
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, LineWeight)   }, // ImPlotStyleVar_LineWeight
+    { ImGuiDataType_S32,   1, (ImU32)IM_OFFSETOF(ImPlotStyle, Marker)       }, // ImPlotStyleVar_Marker
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, MarkerSize)   }, // ImPlotStyleVar_MarkerSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, MarkerWeight) }  // ImPlotStyleVar_MarkerWeight
+};
+
+static const ImPlotStyleVarInfo* GetPlotStyleVarInfo(ImPlotStyleVar idx)
+{
+    IM_ASSERT(idx >= 0 && idx < ImPlotStyleVar_COUNT);
+    IM_ASSERT(IM_ARRAYSIZE(GPlotStyleVarInfo) == ImPlotStyleVar_COUNT);
+    return &GPlotStyleVarInfo[idx];
+}
+
+ImPlotStyle& GetPlotStyle() {
+    return gp.Style;
+}
+
 void SetPlotColorMap(const ImVec4* colors, int num_colors) {
     gp.ColorMap.shrink(0);
     gp.ColorMap.reserve(num_colors);
@@ -1055,7 +1103,7 @@ void RestorePlotColorMap() {
         {(1.0F), (0.6470588446F), (0.0F), (1.0F)},                    // Oranges::Orange,
         {(1.0F), (0.0F), (1.0F), (1.0F)},                             // Purples::Magenta,
         {(0.5411764979F), (0.1686274558F), (0.8862745166F), (1.0F)},  // Purples::BlueViolet,
-        {(0.8784313798F), (1.0F), (1.0F), (1.0F)},                    // Cyans::LightCyan,
+        {(0.5f), (0.5f), (0.5f), (1.0F)},                             // Grays::Gray50,
         {(0.8235294223F), (0.7058823705F), (0.5490196347F), (1.0F)}   // Browns::Tan
     };
     SetPlotColorMap(default_colors, 10);
@@ -1087,10 +1135,53 @@ void PopPlotColor(int count) {
     }
 }
 
-ImPlotStyle& GetPlotStyle() {
-    return gp.Style;
+void PushPlotStyleVar(ImPlotStyleVar idx, float val) {
+    const ImPlotStyleVarInfo* var_info = GetPlotStyleVarInfo(idx);
+    if (var_info->Type == ImGuiDataType_Float && var_info->Count == 1) {
+        float* pvar = (float*)var_info->GetVarPtr(&gp.Style);
+        gp.StyleModifiers.push_back(ImGuiStyleMod(idx, *pvar));
+        *pvar = val;
+        return;
+    }
+    IM_ASSERT(0 && "Called PushPlotStyleVar() float variant but variable is not a float!");
 }
 
+void PushPlotStyleVar(ImPlotStyleVar idx, int val) {
+    const ImPlotStyleVarInfo* var_info = GetPlotStyleVarInfo(idx);
+    if (var_info->Type == ImGuiDataType_S32 && var_info->Count == 1) {
+        int* pvar = (int*)var_info->GetVarPtr(&gp.Style);
+        gp.StyleModifiers.push_back(ImGuiStyleMod(idx, *pvar));
+        *pvar = val;
+        return;
+    }
+    else if (var_info->Type == ImGuiDataType_Float && var_info->Count == 1) {
+        float* pvar = (float*)var_info->GetVarPtr(&gp.Style);
+        gp.StyleModifiers.push_back(ImGuiStyleMod(idx, *pvar));
+        *pvar = (float)val;
+        return;
+    }
+    IM_ASSERT(0 && "Called PushPlotStyleVar() int variant but variable is not a int!");
+}
+
+void PopPlotStyleVar(int count) {
+    while (count > 0) {
+        ImGuiStyleMod& backup = gp.StyleModifiers.back();
+        const ImPlotStyleVarInfo* info = GetPlotStyleVarInfo(backup.VarIdx);
+        void* data = info->GetVarPtr(&gp.Style);
+        if (info->Type == ImGuiDataType_Float && info->Count == 1) {
+            ((float*)data)[0] = backup.BackupFloat[0];
+        }
+        else if (info->Type == ImGuiDataType_Float && info->Count == 2) {
+             ((float*)data)[0] = backup.BackupFloat[0]; 
+             ((float*)data)[1] = backup.BackupFloat[1];   
+        }
+        else if (info->Type == ImGuiDataType_S32 && info->Count == 1) {
+            ((int*)data)[0] = backup.BackupInt[0];
+        }
+        gp.StyleModifiers.pop_back();
+        count--;
+    }
+}
 
 void SetPlotLineStyle(float line_weight, const ImVec4& line_color) {
     gp.Style.LineWeight             = line_weight;
@@ -1247,7 +1338,7 @@ void Plot(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* dat
 
     ImU32 col_line    = gp.Style.Colors[ImPlotCol_Line].w == -1 ? GetColorU32(item->Color) : GetColorU32(gp.Style.Colors[ImPlotCol_Line]);
     ImU32 col_mk_line = gp.Style.Colors[ImPlotCol_MarkerOutline].w == -1 ? col_line        : GetColorU32(gp.Style.Colors[ImPlotCol_MarkerOutline]);
-    ImU32 col_mk_fill = gp.Style.Colors[ImPlotCol_MarkerFill].w == -1 ?    col_line        : GetColorU32(gp.Style.Colors[ImPlotCol_Fill]);
+    ImU32 col_mk_fill = gp.Style.Colors[ImPlotCol_MarkerFill].w == -1 ?    col_line        : GetColorU32(gp.Style.Colors[ImPlotCol_MarkerFill]);
 
     if (gp.Style.Colors[ImPlotCol_Line].w != -1)
         item->Color = gp.Style.Colors[ImPlotCol_Line];
@@ -1347,25 +1438,25 @@ void Plot(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* dat
             if (!cull || gp.BB_Grid.Contains(c)) {
                 // TODO: Optimize the loop and if statements, this is atrocious
                 if (HasFlag(gp.Style.Marker, ImMarker_Circle)) 
-                    MakerCircle(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);       
+                    MakerCircle(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);       
                 if (HasFlag(gp.Style.Marker, ImMarker_Square))
-                    MarkerSquare(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);     
+                    MarkerSquare(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);     
                 if (HasFlag(gp.Style.Marker, ImMarker_Diamond)) 
-                    MarkerDiamond(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);
+                    MarkerDiamond(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);
                 if (HasFlag(gp.Style.Marker, ImMarker_Up))
-                    MarkerUp(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);     
+                    MarkerUp(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);     
                 if (HasFlag(gp.Style.Marker, ImMarker_Down))    
-                    MarkerDown(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);  
+                    MarkerDown(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);  
                 if (HasFlag(gp.Style.Marker, ImMarker_Left))
-                    MarkerLeft(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);     
+                    MarkerLeft(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);     
                 if (HasFlag(gp.Style.Marker, ImMarker_Right))    
-                    MarkerRight(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);  
+                    MarkerRight(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);  
                 if (HasFlag(gp.Style.Marker, ImMarker_Cross))
-                    MarkerCross(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight); 
+                    MarkerCross(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight); 
                 if (HasFlag(gp.Style.Marker, ImMarker_Plus))
-                    MarkerPlus(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight); 
+                    MarkerPlus(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight); 
                 if (HasFlag(gp.Style.Marker, ImMarker_Asterisk))
-                    MarkerAsterisk(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.LineWeight);  
+                    MarkerAsterisk(DrawList, c, gp.Style.MarkerSize, rend_mk_line, col_mk_line, rend_mk_fill, col_mk_fill, gp.Style.MarkerWeight);  
             }
         }    
     }

@@ -93,10 +93,10 @@ enum ImMarker_ {
 
 // Plot style structure
 struct ImPlotStyle {
+    float        LineWeight;
     ImPlotMarker Marker;
     float        MarkerSize;
     float        MarkerWeight;
-    float        LineWeight;
     ImVec4       Colors[ImPlotCol_COUNT];
     ImPlotStyle();
 };
@@ -173,8 +173,10 @@ void PushPlotColor(ImPlotCol idx, const ImVec4& col);
 // Undo temporary color modification. 
 void PopPlotColor(int count = 1);
 
-// Temporarily modify a style variable
-void PushPlotStyleVar(ImPlotStyleVar idx, float value);
+// Temporarily modify a style variable of float type
+void PushPlotStyleVar(ImPlotStyleVar idx, float val);
+// Temporarily modify a style variable of int type
+void PushPlotStyleVar(ImPlotStyleVar idx, int val);
 // Undo temporary style modification.
 void PopPlotStyleVar(int count = 1);
 
@@ -183,12 +185,12 @@ void PushLineStyle(float line_weight, const ImVec4& line_color);
 // Undo temporary line style modification. 
 void PopLineStyle(int count = 1);
 
-// Sets plot marker styling variables to be used on subsequent plot items.
+// Temporarily modify styling variables associated with marker style. 
 void PushMarkerStyle(ImPlotMarker marker, float marker_size, const ImVec4& marker_fill, const ImVec4& marker_outline);
 // Undo temporary marker modification. 
 void PopMarkerStyle(int count = 1);
 
-// Sets bar plot styling variables to be used on subsequent bar plot items.
+// Temporarily modify styling variables associated with bar plot style. 
 void PushBarStyle(float outline_weight, const ImVec4& bar_fill, const ImVec4& bar_outline);
 // Undo temporary bar modification
 void PopBarStyle(int count = 1);

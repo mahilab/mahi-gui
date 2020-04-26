@@ -15,18 +15,18 @@
 // ImPlot v0.1 WIP
 
 #include <implot.h>
+#include <imgui_internal.h>
 
 namespace ImGui {
     
 
 void ShowImPlotDemoWindow(bool* p_open) {
 
-/*
     ImVec2 main_viewport_pos = ImGui::GetMainViewport()->Pos;
     ImGui::SetNextWindowPos(ImVec2(main_viewport_pos.x + 650, main_viewport_pos.y + 20), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
     ImGui::Begin("ImPlot Demo", p_open);
-
+    ImGui::Text("implot says hello. (0.1 WIP)");
     if (ImGui::CollapsingHeader("Help")) {
         ImGui::Text("USER GUIDE:");
         ImGui::BulletText("Left click and drag within the plot area to pan X and Y axes.");
@@ -40,7 +40,7 @@ void ShowImPlotDemoWindow(bool* p_open) {
     }
 
     //-------------------------------------------------------------------------
-    if (ImGui::CollapsingHeader("Basic Plots")) {
+    if (ImGui::CollapsingHeader("Line Plots")) {
         static float xs1[1001], ys1[1001];
         for (int i = 0; i < 1001; ++i) {
             xs1[i] = i * 0.001f;
@@ -51,9 +51,37 @@ void ShowImPlotDemoWindow(bool* p_open) {
             xs2[i] = i * 0.1f;
             ys2[i] = xs2[i] * xs2[i];
         }
-        if (ImGui::BeginPlot("Lines and Points", "x", "f(x)", {-1,300})) {
+        if (ImGui::BeginPlot("Lines", "x", "f(x)", {-1,300})) {
             ImGui::Plot("sin(50*x)", xs1, ys1, 1001);
             ImGui::Plot("x^2", xs2, ys2, 11);
+            ImGui::EndPlot();
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Scatter Plots")) {
+        srand(0);
+        static float xs1[100], ys1[100];
+        for (int i = 0; i < 100; ++i) {
+            xs1[i] = i * 0.01f;
+            ys1[i] = xs1[i] + 0.1f * ((float)rand() / (float)RAND_MAX);
+        }
+        static float xs2[50], ys2[50];
+        for (int i = 0; i < 50; i++) {
+            xs2[i] = 0.25f + 0.2f * ((float)rand() / (float)RAND_MAX);
+            ys2[i] = 0.75f + 0.2f * ((float)rand() / (float)RAND_MAX);
+        }
+        if (ImGui::BeginPlot("Scatter", NULL, NULL, {-1,300})) {
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_LineWeight, 0);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Cross);            
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_MarkerSize, 3);
+            ImGui::Plot("Data 1", xs1, ys1, 100);
+            ImGui::PopPlotStyleVar(2);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle);
+            ImGui::PushPlotColor(ImPlotCol_MarkerFill, ImVec4{1,0,0,0.25f});
+            ImGui::Plot("Data 2", xs2, ys2, 50);
+            ImGui::PopPlotColor();
+            ImGui::PopPlotStyleVar(2);
             ImGui::EndPlot();
         }
     }
@@ -65,56 +93,73 @@ void ShowImPlotDemoWindow(bool* p_open) {
             float xs[2] = {1,4};
             float ys[2] = {10,11};
             // filled
-            ImGui::SetPlotMarkerStyle(ImMarker_Circle);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle);
             ImGui::Plot("Circle##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Square); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Square);   ys[0]--; ys[1]--;
             ImGui::Plot("Square##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Diamond); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Diamond);  ys[0]--; ys[1]--;
             ImGui::Plot("Diamond##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Up); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Up);       ys[0]--; ys[1]--;
             ImGui::Plot("Up##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Down); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Down);     ys[0]--; ys[1]--;
             ImGui::Plot("Down##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Left); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Left);     ys[0]--; ys[1]--;
             ImGui::Plot("Left##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Right); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Right);    ys[0]--; ys[1]--;
             ImGui::Plot("Right##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Cross); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Cross);    ys[0]--; ys[1]--;
             ImGui::Plot("Cross##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Plus); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Plus);     ys[0]--; ys[1]--;
             ImGui::Plot("Plus##Fill", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Asterisk); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Asterisk); ys[0]--; ys[1]--;
             ImGui::Plot("Asterisk##Fill", xs, ys, 2);   
-            // unfilled
+            ImGui::PopPlotStyleVar(10);
+
             xs[0] = 6; xs[1] = 9;
             ys[0] = 10; ys[1] = 11;
-            ImGui::SetPlotMarkerStyle(ImMarker_Circle, 5, ImVec4(0,0,0,0));
+            ImGui::PushPlotColor(ImPlotCol_MarkerFill, ImVec4(0,0,0,0));
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle);
             ImGui::Plot("Circle", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Square, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Square);   ys[0]--; ys[1]--;
             ImGui::Plot("Square", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Diamond, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Diamond);  ys[0]--; ys[1]--;
             ImGui::Plot("Diamond", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Up, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Up);       ys[0]--; ys[1]--;
             ImGui::Plot("Up", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Down, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Down);     ys[0]--; ys[1]--;
             ImGui::Plot("Down", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Left, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Left);     ys[0]--; ys[1]--;
             ImGui::Plot("Left", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Right, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Right);    ys[0]--; ys[1]--;
             ImGui::Plot("Right", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Cross, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Cross);    ys[0]--; ys[1]--;
             ImGui::Plot("Cross", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Plus, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Plus);     ys[0]--; ys[1]--;
             ImGui::Plot("Plus", xs, ys, 2);   
-            ImGui::SetPlotMarkerStyle(ImMarker_Asterisk, 5, ImVec4(0,0,0,0)); ys[0]--; ys[1]--;
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Asterisk); ys[0]--; ys[1]--;
             ImGui::Plot("Asterisk", xs, ys, 2);   
+            ImGui::PopPlotColor();
+            ImGui::PopPlotStyleVar(10);
+
+            xs[0] = 5; xs[1] = 5;
+            ys[0] = 1; ys[1] = 11;
+
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_LineWeight, 2);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_MarkerSize, 8);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_MarkerWeight, 2);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle | ImMarker_Cross); 
+            ImGui::PushPlotColor(ImPlotCol_MarkerOutline, ImVec4(0,0,0,1));
+            ImGui::PushPlotColor(ImPlotCol_MarkerFill, ImVec4(1,1,1,1));
+            ImGui::PushPlotColor(ImPlotCol_Line, ImVec4(0,0,0,1));
+            ImGui::Plot("Circle|Cross", xs, ys, 2);  
+            ImGui::PopPlotStyleVar(4);  
+            ImGui::PopPlotColor(3);
+
             ImGui::EndPlot();
         }
     }
 
-    ImGui::SetPlotMarkerStyle(ImMarker_None);
-
-    if (ImGui::CollapsingHeader("Log Plots")) {
+    if (ImGui::CollapsingHeader("Log Scale")) {
         static float xs[1001], ys1[1001], ys2[1001], ys3[1001];
         for (int i = 0; i < 1001; ++i) {
             xs[i] = (float)(i*0.1f);
@@ -133,7 +178,7 @@ void ShowImPlotDemoWindow(bool* p_open) {
     }
 
     ImGui::End();
-    */
+    
 }
 
 } // namespace ImGui
