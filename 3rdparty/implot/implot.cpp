@@ -1,16 +1,24 @@
 // MIT License
-//
-// Copyright (c) Evan Pezent (epezent@rice.edu)
-//
+
+// Copyright (c) 2020 Evan Pezent
+
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 // ImPlot v0.1 WIP
 
@@ -20,7 +28,6 @@
 
 #include <implot.h>
 #include <imgui_internal.h>
-#include <iostream>
 
 #define IM_NORMALIZE2F_OVER_ZERO(VX, VY)                                                           \
     {                                                                                              \
@@ -32,12 +39,16 @@
         }                                                                                          \
     }
 
+// Special Color used to specific that a plot item color should set determined automatically.
+#define IM_COL_AUTO ImVec4(0,0,0,-1)
+
 ImPlotStyle::ImPlotStyle() {
     LineWeight = 1;
     Marker = ImMarker_None;
     MarkerSize = 5;
     MarkerWeight = 1;
     ErrorBarSize = 5;
+    ErrorBarWeight = 1.5;
 
     Colors[ImPlotCol_Line]          = IM_COL_AUTO;
     Colors[ImPlotCol_Fill]          = IM_COL_AUTO;
@@ -149,7 +160,6 @@ inline ImVec2 CalcTextSizeVertical(const char *text) {
     return ImVec2(sz.y, sz.x);
 }
 
-
 //=============================================================================
 // Structs
 //=============================================================================
@@ -233,7 +243,7 @@ struct ImNextPlotData {
 struct ImPlotContext {
     ImPlotContext() {
         CurrentPlot = NULL;
-        RestorePlotColorMap();
+        RestorePlotPalette();
     }
     /// ALl Plots    
     ImPool<ImPlot> Plots;
@@ -1141,11 +1151,12 @@ struct ImPlotStyleVarInfo {
 
 static const ImPlotStyleVarInfo GPlotStyleVarInfo[] = 
 {
-    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, LineWeight)   }, // ImPlotStyleVar_LineWeight
-    { ImGuiDataType_S32,   1, (ImU32)IM_OFFSETOF(ImPlotStyle, Marker)       }, // ImPlotStyleVar_Marker
-    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, MarkerSize)   }, // ImPlotStyleVar_MarkerSize
-    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, MarkerWeight) }, // ImPlotStyleVar_MarkerWeight
-    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, ErrorBarSize) }  // ImPlotStyleVar_ErrorBarSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, LineWeight)     }, // ImPlotStyleVar_LineWeight
+    { ImGuiDataType_S32,   1, (ImU32)IM_OFFSETOF(ImPlotStyle, Marker)         }, // ImPlotStyleVar_Marker
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, MarkerSize)     }, // ImPlotStyleVar_MarkerSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, MarkerWeight)   }, // ImPlotStyleVar_MarkerWeight
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, ErrorBarSize)   }, // ImPlotStyleVar_ErrorBarSize
+    { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImPlotStyle, ErrorBarWeight) }  // ImPlotStyleVar_ErrorBarWeight
 };
 
 static const ImPlotStyleVarInfo* GetPlotStyleVarInfo(ImPlotStyleVar idx)
@@ -1159,7 +1170,7 @@ ImPlotStyle& GetPlotStyle() {
     return gp.Style;
 }
 
-void SetPlotColorMap(const ImVec4* colors, int num_colors) {
+void SetPlotPalette(const ImVec4* colors, int num_colors) {
     gp.ColorMap.shrink(0);
     gp.ColorMap.reserve(num_colors);
     for (int i = 0; i < num_colors; ++i) {
@@ -1168,7 +1179,7 @@ void SetPlotColorMap(const ImVec4* colors, int num_colors) {
 }
 
 /// Returns the next unused default plot color
-void RestorePlotColorMap() {
+void RestorePlotPalette() {
     static ImVec4 default_colors[10] = {
         {(0.0F), (0.7490196228F), (1.0F), (1.0F)},                    // Blues::DeepSkyBlue,
         {(1.0F), (0.0F), (0.0F), (1.0F)},                             // Reds::Red,
@@ -1181,7 +1192,7 @@ void RestorePlotColorMap() {
         {(0.5f), (0.5f), (0.5f), (1.0F)},                             // Grays::Gray50,
         {(0.8235294223F), (0.7058823705F), (0.5490196347F), (1.0F)}   // Browns::Tan
     };
-    SetPlotColorMap(default_colors, 10);
+    SetPlotPalette(default_colors, 10);
 }
 
 void PushPlotColor(ImPlotCol idx, ImU32 col) {
@@ -1687,13 +1698,42 @@ void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const
 void PlotErrorBars(const char* label_id, ImVec4 (*getter)(void* data, int idx), void* data, int count, int offset) {
     IM_ASSERT_USER_ERROR(gp.CurrentPlot != NULL, "PlotErrorBars() Needs to be called between BeginPlot() and EndPlot()!");
 
+    ImGuiID id = GetID(label_id);
+
+    ImPlotItem* item = gp.CurrentPlot->Items.GetByKey(id);
+    if (item != NULL && item->Show == false)
+        return;
+
+    ImDrawList & DrawList = *GetWindowDrawList();
+
     PushClipRect(gp.BB_Grid.Min, gp.BB_Grid.Max, true);
 
     const ImU32 col = gp.Style.Colors[ImPlotCol_ErrorBar].w == -1 ? GetColorU32(ImGuiCol_Text) : GetColorU32(gp.Style.Colors[ImPlotCol_ErrorBar]);
     const bool rend_whisker = gp.Style.ErrorBarSize > 0;
 
-    for (int i = 0; i < count; ++i) {
+    const float half_whisker = gp.Style.ErrorBarSize * 0.5f;
 
+    // find data extents
+    if (gp.FitThisFrame) {
+        for (int i = 0; i < count; ++i) {
+            ImVec4 e = getter(data, i);
+            gp.FitPoint(ImVec2(e.x , e.y - e.z));
+            gp.FitPoint(ImVec2(e.x , e.y + e.w ));
+        }
+    }
+
+    int idx = offset;
+    for (int i = 0; i < count; ++i) {
+        ImVec4 e;
+        e = getter(data, idx);
+        idx = (idx + 1) % count;
+        ImVec2 p1 = gp.ToPixels(e.x, e.y - e.z);
+        ImVec2 p2 = gp.ToPixels(e.x, e.y + e.w);
+        DrawList.AddLine(p1,p2,col, gp.Style.ErrorBarWeight);
+        if (rend_whisker) {
+            DrawList.AddLine(p1 - ImVec2(half_whisker, 0), p1 + ImVec2(half_whisker, 0), col, gp.Style.ErrorBarWeight);
+            DrawList.AddLine(p2 - ImVec2(half_whisker, 0), p2 + ImVec2(half_whisker, 0), col, gp.Style.ErrorBarWeight);
+        }
     }
 
     PopClipRect();

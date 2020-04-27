@@ -1,16 +1,24 @@
 // MIT License
-//
-// Copyright (c) Evan Pezent (epezent@rice.edu)
-//
+
+// Copyright (c) 2020 Evan Pezent
+
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 // ImPlot v0.1 WIP
 
@@ -70,11 +78,12 @@ enum ImPlotCol_ {
 };
 
 enum ImPlotStyleVar_ {
-    ImPlotStyleVar_LineWeight,   // float, line weight in pixels
-    ImPlotStyleVar_Marker,       // int,   marker specification
-    ImPlotStyleVar_MarkerSize,   // float, marker size in pixels (roughly the marker's "radius")
-    ImPlotStyleVar_MarkerWeight, // float, outline weight of markers in pixels
-    ImPlotStyleVar_ErrorBarSize, // float, error bar whisker width in pixels
+    ImPlotStyleVar_LineWeight,     // float, line weight in pixels
+    ImPlotStyleVar_Marker,         // int,   marker specification
+    ImPlotStyleVar_MarkerSize,     // float, marker size in pixels (roughly the marker's "radius")
+    ImPlotStyleVar_MarkerWeight,   // float, outline weight of markers in pixels
+    ImPlotStyleVar_ErrorBarSize,   // float, error bar whisker width in pixels
+    ImPlotStyleVar_ErrorBarWeight, // float, error bar whisker weight in pixels
     ImPlotStyleVar_COUNT
 };
 
@@ -100,6 +109,7 @@ struct ImPlotStyle {
     float    MarkerSize;              // = 5, marker size in pixels (roughly the marker's "radius")
     float    MarkerWeight;            // = 1, outline weight of markers in pixels
     float    ErrorBarSize;            // = 5, error bar whisker width in pixels
+    float    ErrorBarWeight;          // = 1.5, error bar whisker weight in pixels
     ImVec4   Colors[ImPlotCol_COUNT]; // array of plot specific colors
     ImPlotStyle();
 };
@@ -115,25 +125,25 @@ namespace ImGui {
 // be unique. If you need to avoid ID collisions or don't want to display a
 // title in the plot, use double hashes (e.g. "MyPlot##Hidden"). If #x_label
 // and/or #y_label are provided, axes labels will be displayed. Flags are only
-// set once during the first call to BeginPlot. 
+// set ONCE during the first call to BeginPlot. 
 bool BeginPlot(const char* title_id, 
-               const char* x_label     = NULL, 
-               const char* y_label     = NULL, 
-               const ImVec2& size      = ImVec2(-1,-1), 
-               ImPlotFlags flags       = ImPlotFlags_Default, 
+               const char* x_label = NULL, 
+               const char* y_label = NULL, 
+               const ImVec2& size  = ImVec2(-1,-1), 
+               ImPlotFlags flags   = ImPlotFlags_Default, 
                ImAxisFlags x_flags = ImAxisFlags_Default, 
                ImAxisFlags y_flags = ImAxisFlags_Default);
 // Only call EndPlot() if BeginPlot() returns true! Typically called at the end
 // of an if statement conditioned on BeginPlot().
 void EndPlot();
 
-/// Set the axes ranges of the next plot. Call right before BeginPlot().
+/// Set the axes ranges of the next plot. Call right before BeginPlot(). If ImGuiCond_Always is used, the axes will be locked.
 void SetNextPlotRange(float x_min, float x_max, float y_min, float y_max, ImGuiCond cond = ImGuiCond_Once);
-/// Set the X axis range of the next plot. Call right before BeginPlot().
+/// Set the X axis range of the next plot. Call right before BeginPlot(). If ImGuiCond_Always is used, the axis will be locked.
 void SetNextPlotRangeX(float x_min, float x_max, ImGuiCond cond = ImGuiCond_Once);
-/// Set the X axis range of the next plot. Call right before BeginPlot().
+/// Set the X axis range of the next plot. Call right before BeginPlot(). If ImGuiCond_Always is used, the axis will be locked.
 void SetNextPlotRangeY(float y_min, float y_max, ImGuiCond cond = ImGuiCond_Once);
-/// Returns true if the plot in the current or most recent plot is hovered
+/// Returns true if the plot area in the current or most recent call to BeginPlot() is hovered
 bool IsPlotHovered();
 /// Returns the mouse position in x,y coordinates of the current or most recent plot.
 ImVec2 GetPlotMousePos();
@@ -154,8 +164,6 @@ void PlotBar(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* 
 void PlotBarH(const char* label_id, const float* values, int count, float height = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
 void PlotBarH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset = 0, int stride = sizeof(float));
 void PlotBarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset = 0);
-// Plots vertical stems (TODO)
-void PlotStem(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
 // Plots vertical error bars
 void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* err, int count, int offset = 0, int stride = sizeof(float));
 void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* neg, const float* pos, int count, int offset = 0, int stride = sizeof(float));
@@ -167,16 +175,13 @@ void PlotLabel(const char* text, float x, float y, const ImVec2& pixel_offset = 
 // Plot Styling
 //-----------------------------------------------------------------------------
 
-// Special Color used to specific that a plot item color should set determined automatically.
-#define IM_COL_AUTO ImVec4(0,0,0,-1)
-
 // Provides access to plot style structure for permanant modifications to colors, sizes, etc.
 ImPlotStyle& GetPlotStyle();
 
-// Sets the color map to be used for plot items 
-void SetPlotColorMap(const ImVec4* colors, int num_colors);
+// Sets the color palette to be used for plot items 
+void SetPlotPalette(const ImVec4* colors, int num_colors);
 // Restores the default ImPlot color map 
-void RestorePlotColorMap();
+void RestorePlotPalette();
 
 // Temporarily modify a plot color.
 void PushPlotColor(ImPlotCol idx, ImU32 col);

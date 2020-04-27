@@ -1,16 +1,24 @@
 // MIT License
-//
-// Copyright (c) Evan Pezent (epezent@rice.edu)
-//
+
+// Copyright (c) 2020 Evan Pezent
+
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 // ImPlot v0.1 WIP
 
@@ -81,7 +89,7 @@ void ShowImPlotDemoWindow(bool* p_open) {
             xs2[i] = i * 0.1f;
             ys2[i] = xs2[i] * xs2[i];
         }
-        if (ImGui::BeginPlot("Lines", "x", "f(x)", {-1,300})) {
+        if (ImGui::BeginPlot("Line Plot", "x", "f(x)", {-1,300})) {
             ImGui::Plot("sin(50*x)", xs1, ys1, 1001);
             ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle);
             ImGui::Plot("x^2", xs2, ys2, 11);
@@ -102,7 +110,7 @@ void ShowImPlotDemoWindow(bool* p_open) {
             xs2[i] = 0.25f + 0.2f * ((float)rand() / (float)RAND_MAX);
             ys2[i] = 0.75f + 0.2f * ((float)rand() / (float)RAND_MAX);
         }
-        if (ImGui::BeginPlot("Scatter", NULL, NULL, {-1,300})) {
+        if (ImGui::BeginPlot("Scatter Plot", NULL, NULL, {-1,300})) {
             ImGui::PushPlotStyleVar(ImPlotStyleVar_LineWeight, 0);
             ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Cross);            
             ImGui::PushPlotStyleVar(ImPlotStyleVar_MarkerSize, 3);
@@ -138,6 +146,30 @@ void ShowImPlotDemoWindow(bool* p_open) {
                 ImGui::PlotBar("Final Exam", final, 10, 0.2f,  0);
                 ImGui::PlotBar("Course Grade", grade, 10, 0.2f, 0.2f);
             }
+            ImGui::EndPlot();
+        }
+    }
+    //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Error Bars")) {
+        float xs[5]  = {1,2,3,4,5};
+        float lin[5] = {8,8,9,7,8};
+        float bar[5] = {1,2,5,3,4};
+        float err1[5] = {0.2, 0.4, 0.2, 0.6, 0.4};
+        float err2[5] = {0.4, 0.2, 0.4, 0.8, 0.6};
+        ImGui::SetNextPlotRange(0, 6, 0, 10);
+        if (ImGui::BeginPlot("##ErrorBars",NULL,NULL,ImVec2(-1,300))) {
+
+            ImGui::PlotBar("Bar", xs, bar, 5, 0.5f);
+            ImGui::PlotErrorBars("Bar", xs, bar, err1, 5);
+
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Circle);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_MarkerSize, 3);
+            ImGui::PushPlotColor(ImPlotCol_ErrorBar, ImVec4(1,0,0,1));
+            ImGui::PlotErrorBars("Line", xs, lin, err1, err2, 5);
+            ImGui::Plot("Line", xs, lin, 5);
+            ImGui::PopPlotStyleVar(2);
+            ImGui::PopPlotColor();
+
             ImGui::EndPlot();
         }
     }
@@ -337,7 +369,34 @@ void ShowImPlotDemoWindow(bool* p_open) {
     }
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Custom Styles")) {
-        
+        static ImVec4 my_palette[3] = {
+            {0.000f, 0.980f, 0.604f, 1.0f},
+            {0.996f, 0.278f, 0.380f, 1.0f},
+            {(0.1176470593F), (0.5647059083F), (1.0F), (1.0F)},
+        };
+        ImGui::SetPlotPalette(my_palette, 3);
+        ImGui::PushPlotColor(ImPlotCol_FrameBg, IM_COL32(32,51,77,255));
+        ImGui::PushPlotColor(ImPlotCol_PlotBg, {0,0,0,0});
+        ImGui::PushPlotColor(ImPlotCol_PlotBorder, {0,0,0,0});
+        ImGui::PushPlotColor(ImPlotCol_XAxis, IM_COL32(192, 192, 192, 192));
+        ImGui::PushPlotColor(ImPlotCol_YAxis, IM_COL32(192, 192, 192, 192));
+        ImGui::PushPlotStyleVar(ImPlotStyleVar_LineWeight, 2);
+        ImGui::SetNextPlotRange(-0.5f, 9.5f, -0.5f, 9.5f);
+        if (ImGui::BeginPlot("##Custom", NULL, NULL, {-1,300}, ImPlotFlags_Default & ~ImPlotFlags_Legend, 0)) {
+            float lin[10] = {8,8,9,7,8,8,8,9,7,8};
+            float bar[10] = {1,2,5,3,4,1,2,5,3,4};       
+            float dot[10] = {7,6,6,7,8,5,6,5,8,7}; 
+            ImGui::PlotBar("Bar", bar, 10, 0.5f);
+            ImGui::Plot("Line", lin, 10);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_LineWeight, 0);
+            ImGui::PushPlotStyleVar(ImPlotStyleVar_Marker, ImMarker_Square);
+            ImGui::Plot("Dot", dot, 10);
+            ImGui::PopPlotStyleVar(2);
+            ImGui::EndPlot();
+        }
+        ImGui::PopPlotColor(5);
+        ImGui::PopPlotStyleVar();
+        ImGui::RestorePlotPalette();
     }
     //-------------------------------------------------------------------------
     ImGui::End();

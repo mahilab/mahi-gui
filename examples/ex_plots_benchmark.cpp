@@ -21,6 +21,12 @@
 using namespace mahi::gui;
 using namespace mahi::util;
 
+struct PlotItem {
+    std::vector<ImVec2> data;
+    ImVec4 color;
+    std::string label;
+};
+
 class PlotBench : public Application {
 public:
     PlotBench() : Application(500,500,"Plots Benchmark") { 
@@ -28,19 +34,17 @@ public:
         ImGui::DisableViewports();
         for (int i = 0; i < 100; ++i)
         {
-            ImGui::PlotItem item;
+            PlotItem item;
             item.data.reserve(1000);
             item.color = random_color();
+            item.label = fmt::format("item_{}",i);
             float y = i * 0.01f;
             for (int i = 0; i < 1000; ++i)
                 item.data.push_back(ImVec2(i*0.001f, y + (float)random_range(-0.01,0.01)));
             items.emplace_back(std::move(item));
         }
-        // plot.show_legend = false;
-        // plt.Flags &= ~ImPlotFlags_Legend;
     };
     void update() override {
-
         if (animate) {
             for (int i = 0; i < 100; ++i) {
                 float y = i * 0.01f;
@@ -50,7 +54,6 @@ public:
                 }
             }
         }
-
         auto [w,h] = get_window_size();
         ImGui::SetNextWindowPos({0,0}, ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(w,h), ImGuiCond_FirstUseEver);
@@ -64,28 +67,23 @@ public:
         ImGui::Checkbox("Render", &render);
         ImGui::SameLine();
         ImGui::Checkbox("Animate", &animate);
-
         ImGui::Text("%lu lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
-        if (render) {            
-            // ImGui::Plot("plot", plot, items);
-
-            if (ImGui::BeginPlot("##Plot")) {
+        if (ImGui::BeginPlot("##Plot")) {
+            if (render) {         
                 for (int i = 0; i < 100; ++i) {
-                    ImGui::SetPlotLineStyle(1, items[i].color);
+                    ImGui::PushPlotColor(ImPlotCol_Line, items[i].color);
                     ImGui::Plot(items[i].label.c_str(), &items[i].data[0].x, &items[i].data[0].y, items[i].data.size(), 0, 8);
+                    ImGui::PopPlotColor();
                 }
-                ImGui::EndPlot();
             }
-        }
+            ImGui::EndPlot();
+        }        
         ImGui::End();
-
         // ImGui::ShowMetricsWindow();
     }
 
+    std::vector<PlotItem> items;
     float v[2] = {1,2};
-
-    ImGui::PlotInterface plot;
-    std::vector<ImGui::PlotItem> items;
     bool render = true;
     bool animate = false;
 };
