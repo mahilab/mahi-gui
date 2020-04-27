@@ -67,7 +67,6 @@ public:
             simulate();
         ImGui::Plot("Plot", &plot, &xplot, 1);
         ImGui::End();
-
     }
 
     void simulate() {
