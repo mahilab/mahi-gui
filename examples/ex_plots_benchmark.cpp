@@ -66,6 +66,8 @@ public:
         ImGui::Text("%lu lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
         if (render)
             ImGui::Plot("plot", plot, items);
+        else
+            ImGui::Plot("plot", &plot, nullptr, 0);
         ImGui::End();
 
         // ImGui::ShowMetricsWindow();
