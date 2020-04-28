@@ -8,11 +8,17 @@ using namespace mahi::util;
 class PlotDemo : public Application {
 public:
     PlotDemo() : Application() { 
-        // ImGui::StyleColorsDark();
+        ImGui::StyleColorsDark();
     }
     void update() {
         static bool p_open = true;
         ImGui::ShowImPlotDemoWindow(&p_open);
+
+        // ImGui::SetNextWindowSize(ImVec2(600,400));
+        // ImGui::Begin("m", &p_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
+
+        // ImGui::End();
+
         if (!p_open)
             quit();
     }
