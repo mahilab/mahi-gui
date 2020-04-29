@@ -4,11 +4,23 @@
 
 ## mahi-gui
 
-This library provides an lightweight, all-in-one package for making GUIs and 2D visualizations in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) with several custom extension classes and methods for all your GUI needs, [NanoVG](https://github.com/memononen/nanovg) and [NanoSVG](https://github.com/memononen/nanosvg) for drawing vector graphics, [NFD](https://github.com/mlabbe/nativefiledialog) for native file/folder dialogs, and a few custom utility classes such as Coroutines and Events to spice things up. 
+This library provides an lightweight, all-in-one package for making GUIs and 2D visualizations in C++. It bundles and wraps the following libraries into a neat interface, so you don't have to:
+
+|**Library**|**Description**|
+|---|---|
+|[GLFW](https://www.glfw.org/)| Cross-platform windows, OpenGL contexts, and user input.  |
+|[glad](https://github.com/Dav1dde/glad)| OpenGL function loader.  |
+|[Dear ImGui](https://github.com/ocornut/imgui)| Immediate mode GUI toolkit for rapid prototyping.  |
+|[ImPlot](https://github.com/epezent/implot)| ImGui 2D plotting extension.  |
+|[NanoVG](https://github.com/memononen/nanovg)| Anti-aliased vector graphics with OpenGL.  |
+|[NanoSVG](https://github.com/memononen/nanosvg)| SVG loader and parser. |
+|[Clipper](http://www.angusj.com/delphi/clipper.php)| Polygon clipping and offsetting.  |
+|[NFD](https://github.com/btzy/nativefiledialog-extended)| Native file open/save dialogs. |
+|[mahi-util](https://github.com/mahilab/mahi-util)| Clocks, timers, coroutines, events, formatting, and more. |
 
 ### Integration
 
-The library is small and intended to be used with CMake's `FetchContent`:
+The library is small and intended to be used with CMake's [`FetchContent`](https://cmake.org/cmake/help/v3.11/module/FetchContent.html):
 
 ```cmake
 include(FetchContent) 
@@ -19,7 +31,7 @@ add_executable(my_app "my_app.cpp")
 target_link_libraries(my_app mahi::gui)
 ```
 
-That's it! You should also be able to install or use the library as a git-submodule + CMake subdirectory if you prefer.
+That's it! If you want to stay on a particular commit of mahi-gui, use the `GIT_TAG` option with [`FetchContent`](https://cmake.org/cmake/help/v3.11/module/FetchContent.html). You should also be able to install or use the library as a git-submodule + CMake subdirectory if you prefer. 
 
 ### Example Usage
 
@@ -89,6 +101,3 @@ If your Apple Clang compiler is too [old](https://en.wikipedia.org/wiki/Xcode#Ve
 > cmake .. -DCMAKE_C_COMPILER="/path/to/clang/bin/clang" -DCMAKE_CXX_COMPILER="/path/to/clang/bin/clang++" -DCMAKE_BUILD_TYPE="Release"
 > cmake --build .
 ```
-
-### See Also
-- [ImGui::Plot Discussion](https://github.com/ocornut/imgui/issues/3067)
