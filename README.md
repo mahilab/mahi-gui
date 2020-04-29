@@ -89,6 +89,3 @@ If your Apple Clang compiler is too [old](https://en.wikipedia.org/wiki/Xcode#Ve
 > cmake .. -DCMAKE_C_COMPILER="/path/to/clang/bin/clang" -DCMAKE_CXX_COMPILER="/path/to/clang/bin/clang++" -DCMAKE_BUILD_TYPE="Release"
 > cmake --build .
 ```
-
-### See Also
-- [ImGui::Plot Discussion](https://github.com/ocornut/imgui/issues/3067)
