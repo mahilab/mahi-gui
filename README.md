@@ -4,7 +4,19 @@
 
 ## mahi-gui
 
-This library provides an lightweight, all-in-one package for making GUIs and 2D visualizations in C++. It bundles [GLFW](https://www.glfw.org/) and [glad](https://github.com/Dav1dde/glad) for creating Windows and OpenGL contexts, [Dear ImGui](https://github.com/ocornut/imgui) with several custom extension classes and methods for all your GUI needs, [NanoVG](https://github.com/memononen/nanovg) and [NanoSVG](https://github.com/memononen/nanosvg) for drawing vector graphics, [NFD](https://github.com/mlabbe/nativefiledialog) for native file/folder dialogs, and a few custom utility classes such as Coroutines and Events to spice things up. 
+This library provides an lightweight, all-in-one package for making GUIs and 2D visualizations in C++. It bundles and wraps the following libraries into a neat interface, so you don't have to:
+
+|**Library**|**Description**|
+|---|---|
+|[GLFW](https://www.glfw.org/)| Cross-platform windows, OpenGL contexts, and user input.  |
+|[glad](https://github.com/Dav1dde/glad)| OpenGL function loader.  |
+|[Dear ImGui](https://github.com/ocornut/imgui)| Immediate mode GUI toolkit for rapid prototyping.  |
+|[ImPlot](https://github.com/epezent/implot)| ImGui 2D plotting extension.  |
+|[NanoVG](https://github.com/memononen/nanovg)| Anti-aliased vector graphics with OpenGL.  |
+|[NanoSVG](https://github.com/memononen/nanosvg)| SVG loader and parser. |
+|[Clipper](http://www.angusj.com/delphi/clipper.php)| Polygon clipping and offsetting.  |
+|[NFD](https://github.com/btzy/nativefiledialog-extended)| Native file open/save dialogs. |
+|[mahi-util](https://github.com/mahilab/mahi-util)| Clocks, timers, coroutines, events, formatting, and more |
 
 ### Integration
 
