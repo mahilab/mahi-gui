@@ -27,9 +27,6 @@ mahi_gui_example(raw_glfw)
 mahi_gui_example(shapes)
 mahi_gui_example(transparent)
 
-add_executable(imgui_plot "imgui_plot_ex.cpp" "imgui_plot.cpp")
-target_link_libraries(imgui_plot mahi::gui)
-
 mahi_gui_example(svg)
 mahi_gui_example(nvg_fbo)
 mahi_gui_example(nvg_demo)
