@@ -16,11 +16,11 @@ This library provides an lightweight, all-in-one package for making GUIs and 2D 
 |[NanoSVG](https://github.com/memononen/nanosvg)| SVG loader and parser. |
 |[Clipper](http://www.angusj.com/delphi/clipper.php)| Polygon clipping and offsetting.  |
 |[NFD](https://github.com/btzy/nativefiledialog-extended)| Native file open/save dialogs. |
-|[mahi-util](https://github.com/mahilab/mahi-util)| Clocks, timers, coroutines, events, formatting, and more |
+|[mahi-util](https://github.com/mahilab/mahi-util)| Clocks, timers, coroutines, events, formatting, and more. |
 
 ### Integration
 
-The library is small and intended to be used with CMake's `FetchContent`:
+The library is small and intended to be used with CMake's [`FetchContent`](https://cmake.org/cmake/help/v3.11/module/FetchContent.html):
 
 ```cmake
 include(FetchContent) 
@@ -31,7 +31,7 @@ add_executable(my_app "my_app.cpp")
 target_link_libraries(my_app mahi::gui)
 ```
 
-That's it! You should also be able to install or use the library as a git-submodule + CMake subdirectory if you prefer.
+That's it! If you want to stay on a particular commit of mahi-gui, use the `GIT_TAG` option with [`FetchContent`](https://cmake.org/cmake/help/v3.11/module/FetchContent.html). You should also be able to install or use the library as a git-submodule + CMake subdirectory if you prefer. 
 
 ### Example Usage
 
