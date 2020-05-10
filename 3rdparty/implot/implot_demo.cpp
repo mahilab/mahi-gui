@@ -22,11 +22,20 @@
 
 // ImPlot v0.1 WIP
 
+#ifdef _MSC_VER
+#pragma warning (disable: 4996) // 'This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+#endif
+
 #include <implot.h>
-#include <imgui_internal.h>
-#include <iostream>
+#include <math.h>
+#include <stdio.h>
 
 namespace {
+
+float RandomRange( float min, float max ) {
+    float scale = rand() / (float) RAND_MAX; 
+    return min + scale * ( max - min );
+}
 
 struct ScrollingData {
     int MaxSize = 1000;
@@ -41,6 +50,12 @@ struct ScrollingData {
             Offset =  (Offset + 1) % MaxSize;
         }
     }
+    void Erase() {
+        if (Data.size() > 0) {
+            Data.shrink(0);
+            Offset  = 0;
+        }
+    }    
 };
 
 struct RollingData {
@@ -48,18 +63,26 @@ struct RollingData {
     ImVector<ImVec2> Data;
     RollingData() { Data.reserve(1000); }
     void AddPoint(float x, float y) {
-        float xmod = ImFmod(x, Span);
+        float xmod = fmodf(x, Span);
         if (!Data.empty() && xmod < Data.back().x)
             Data.shrink(0);
         Data.push_back(ImVec2(xmod, y));
     }
 };
 
-// Put big data here
-struct DemoData {
-    DemoData() {
-
-    }    
+struct BenchmarkItem {
+    BenchmarkItem() {
+        float y = RandomRange(0,1);
+        Data = new ImVec2[1000];
+        for (int i = 0; i < 1000; ++i) {
+            Data[i].x = i*0.001f;
+            Data[i].y = y + RandomRange(-0.01f,0.01f);
+        }
+        Col = ImVec4(RandomRange(0,1),RandomRange(0,1),RandomRange(0,1),1);
+    }
+    ~BenchmarkItem() { delete Data; }
+    ImVec2* Data;
+    ImVec4 Col;
 };
 
 }
@@ -68,19 +91,21 @@ namespace ImGui {
     
 void ShowImPlotDemoWindow(bool* p_open) {
 
-    static DemoData data;
-
-    ImVec2 main_viewport_pos = ImGui::GetMainViewport()->Pos;
-    ImGui::SetNextWindowPos(ImVec2(main_viewport_pos.x + 650, main_viewport_pos.y + 20), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(550, 680), ImGuiCond_FirstUseEver);
+    //ImVec2 main_viewport_pos = ImGui::GetMainViewport()->Pos;
+    ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(520, 750), ImGuiCond_FirstUseEver);
     ImGui::Begin("ImPlot Demo", p_open);
     ImGui::Text("ImPlot says hello. (0.1 WIP)");
     if (ImGui::CollapsingHeader("Help")) {
         ImGui::Text("USER GUIDE:");
         ImGui::BulletText("Left click and drag within the plot area to pan X and Y axes.");
-        ImGui::BulletText("Left click and drag on an axis to pan an individual axis.");
+        ImGui::Indent();
+            ImGui::BulletText("Left click and drag on an axis to pan an individual axis.");
+        ImGui::Unindent();
         ImGui::BulletText("Scroll in the plot area to zoom both X any Y axes.");
-        ImGui::BulletText("Scroll on an axis to zoom an individual axis.");
+        ImGui::Indent();
+            ImGui::BulletText("Scroll on an axis to zoom an individual axis.");
+        ImGui::Unindent();
         ImGui::BulletText("Right click and drag to box select data.");
         ImGui::Indent();
             ImGui::BulletText("Hold Alt to expand box selection horizontally.");
@@ -93,6 +118,9 @@ void ShowImPlotDemoWindow(bool* p_open) {
             ImGui::BulletText("Hold Shift to expand query vertically.");
         ImGui::Unindent();
         ImGui::BulletText("Double left click to fit all visible data.");
+        ImGui::Indent();
+            ImGui::BulletText("Double left click on an axis to fit the individual axis.");
+        ImGui::Unindent();
         ImGui::BulletText("Double right click to open the plot context menu.");
         ImGui::BulletText("Click legend label icons to show/hide plot items.");
     }
@@ -173,8 +201,8 @@ void ShowImPlotDemoWindow(bool* p_open) {
         float xs[5]  = {1,2,3,4,5};
         float lin[5] = {8,8,9,7,8};
         float bar[5] = {1,2,5,3,4};
-        float err1[5] = {0.2, 0.4, 0.2, 0.6, 0.4};
-        float err2[5] = {0.4, 0.2, 0.4, 0.8, 0.6};
+        float err1[5] = {0.2f, 0.4f, 0.2f, 0.6f, 0.4f};
+        float err2[5] = {0.4f, 0.2f, 0.4f, 0.8f, 0.6f};
         ImGui::SetNextPlotRange(0, 6, 0, 10);
         if (ImGui::BeginPlot("##ErrorBars",NULL,NULL,ImVec2(-1,300))) {
 
@@ -193,8 +221,41 @@ void ShowImPlotDemoWindow(bool* p_open) {
         }
     }
     //-------------------------------------------------------------------------
+    if (ImGui::CollapsingHeader("Pie Charts")) {
+        static const char* labels1[]   = {"Frogs","Hogs","Dogs","Logs"};
+        static float pre_normalized[] = {0.15f,  0.30f,  0.45f, 0.10f};
+        ImVec2 center(0.5f,0.5f); // in plot units, not pixels
+        float radius = 0.4f;      // in plot units, not pixels
+
+        SetNextPlotRange(0,1,0,1,ImGuiCond_Always);
+        if (ImGui::BeginPlot("##Pie1", NULL, NULL, ImVec2(250,250), ImPlotFlags_Legend, 0, 0)) {
+            ImGui::PlotPieChart(labels1, pre_normalized, 4, center, radius);
+            ImGui::EndPlot();
+        }
+        ImGui::SameLine();
+
+        static ImVec4 YlOrRd[5] = {
+            {1.0000f,    1.0000f,    0.8000f, 1.0f},
+            {0.9961f,    0.8510f,    0.4627f, 1.0f},
+            {0.9961f,    0.6314f,    0.2627f, 1.0f},
+            {0.9882f,    0.3059f,    0.1647f, 1.0f},
+            {0.7412f,       0.0f,    0.1490f, 1.0f},
+        };
+        ImGui::SetPlotPalette(YlOrRd, 5);
+        SetNextPlotRange(0,1,0,1,ImGuiCond_Always);
+        static const char* labels2[]   = {"One","Two","Three","Four","Five"};
+        static float not_normalized[] = {1,2,3,4,5};
+        if (ImGui::BeginPlot("##Pie2", NULL, NULL, ImVec2(250,250), ImPlotFlags_Legend, 0, 0)) {
+            ImGui::PlotPieChart(labels2, not_normalized, 5, center, radius);
+            ImGui::EndPlot();
+        }
+        ImGui::RestorePlotPalette();
+    }
+
+    //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Realtime Plots")) {
         ImGui::BulletText("Move your mouse to change the data!");
+        ImGui::BulletText("This example assumes 60 FPS. Higher FPS requires larger buffer size.");
         static bool paused = false;
         static ScrollingData sdata1, sdata2;
         static RollingData   rdata1, rdata2;
@@ -462,6 +523,122 @@ void ShowImPlotDemoWindow(bool* p_open) {
             ImGui::EndDragDropTarget();
         }
     }
+
+    if (ImGui::CollapsingHeader("Digital and Analog Signals")) {
+
+
+        static bool paused = false;
+        #define K_PLOT_DIGITAL_CH_COUNT 4
+        #define K_PLOT_ANALOG_CH_COUNT  4
+        static ScrollingData dataDigital[K_PLOT_DIGITAL_CH_COUNT];
+        static ScrollingData dataAnalog[K_PLOT_ANALOG_CH_COUNT];
+        static bool showDigital[K_PLOT_DIGITAL_CH_COUNT];
+        static bool showAnalog[K_PLOT_ANALOG_CH_COUNT];
+
+        ImGui::BulletText("You can plot digital and analog signals on the same plot.");
+        ImGui::BulletText("Digital signals do not respond to Y drag and zoom, so that");
+        ImGui::Indent();
+        ImGui::Text("you can drag analog signals over the rising/falling digital edge.");
+        ImGui::Unindent();
+        static float bitHeight = 8;
+        ImGui::BeginGroup();
+        if (ImGui::Button("Clear", {100, 0})) {
+            for (int i = 0; i < K_PLOT_DIGITAL_CH_COUNT; ++i)
+                showDigital[i] = false;
+            for (int i = 0; i < K_PLOT_ANALOG_CH_COUNT; ++i)
+                showAnalog[i] = false;
+        }
+        if (ImGui::Button(paused ? "Resume" : "Pause", {100,0}))
+            paused = !paused;
+        ImGui::SetNextItemWidth(100);
+        ImGui::DragFloat("##Bit Height", &bitHeight, 1, 5, 25, "%.0f px");
+        ImGui::Separator();
+        for (int i = 0; i < K_PLOT_DIGITAL_CH_COUNT; ++i) {
+            char label[32];
+            sprintf(label, "digital_%d", i);
+            ImGui::Checkbox(label, &showDigital[i]);
+            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+                ImGui::SetDragDropPayload("DND_DIGITAL_PLOT", &i, sizeof(int));
+                ImGui::TextUnformatted(label);
+                ImGui::EndDragDropSource();
+            }
+        }
+        for (int i = 0; i < K_PLOT_ANALOG_CH_COUNT; ++i) {
+            char label[32];
+            sprintf(label, "analog_%d", i);
+            ImGui::Checkbox(label, &showAnalog[i]);
+            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+                ImGui::SetDragDropPayload("DND_ANALOG_PLOT", &i, sizeof(int));
+                ImGui::TextUnformatted(label);
+                ImGui::EndDragDropSource();
+            }
+        }
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        static float t = 0;
+        if (!paused) {
+            t += ImGui::GetIO().DeltaTime;
+            //digital signal values
+            int i = 0;
+            if (showDigital[i])
+                dataDigital[i].AddPoint(t, sin(2*t) > 0.45);
+            i++;
+            if (showDigital[i])
+                dataDigital[i].AddPoint(t, sin(2*t) < 0.45);
+            i++;
+            if (showDigital[i])
+                dataDigital[i].AddPoint(t, sin(2*t) > 0.83);
+            i++;
+            if (showDigital[i])
+                dataDigital[i].AddPoint(t, sin(2*t) < 0.17);
+            //Analog signal values
+            i = 0;
+            if (showAnalog[i])
+                dataAnalog[i].AddPoint(t, sin(2*t));
+            i++;
+            if (showAnalog[i])
+                dataAnalog[i].AddPoint(t, cos(2*t));
+            i++;
+            if (showAnalog[i])
+                dataAnalog[i].AddPoint(t, sin(2*t) * cos(2*t));
+            i++;
+            if (showAnalog[i])
+                dataAnalog[i].AddPoint(t, sin(2*t) - cos(2*t));
+        }
+        ImGui::SetNextPlotRangeY(-1, 1);
+        ImGui::SetNextPlotRangeX(t - 10.0f, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
+        if (ImGui::BeginPlot("##Digital", NULL, NULL, ImVec2(-1,300), ImPlotFlags_Default)) {
+            for (int i = 0; i < K_PLOT_DIGITAL_CH_COUNT; ++i) {
+                if (showDigital[i]) {
+                    char label[32];
+                    sprintf(label, "digital_%d", i);
+                    ImGui::PushPlotStyleVar(ImPlotStyleVar_DigitalBitHeight, bitHeight);
+                    ImGui::PlotDigital(label, &dataDigital[i].Data[0].x, &dataDigital[i].Data[0].y, dataDigital[i].Data.size(), dataDigital[i].Offset, 2 * sizeof(float));
+                    ImGui::PopPlotStyleVar();
+                }
+            }
+            for (int i = 0; i < K_PLOT_ANALOG_CH_COUNT; ++i) {
+                if (showAnalog[i]) {
+                    char label[32];
+                    sprintf(label, "analog_%d", i);
+                    if (dataAnalog[i].Data.size() > 0)
+                        ImGui::Plot(label, &dataAnalog[i].Data[0].x, &dataAnalog[i].Data[0].y, dataAnalog[i].Data.size(), dataAnalog[i].Offset, 2 * sizeof(float));
+                }
+            }
+            ImGui::EndPlot();
+        }
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DIGITAL_PLOT")) {
+                int i = *(int*)payload->Data;
+                showDigital[i] = true;
+            }
+            else if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_ANALOG_PLOT")) {
+                int i = *(int*)payload->Data;
+                showAnalog[i] = true;
+            }
+            ImGui::EndDragDropTarget();
+        }
+    }
     //-------------------------------------------------------------------------
     if (ImGui::CollapsingHeader("Custom Styles")) {
         static ImVec4 my_palette[3] = {
@@ -493,10 +670,36 @@ void ShowImPlotDemoWindow(bool* p_open) {
         ImGui::PopPlotStyleVar();
         ImGui::RestorePlotPalette();
     }
+    if (ImGui::CollapsingHeader("Custom Rendering")) {
+        if (ImGui::BeginPlot("##CustomRend",NULL,NULL,{-1,300})) {
+            ImVec2 cntr = ImGui::PlotToPixels({0.5f,  0.5f});
+            ImVec2 rmin = ImGui::PlotToPixels({0.25f, 0.75f});
+            ImVec2 rmax = ImGui::PlotToPixels({0.75f, 0.25f});
+            ImGui::PushPlotClipRect();
+            ImGui::GetWindowDrawList()->AddCircleFilled(cntr,20,IM_COL32(255,255,0,255),20);
+            ImGui::GetWindowDrawList()->AddRect(rmin, rmax, IM_COL32(128,0,255,255));
+            ImGui::PopPlotClipRect();
+            ImGui::EndPlot();
+        }
+    }
     //-------------------------------------------------------------------------
-    // if (ImGui::CollapsingHeader("Benchmark")) {
-        
-    // }
+    if (ImGui::CollapsingHeader("Benchmark")) {
+        static const int n_items = 100;
+        static BenchmarkItem items[n_items];
+        ImGui::BulletText("Make sure VSync is disabled.");
+        ImGui::BulletText("%d lines with %d points each @ %.3f FPS.",n_items,1000,ImGui::GetIO().Framerate);
+        SetNextPlotRange(0,1,0,1, ImGuiCond_Always);
+        if (ImGui::BeginPlot("##Bench",NULL,NULL,{-1,300},ImPlotFlags_Default | ImPlotFlags_NoChild)) {
+            char buff[16];            
+            for (int i = 0; i < 100; ++i) {
+                sprintf(buff, "item_%d",i);
+                ImGui::PushPlotColor(ImPlotCol_Line, items[i].Col);
+                ImGui::Plot(buff, items[i].Data, 1000);
+                ImGui::PopPlotColor();
+            }   
+            ImGui::EndPlot();
+        }
+    }
     //-------------------------------------------------------------------------
     ImGui::End();
     
