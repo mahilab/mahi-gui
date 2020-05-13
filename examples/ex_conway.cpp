@@ -41,7 +41,7 @@ public:
     }
 
     void draw(NVGcontext* vg, float t) {
-        if (alive) {            
+        if (alive) {
             nvgBeginPath(vg);
             nvgRect(vg, pos.x, pos.y, size, size);
             nvgFillColor(vg, Tween::Linear(Colors::Black, Colors::White, t));
@@ -67,7 +67,7 @@ public:
     int age = 0;
     bool alive    = false;
     bool willLive = false;
-    Cell* left; 
+    Cell* left;
     Cell* right;
     Cell* top;
     Cell* bottom;
@@ -157,11 +157,11 @@ public:
         ImGui::End();
     }
 
-    void draw(NVGcontext* vg) override {
+    void draw_nanovg(NVGcontext* vg) override {
         float t = 0.5 + 0.5 * std::sin((float)time().as_seconds() * 0.1f);
         set_background(Tween::Linear(Colors::White, Colors::Black, t));
         for (auto& c : cells)
-            c.draw(vg,t);        
+            c.draw(vg,t);
     }
 
 public:

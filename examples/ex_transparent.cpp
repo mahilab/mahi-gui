@@ -24,7 +24,7 @@ class TransparentDemo : public Application {
 public:
     using Application::Application;
 
-    void draw(NVGcontext* nvg) override {
+    void draw_nanovg(NVGcontext* nvg) override {
         auto [w, h] = get_window_size();
         float t = (float)time().as_seconds();
         nvgBeginPath(nvg);

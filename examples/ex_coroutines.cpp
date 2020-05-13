@@ -10,7 +10,7 @@ public:
     void update() {
         // controls
         ImGui::Begin("Coroutine Demo", nullptr);
-        if (ImGui::Button("Move X")) 
+        if (ImGui::Button("Move X"))
             start_coroutine(move(0));
         ImGui::SameLine();
         if (ImGui::Button("Move Y"))
@@ -31,7 +31,7 @@ public:
         ImGui::End();
     }
 
-    void draw(NVGcontext* vg) override {
+    void draw_nanovg(NVGcontext* vg) override {
         nvgBeginPath(vg);
         nvgCircle(vg, pos.x, pos.y, 50);
         nvgFillColor(vg, col);

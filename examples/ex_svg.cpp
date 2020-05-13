@@ -28,7 +28,7 @@ extern std::string mahi_logo;
 
 class SvgDemo : public Application {
 public:
-    SvgDemo(Config conf) : Application(conf) { 
+    SvgDemo(Config conf) : Application(conf) {
         svg = nsvgParseFromString(mahi_logo, "px", 96);
         width = svg->width;
         height = svg->height;
@@ -110,10 +110,10 @@ public:
         svg = nullptr;
     }
 
-    void draw(NVGcontext* vg) override {
+    void draw_nanovg(NVGcontext* vg) override {
         nvgTransform(vg, transform.transform());
-        if (svg) 
-            nvgDrawSvg(vg, svg);        
+        if (svg)
+            nvgDrawSvg(vg, svg);
         else if (fb) {
             NVGpaint paint = nvgImagePattern(vg, 0, 0, width, height, 0, fb->image, 1.0f);
             nvgBeginPath(vg);

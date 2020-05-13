@@ -22,7 +22,7 @@ using namespace mahi::util;
 
 class ShapeDemo : public Application {
 public:
-    ShapeDemo(const Config& cfg) : Application(cfg) { 
+    ShapeDemo(const Config& cfg) : Application(cfg) {
 
         shape = make_polygon_shape(5, 50);
         shape.set_radii(10);
@@ -50,10 +50,10 @@ public:
 
         s1.move(100,0);
         s2.move(100,0);
-        ints_shape = clip_shapes(s1,s2,ClipType::Intersection);        
+        ints_shape = clip_shapes(s1,s2,ClipType::Intersection);
     }
-    
-    void draw(NVGcontext* nvg) override {  
+
+    void draw_nanovg(NVGcontext* nvg) override {
 
         nvgTranslate(nvg, 100, 100);
         nvgFillShape(nvg, shape2, Greens::ForestGreen);
@@ -74,7 +74,7 @@ public:
             nvgFillShape(nvg, s, Reds::FireBrick);
         for (auto& s : ints_shape)
             nvgFillShape(nvg, s, Reds::FireBrick);
-    } 
+    }
 
     Shape shape;
     Shape shape2;

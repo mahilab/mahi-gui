@@ -63,7 +63,7 @@ struct Dot {
 
 class CoroDemo : public Application {
 public:
-    CoroDemo(Config conf) : Application(conf) { 
+    CoroDemo(Config conf) : Application(conf) {
         dots.reserve(5000);
         for (int i = 0; i < 5000; ++i)
             dots.emplace_back(*this);
@@ -85,17 +85,17 @@ public:
         ImGui::Text("%.3f FPS", ImGui::GetIO().Framerate);
         ImGui::End();
         if (!use_coros) {
-            for (auto& dot : dots) 
-                dot.animate();            
+            for (auto& dot : dots)
+                dot.animate();
         }
 
         if (!open)
             quit();
     }
 
-    void draw(NVGcontext* vg) override {
-        for (auto& dot : dots) 
-            dot.draw(vg);        
+    void draw_nanovg(NVGcontext* vg) override {
+        for (auto& dot : dots)
+            dot.draw(vg);
     }
 
     std::vector<Dot> dots;

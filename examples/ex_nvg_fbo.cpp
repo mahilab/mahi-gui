@@ -22,7 +22,7 @@ using namespace mahi::util;
 
 class FboDemo : public Application {
 public:
-    FboDemo(Config conf) : Application(conf) { 
+    FboDemo(Config conf) : Application(conf) {
         auto pxRatio = get_pixel_ratio();
 	    m_fb = nvgluCreateFramebuffer(m_vg, (int)(100*pxRatio), (int)(100*pxRatio), NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
         set_background({0.3f, 0.3f, 0.32f, 1.0f});
@@ -36,7 +36,7 @@ public:
         renderPattern(m_vg, m_fb, time().as_seconds(), get_pixel_ratio());
     }
 
-    void draw(NVGcontext* vg) override {
+    void draw_nanovg(NVGcontext* vg) override {
         float t = time().as_seconds();
 		if (m_fb != NULL) {
 			NVGpaint img = nvgImagePattern(vg, 0, 0, 100, 100, 0, m_fb->image, 1.0f);

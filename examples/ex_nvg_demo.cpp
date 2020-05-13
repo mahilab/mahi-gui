@@ -23,7 +23,7 @@ using namespace mahi::util;
 
 class NvgDemo : public Application {
 public:
-    NvgDemo(Config conf) : Application(conf) { 
+    NvgDemo(Config conf) : Application(conf) {
         set_background({0.3f, 0.3f, 0.32f, 1.0f});
         loadDemoData(m_vg,&data);
     }
@@ -32,7 +32,7 @@ public:
         freeDemoData(m_vg,&data);
     }
 
-    void update() override { 
+    void update() override {
         ImGui::Begin("ImGui");
         ImGui::Text("ImGui will always be drawn on top of NanoVG");
         ImGui::Text("even if it is called first in update()");
@@ -50,13 +50,12 @@ public:
         ImGui::End();
     }
 
-    void draw(NVGcontext* vg) override {
+    void draw_nanovg(NVGcontext* vg) override {
         auto [x,y] = get_mouse_pos();
         auto [w,h] = get_window_size();
         float t = (float)time().as_seconds();
         renderDemo(vg,x,y,w,h,t,0,&data);
-        
-    }    
+    }
 
     DemoData data;
 };

@@ -73,7 +73,7 @@ public:
         glLinkProgram(shader);
     }
 
-    void draw() override {
+    void draw_opengl() override {
         glUseProgram(shader);
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);

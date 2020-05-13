@@ -35,9 +35,9 @@ using namespace mahi::util;
 // https://www.puzzometry.com/
 //
 // This is a rather complex example that shows several features of the Shapes
-// class, NanoVG, and coroutines. The majority of this problem is related to 
-// the solver, which you may skip over unless it interestes you. The mahi-gui 
-// related portions start around line 500. 
+// class, NanoVG, and coroutines. The majority of this problem is related to
+// the solver, which you may skip over unless it interestes you. The mahi-gui
+// related portions start around line 500.
 
 //==============================================================================
 // SOLVER IMPLEMENTATION
@@ -47,7 +47,7 @@ using namespace mahi::util;
 // a collection S of subsets of a set X, the exact cover is a subcollection S* of
 // Such that each element in X is contained in exactly one subset in S*. For
 // example, here the exact cover solution is S* = {B,D,F}, since when combined
-// there remains exactly one 1 in every column. 
+// there remains exactly one 1 in every column.
 
 //      1  2  3  4  5  6  7
 //      -------------------
@@ -55,24 +55,24 @@ using namespace mahi::util;
 // [B]  1  0  0  1  0  0  0 *
 // [C]  0  0  0  1  1  0  1
 // [D]  0  0  1  0  1  1  0 *
-// [E]  0  1  1  0  0  1  1 
+// [E]  0  1  1  0  0  1  1
 // [F]  0  1  0  0  0  0  1 *
 
 // Read More: https://en.wikipedia.org/wiki/Exact_cover
 
-// The best method for solving large exact cover problems is Donald's Knuths 
-// "Dancing Links" (DLX) approach, which works by treating the exact cover matrix as 
+// The best method for solving large exact cover problems is Donald's Knuths
+// "Dancing Links" (DLX) approach, which works by treating the exact cover matrix as
 // a double linked list instead of a matrix of ones and zeros, and then using his
-// Algorithm X to search the list for solutions. Each list node represents a 1 in 
+// Algorithm X to search the list for solutions. Each list node represents a 1 in
 // the exact cover matrix, and is linked to adjacent 1s in all four directions.
 // The gist is that we save considerable time using double link lists because we don't
-// have to iterate the entire matrix and check if an element is 0 or 1. 
+// have to iterate the entire matrix and check if an element is 0 or 1.
 // The original paper is defintely worth a read: https://arxiv.org/pdf/cs/0011047.pdf
 //
 // The most challenging part of this approach is choosing how to define and construct
 // the exact cover matrix. I will try to break down my process as simply as possible.
 //
-// First, understand that the board and pieces are just tilings of squares and octagons. 
+// First, understand that the board and pieces are just tilings of squares and octagons.
 // Rotating the board 45 degrees, we can see that all squares and octagons are equally spaced.
 //
 // .  .  .  .  .  .  .  .  S  O  .  .  .  .  .  .
@@ -122,22 +122,22 @@ using namespace mahi::util;
 // [B]  0  0  0  1  1  1  1  1  1  ...  0
 // ...
 //
-// To constrain the problem so that every piece will be in the final solution only 
+// To constrain the problem so that every piece will be in the final solution only
 // once, we can add a dummy column for each of the 14 pieces, and cover it.
-// 
+//
 //      P1 P2 P3 P4 ... P14 | 1  2  3  4  5  6  7  8  9  ...  N
 //      --------------------------------------------------------
 // [A]  1  0  0  0  ... 0   | 1  1  1  1  1  0  0  0  0  ...  0
 // [B]  1  0  0  0  ... 0   | 0  0  0  1  1  1  1  1  1  ...  0
-// ...                      | 
+// ...                      |
 // [X]  0  1  0  0  ... 0   | 0  0  0  0  0  1  1  1  1  ...  0
 // ...
 // [Z]  0  0  0  0  ... 1   | 0  0  1  1  1  1  1  0  0  ...  0
 //
-// Since each piece can have hundres to thousands of valid placements, our exact 
+// Since each piece can have hundres to thousands of valid placements, our exact
 // cover matrix will be extremely large, and so we need to construct it
-// progmatically. To do this, I first represent the board and pieces as 
-// matrices of  0s, 4s and 8s, where 0s are dead space, 4s are squares, and 8s 
+// progmatically. To do this, I first represent the board and pieces as
+// matrices of  0s, 4s and 8s, where 0s are dead space, 4s are squares, and 8s
 // are octagons (note 0s are displayed as dots here):
 //
 // 16x16 Board:
@@ -160,19 +160,19 @@ using namespace mahi::util;
 // .  .  .  .  .  .  8  .  .  .  .  .  .  .  .  .
 //
 // 3x3 Piece:    2x4 Piece:      ... and so on for all 14 pieces ...
-//                     
+//
 // 8  4  8       8  4  8  4
 // 4  8  .       .  8  4  8
 // 8  .  .
 //
 // Next, I iteratively overlay each piece in every location on the board and take
-// the difference between the board and piece values. If all values in the piece 
+// the difference between the board and piece values. If all values in the piece
 // matrix go to zero, then the piece can be placed in that location. Note that
-// we need to permutate each piece matrix (i.e. combinations of flipping and 
-// rotating) since we don't know which orientation will be the correct one. 
+// we need to permutate each piece matrix (i.e. combinations of flipping and
+// rotating) since we don't know which orientation will be the correct one.
 
 // 3x3 Piece cannot be placed here:                     // But could be placed here:
-// 
+//
 // .  .  .  .  .  .  .  .  4  8  .  .  .  .  .  .       // .  .  .  .  .  .  .  .  4  8  .  .  .  .  .  .
 // .  .  .  .  .  .  .  4  8  4  8  .  .  .  .  .       // .  .  .  .  .  .  .  4  8  4  8  .  .  .  .  .
 // .  8  4  8  .  .  4  8  4  8  4  8  .  .  .  .       // .  .  .  .  .  .  4  8  4  8  4  8  .  .  .  .
@@ -192,14 +192,14 @@ using namespace mahi::util;
 //
 // If the placement is valid, I create an entry into the exact cover matrix that
 // covers the piece's number and the board positions that it filled. Once the sparse
-// exact cover matrix is formulated, it is converted to a dense matrix representation, 
-// and passed to my DLX solver implementation. That's pretty much it! :) 
+// exact cover matrix is formulated, it is converted to a dense matrix representation,
+// and passed to my DLX solver implementation. That's pretty much it! :)
 
 //==============================================================================
 // MATRIX OPERATIONS
 //==============================================================================
 
-typedef int         Num;    
+typedef int         Num;
 typedef vector<Num> Row;    // Matrix row
 typedef vector<Row> Matrix; // 2D Matrix
 
@@ -210,7 +210,7 @@ inline size_t size(const Matrix& mat, int dim) {
     else if (dim == 1)
         return mat[0].size();
     return 0;
-} 
+}
 
 /// Makes a matrix of all zeros, size r x c
 inline Matrix zeros(size_t r, size_t c) {
@@ -263,10 +263,10 @@ inline size_t uniquePermutations(const Matrix& mat, vector<size_t>& uniquePerms,
         auto temp = mat;
         permute(temp, perm);
         if (std::find(uniqueMats.begin(), uniqueMats.end(), temp) == uniqueMats.end()) {
-            uniquePerms.push_back(perm);  
+            uniquePerms.push_back(perm);
             uniqueMats.push_back(temp);
-            numUnique++;  
-        }    
+            numUnique++;
+        }
     }
     return numUnique;
 }
@@ -355,9 +355,9 @@ struct ExactCover {
                         row.assign(numPieces + numSlots, 0);
                         row[piece] = 1;
                         if (place(uniqueMats[perm], r, c, row)) {
-                            sparse.push_back(row);  
+                            sparse.push_back(row);
                             info.push_back({piece, perm, r, c});
-                        }                     
+                        }
                     }
                 }
             }
@@ -366,11 +366,11 @@ struct ExactCover {
         numCols = size(sparse,1);
     }
 
-   
+
     bool place(const Matrix& permMat, size_t r, size_t c, Row& rowOut) {
         auto height = size(permMat,0);
         auto width  = size(permMat,1);
-        if ((r + height) > boardRows || (c + width) > boardCols) 
+        if ((r + height) > boardRows || (c + width) > boardCols)
             return false;
         else {
             for (size_t rr = 0; rr < height; ++rr) {
@@ -384,7 +384,7 @@ struct ExactCover {
                 }
             }
         }
-        return true;   
+        return true;
     }
 
     void writeToFiles() {
@@ -400,7 +400,7 @@ struct ExactCover {
         file1.close();
         file2.close();
         file3.close();
-    }    
+    }
 
     Matrix         board;
     vector<Matrix> pieces;
@@ -430,7 +430,7 @@ struct DLX {
         Cell* D    = nullptr; // pointer to down cell
         Cell* C    = nullptr; // pointer to header cell
         size_t* S  = nullptr; // pointer to cell's column size
-    };  
+    };
     /// Constructor, taking exact cover matrix in dense representation
     DLX(const Matrix& dense, size_t numCols) {
         size_t numCells = 1 + numCols;
@@ -482,8 +482,8 @@ struct DLX {
             // left/right linkage
             if (!leftMost) {
                 cell->L = cell;
-                cell->R = cell;    
-                leftMost = cell;        
+                cell->R = cell;
+                leftMost = cell;
             }
             else {
                 cell->L     = leftMost->L;
@@ -501,7 +501,7 @@ struct DLX {
     /// Chooses column with fewest cells remaining in it
     inline Cell* chooseColumn() {
         auto C = root->R->C;
-        size_t s = -1;        
+        size_t s = -1;
         for (Cell* j = root->R; j != root; j = j->R) {
             if (*j->S < s) {
                 s = *j->S;
@@ -514,7 +514,7 @@ struct DLX {
     inline void cover(Cell* C) {
         C->R->L = C->L;
         C->L->R = C->R;
-        for (Cell* i = C->D; i != C; i = i->D) {            
+        for (Cell* i = C->D; i != C; i = i->D) {
             for (Cell* j = i->R; j != i; j = j->R) {
                 j->D->U = j->U;
                 j->U->D = j->D;
@@ -523,8 +523,8 @@ struct DLX {
         }
     }
     /// Uncoverse a column cell C
-    inline void uncover(Cell* C) {        
-        for (Cell* i = C->U; i != C; i = i->U) {            
+    inline void uncover(Cell* C) {
+        for (Cell* i = C->U; i != C; i = i->U) {
             for (Cell* j = i->L; j != i; j = j->L) {
                 ++*j->S;
                 j->D->U = j;
@@ -541,23 +541,23 @@ struct DLX {
             return true;
         }
         auto C = chooseColumn();
-        cover(C);        
+        cover(C);
         for (Cell* r = C->D; r != C; r = r->D) {
-            workingSolution.push_back(r->row);  
-            operations.push_back({(size_t)r->row,true});         
-            for (Cell* j = r->R; j != r; j = j->R) 
-                cover(j->C);                
+            workingSolution.push_back(r->row);
+            operations.push_back({(size_t)r->row,true});
+            for (Cell* j = r->R; j != r; j = j->R)
+                cover(j->C);
             if (search() && !findAll)
                 return true;
             workingSolution.pop_back();
             operations.push_back({(size_t)r->row,false});
-            C = r->C;           
+            C = r->C;
             for (Cell* j = r->L; j != r; j = j->L)
-                uncover(j->C);                
+                uncover(j->C);
         }
         uncover(C);
         return false;
-    }    
+    }
 
     bool                      findAll = false; ///< find all solutions?
     vector<Cell>              cells;           ///< all root, header, and normal cells
@@ -599,20 +599,20 @@ const Matrix g_board_mat {
 /// Piece matrices
 const vector<Matrix> g_piece_mats
 {
-    {{8, 4, 8, 4}, {0, 8, 4, 8}},                                          
-    {{0, 4, 8}, {4, 8, 4}, {8, 4, 8}},                                     
-    {{8, 4, 0}, {4, 8, 4}, {8, 4, 0}},                                     
-    {{0, 4, 0}, {4, 8, 4}, {8, 4, 8}, {4, 8, 4}, {8, 4, 0}},               
+    {{8, 4, 8, 4}, {0, 8, 4, 8}},
+    {{0, 4, 8}, {4, 8, 4}, {8, 4, 8}},
+    {{8, 4, 0}, {4, 8, 4}, {8, 4, 0}},
+    {{0, 4, 0}, {4, 8, 4}, {8, 4, 8}, {4, 8, 4}, {8, 4, 0}},
     {{4, 8, 0, 0}, {8, 4, 8, 0}, {0, 8, 4, 8}, {0, 4, 8, 4}, {0, 8, 4, 0}},
-    {{4, 8, 0}, {8, 4, 8}, {0, 8, 4}},                                     
-    {{4, 0, 0, 0}, {8, 4, 0, 0}, {4, 8, 4, 0}, {0, 4, 8, 4}},              
-    {{0, 0, 0, 8, 4}, {0, 0, 8, 4, 8}, {0, 8, 4, 8, 0}, {8, 4, 0, 0, 0}},  
-    {{0, 0, 0, 4, 0}, {0, 8, 4, 8, 4}, {8, 4, 8, 4, 8}, {0, 8, 4, 8, 4}},  
-    {{0, 8, 4, 8}, {8, 4, 8, 0}, {4, 8, 4, 0}, {8, 0, 0, 0}},              
-    {{0, 4, 8}, {0, 8, 4}, {8, 4, 0}, {0, 8, 0}},                          
-    {{8, 4, 8}, {4, 8, 0}, {8, 0, 0}},                                     
-    {{4, 8, 0}, {8, 4, 8}, {4, 8, 0}, {8, 0, 0}},                          
-    {{4, 8, 0}, {8, 4, 8}, {4, 8, 0}},                                     
+    {{4, 8, 0}, {8, 4, 8}, {0, 8, 4}},
+    {{4, 0, 0, 0}, {8, 4, 0, 0}, {4, 8, 4, 0}, {0, 4, 8, 4}},
+    {{0, 0, 0, 8, 4}, {0, 0, 8, 4, 8}, {0, 8, 4, 8, 0}, {8, 4, 0, 0, 0}},
+    {{0, 0, 0, 4, 0}, {0, 8, 4, 8, 4}, {8, 4, 8, 4, 8}, {0, 8, 4, 8, 4}},
+    {{0, 8, 4, 8}, {8, 4, 8, 0}, {4, 8, 4, 0}, {8, 0, 0, 0}},
+    {{0, 4, 8}, {0, 8, 4}, {8, 4, 0}, {0, 8, 0}},
+    {{8, 4, 8}, {4, 8, 0}, {8, 0, 0}},
+    {{4, 8, 0}, {8, 4, 8}, {4, 8, 0}, {8, 0, 0}},
+    {{4, 8, 0}, {8, 4, 8}, {4, 8, 0}},
 };
 
 /// Represents a coordinate position in the Board
@@ -623,15 +623,15 @@ struct Coord {
 
 /// Solution coordinates for g_piece_mats, all in permutation 0
 const vector<Coord> g_solutions {
-    {9, 0}, 
-    {6, 1}, 
-    {5, 4}, 
-    {1, 6}, 
-    {0, 8}, 
+    {9, 0},
+    {6, 1},
+    {5, 4},
+    {1, 6},
+    {0, 8},
     {11, 3},
-    {8, 4}, 
-    {5, 5}, 
-    {7, 6}, 
+    {8, 4},
+    {5, 5},
+    {7, 6},
     {4, 10},
     {12, 5},
     {11, 8},
@@ -682,7 +682,7 @@ Shape makeShape(const Matrix& mat) {
                     shapes.push_back(sqr);
                 else if (mat[r][c] == 8)
                     shapes.push_back(oct);
-                oct.move(g_gridSize, 0);  
+                oct.move(g_gridSize, 0);
                 sqr.move(g_gridSize, 0);
             }
             oct.move(-g_gridSize * size(mat,1), g_gridSize);
@@ -709,7 +709,7 @@ Shape makeShape(const Matrix& mat) {
 class Board
 {
   public:
-  
+
     Board(Application* app) : app(app), matrix(g_board_mat), color(Grays::Gray50) {
         shape.set_point_count(4);
         shape.set_point(0, coordPosition(9,-2));
@@ -722,7 +722,7 @@ class Board
         shape.push_back_hole(hole);
     }
 
-    void draw(NVGcontext* vg) {
+    void draw_nanovg(NVGcontext* vg) {
 
         float trans[6], inv[6];
         nvgCurrentTransform(vg, trans);
@@ -791,7 +791,7 @@ class Piece : public Transformable
     }
 
     Vec2 computeOrigin(int perm) {
-        return g_gridSize * Vec2((perm == 2 || perm == 3 || perm == 4 || perm == 5) ? (float)size(matrix,1) - 1 : 0.0f, 
+        return g_gridSize * Vec2((perm == 2 || perm == 3 || perm == 4 || perm == 5) ? (float)size(matrix,1) - 1 : 0.0f,
                                  (perm == 1 || perm == 2 || perm == 5 || perm == 6) ? (float)size(matrix,0) - 1 : 0.0f);
     }
 
@@ -800,7 +800,7 @@ class Piece : public Transformable
     }
 
     void place(const Coord& new_coord, int new_perm) {
-        set_pos(coordPosition(new_coord)); 
+        set_pos(coordPosition(new_coord));
         set_origin(computeOrigin(new_perm));
         set_scale(computeScale(new_perm));
         set_rotation(computeRotation(new_perm));
@@ -830,12 +830,12 @@ class Piece : public Transformable
             set_origin( Tween::Smootherstep(startOrigin, endOrigin, t) );
             elapsedTime += (float)app->delta_time().as_seconds();
             co_yield nullptr;
-        }        
+        }
         place(to_coord, perm);
-        transitioning = false;        
+        transitioning = false;
     }
 
-    void draw(NVGcontext* vg) {
+    void draw_nanovg(NVGcontext* vg) {
 
 
         nvgTransform(vg, transform());
@@ -863,9 +863,9 @@ class Piece : public Transformable
         Vec2 br = tl + shape.bounds().size();
         nvgBeginPath(vg);
         nvgShape(vg, shape);
-        auto paint = nvgLinearGradient(vg, tl.x, tl.y, br.x, br.y, with_alpha(color,0.25f), with_alpha(color,0.5f));   
+        auto paint = nvgLinearGradient(vg, tl.x, tl.y, br.x, br.y, with_alpha(color,0.25f), with_alpha(color,0.5f));
         nvgFillPaint(vg, paint);
-        nvgFill(vg);        
+        nvgFill(vg);
         nvgStrokeColor(vg, Tween::Linear(Whites::White, color, 0.5f));
         nvgStrokeWidth(vg, hovered ? 3 : 1);
         nvgStroke(vg);
@@ -881,12 +881,12 @@ class Piece : public Transformable
 };
 
 //==============================================================================
-// PUZZOMETRY 
+// PUZZOMETRY
 //==============================================================================
 
 class Puzzometry : public Application {
 public:
-    Puzzometry(Config conf) : Application(conf), board(this), problem(g_board_mat, g_piece_mats), solver(problem.dense, problem.numCols) { 
+    Puzzometry(Config conf) : Application(conf), board(this), problem(g_board_mat, g_piece_mats), solver(problem.dense, problem.numCols) {
 
         pieces.reserve(g_piece_mats.size());
         for (size_t i = 0; i < g_piece_mats.size(); ++i) {
@@ -895,13 +895,13 @@ public:
             pieces.emplace_back(std::move(p));
         }
         // solve
-        set_vsync(false);  
+        set_vsync(false);
         nvgCreateFontMem(m_vg, "roboto-bold", Roboto_Bold_ttf, Roboto_Bold_ttf_len, 0);
-        createCheckerBoard();  
+        createCheckerBoard();
     }
 
     void createCheckerBoard() {
-        checker = nvgluCreateFramebuffer(m_vg, 16, 16, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);     
+        checker = nvgluCreateFramebuffer(m_vg, 16, 16, NVG_IMAGE_REPEATX | NVG_IMAGE_REPEATY);
         nvgluBindFramebuffer(checker);
         glViewport(0, 0, 16, 16);
         glClearColor(0, 0, 0, 0);
@@ -924,12 +924,12 @@ public:
     }
 
     Enumerator shuffle() {
-        stop_coroutines();    
-        animating = false;  
+        stop_coroutines();
+        animating = false;
         percent = 0;
         solver.solutions.clear();
         std::random_device rng;
-        std::mt19937 gen(rng()); 
+        std::mt19937 gen(rng());
         std::shuffle(pieces.begin(), pieces.end(), gen);
         std::vector<Matrix> matrices;
         for (auto& p : pieces) {
@@ -947,19 +947,19 @@ public:
 
     void solve() {
         Clock clk;
-        solver = DLX(problem.dense, problem.numCols); 
+        solver = DLX(problem.dense, problem.numCols);
         solver.search();
         ms_solve = clk.get_elapsed_time().as_milliseconds();
     }
 
     void update() {
         ImGui::Begin("Puzzometry");
-        if (ImGui::Button("Shuffle")) 
-            start_coroutine(shuffle());      
-        ImGui::SameLine();  
+        if (ImGui::Button("Shuffle"))
+            start_coroutine(shuffle());
+        ImGui::SameLine();
         ImGui::BeginDisabled(animating || solver.solutions.size() > 0);
-        if (ImGui::Button("Solve")) 
-            solve();        
+        if (ImGui::Button("Solve"))
+            solve();
         ImGui::EndDisabled();
         if (solver.solutions.size()) {
             ImGui::SameLine();
@@ -970,7 +970,7 @@ public:
         if (ImGui::Button("Animate"))
             start_coroutine(animateSolution());
         ImGui::SameLine();
-        ImGui::ProgressBar(percent);        
+        ImGui::ProgressBar(percent);
         static float scale = 1;
         if (ImGui::DragFloat("Animation Speed", &scale, 0.1f, 0, 100, "%.1fx"))
             set_time_scale(scale);
@@ -984,19 +984,19 @@ public:
             int c = pieces[i].coord.c;
             int p = pieces[i].perm;
             if (ImGui::SliderInt("Row",&r,0,15))
-            { 
+            {
                 pieces[i].coord.r = r;
                 pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
             ImGui::SameLine();
             if (ImGui::SliderInt("Col",&c,0,15))
-            { 
+            {
                 pieces[i].coord.c = c;
                 pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
             ImGui::SameLine();
             if (ImGui::SliderInt("Permutation",&p,0,7))
-            { 
+            {
                 pieces[i].perm = p;
                 pieces[i].place(pieces[i].coord, pieces[i].perm);
             }
@@ -1006,7 +1006,7 @@ public:
         ImGui::End();
     }
 
-    void draw(NVGcontext* vg) override {
+    void draw_nanovg(NVGcontext* vg) override {
         NVGpaint img = nvgImagePattern(vg, 0, 0, 16, 16, 0, checker->image, 1.0f);
         nvgBeginPath(vg);
         nvgRect(vg,0,0,800,800);

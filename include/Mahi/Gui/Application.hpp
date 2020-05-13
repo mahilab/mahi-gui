@@ -142,8 +142,8 @@ public:
         util::Time t_poll;        ///< time elapsed polling input events
         util::Time t_update;      ///< time elapsed across update()
         util::Time t_coroutines;  ///< time elapsed across all coroutines
-        util::Time t_gl;          ///< time elapsed rendering raw OpenGL (i.e. inside of draw())
-        util::Time t_nvg;      ///< time elapsed rendering NanoVG (i.e. inside of draw(NVGcontext*))
+        util::Time t_gl;          ///< time elapsed rendering raw OpenGL (i.e. inside of draw_opengl())
+        util::Time t_nvg;      ///< time elapsed rendering NanoVG (i.e. inside of draw_nanovg(NVGcontext*))
         util::Time t_imgui;    ///< time elapsed rendering ImGui
         util::Time t_idle;     ///< time elapsed idling
         util::Time t_buffers;  ///< time elapsed swapping OpenGL buffers
@@ -156,9 +156,9 @@ protected:
     /// Called once per frame. For application logic and ImGui. Do not make raw OpenGL calls here.
     virtual void update() { /* nothing by default */ }
     /// Generic OpenGL drawing context, called immediately after update().
-    virtual void draw() { /* nothing by default */ }
-    /// NanoVG specific drawing context, called immediately after draw()
-    virtual void draw(NVGcontext* nvg) { /* nothing by default */ }
+    virtual void draw_opengl() { /* nothing by default */ }
+    /// NanoVG specific drawing context, called immediately after draw_opengl()
+    virtual void draw_nanovg(NVGcontext* nvg) { /* nothing by default */ }
 
 public:
     /// Emitted when the Window moves. Passes (x,y) window position pixels.

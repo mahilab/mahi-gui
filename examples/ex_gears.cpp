@@ -182,7 +182,7 @@ public:
         on_keyboard.connect(this, &GearsDemo::key);
     }
 
-    void update() {
+    void update() override {
         ImGui::Begin("Gears");
         ImGui::DragFloat("Rot. X", &view_rotx, 1, 0, 360);
         ImGui::DragFloat("Rot. Y", &view_roty, 1, 0, 360);
@@ -193,7 +193,7 @@ public:
         angle = speed * (float)time().as_seconds();
     }
 
-    void draw() override {
+    void draw_opengl() override {
         glPushMatrix();
         glRotatef(view_rotx, 1.0, 0.0, 0.0);
         glRotatef(view_roty, 0.0, 1.0, 0.0);
