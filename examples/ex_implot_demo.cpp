@@ -12,13 +12,7 @@ public:
     }
     void update() {
         static bool p_open = true;
-        ImGui::ShowImPlotDemoWindow(&p_open);
-
-        // ImGui::SetNextWindowSize(ImVec2(600,400));
-        // ImGui::Begin("m", &p_open, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
-
-        // ImGui::End();
-
+        ImPlot::ShowDemoWindow(&p_open);
         if (!p_open)
             quit();
     }

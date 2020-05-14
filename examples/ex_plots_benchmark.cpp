@@ -68,15 +68,15 @@ public:
         ImGui::SameLine();
         ImGui::Checkbox("Animate", &animate);
         ImGui::Text("%lu lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
-        if (ImGui::BeginPlot("##Plot")) {
+        if (ImPlot::BeginPlot("##Plot")) {
             if (render) {         
                 for (int i = 0; i < 100; ++i) {
-                    ImGui::PushPlotColor(ImPlotCol_Line, items[i].color);
-                    ImGui::Plot(items[i].label.c_str(), &items[i].data[0].x, &items[i].data[0].y, items[i].data.size(), 0, 8);
-                    ImGui::PopPlotColor();
+                    ImPlot::PushStyleColor(ImPlotCol_Line, items[i].color);
+                    ImPlot::Plot(items[i].label.c_str(), &items[i].data[0].x, &items[i].data[0].y, items[i].data.size(), 0, 8);
+                    ImPlot::PopStyleColor();
                 }
             }
-            ImGui::EndPlot();
+            ImPlot::EndPlot();
         }        
         ImGui::End();
         // ImGui::ShowMetricsWindow();
