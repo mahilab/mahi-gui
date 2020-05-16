@@ -72,7 +72,7 @@ public:
             if (render) {         
                 for (int i = 0; i < 100; ++i) {
                     ImPlot::PushStyleColor(ImPlotCol_Line, items[i].color);
-                    ImPlot::Plot(items[i].label.c_str(), &items[i].data[0].x, &items[i].data[0].y, items[i].data.size(), 0, 8);
+                    ImPlot::PlotLine(items[i].label.c_str(), &items[i].data[0].x, &items[i].data[0].y, items[i].data.size(), 0, 8);
                     ImPlot::PopStyleColor();
                 }
             }

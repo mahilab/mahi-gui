@@ -24,9 +24,8 @@ project(mahi-gui VERSION 1.0.0 LANGUAGES C CXX)
 set(CXX_CMAKE_STANDARD 14)
 set(CXX_CMAKE_STANDARD_REQUIRED ON)
 
-# tell user they can't have shared version of MEL if they try
 if (BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "mahi::gui does not support shared libaries")
+    message(WARNING "mahi::gui has not beeing tested as a shared library. Proceed at your own risk.")
 endif()
 
 # add ./cmake to CMake module path so our .cmake files can be found

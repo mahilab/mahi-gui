@@ -27,17 +27,17 @@ ImPlot is an immediate mode plotting widget for [Dear ImGui](https://github.com/
 - size-aware grid with smart labels that are always power-of-ten multiples of 1, 2, and 5
 - default styling based on current ImGui theme, but most elements can be customized independently 
 - mouse cursor location display and optional crosshairs cursor
-- customizable data getters and data striding (just like ImGui:PlotLines)
+- customizable data getters and data striding (just like ImGui:PlotLine)
 - relatively good performance for high density plots
 
 ## Usage
 
-The API is used just like any other ImGui `BeginX`/`EndX` pair. First, start a plotting context with `ImPlot::BeginPlot()`. Next, plot as many items as you want with the provided API functions (e.g. `Plot()`, `Bar()`, `ErrorBars()`, etc). Finally, wrap things up with a call to `ImPlot::EndPlot()`. That's it! 
+The API is used just like any other ImGui `BeginX`/`EndX` pair. First, start a plotting context with `ImPlot::BeginPlot()`. Next, plot as many items as you want with the provided `PlotX` functions (e.g. `PlotLine()`, `PlotBars()`, `PlotErrorBars()`, etc). Finally, wrap things up with a call to `ImPlot::EndPlot()`. That's it! 
 
 ```cpp
 if (ImPlot::BeginPlot("My Plot")) {
-    ImPlot::Plot("My Line Plot", x_data, y_data, 1000);
-    ImPlot::Bar("My Bar Plot", values, 10);
+    ImPlot::PlotLine("My Line Plot", x_data, y_data, 1000);
+    ImPlot::PlotBars("My Bar Plot", values, 10);
     ...
     ImPlot::EndPlot();
 }

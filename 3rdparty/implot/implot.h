@@ -23,7 +23,7 @@
 // ImPlot v0.2 WIP
 
 #pragma once
-#include <imgui.h>
+#include "imgui.h"
 
 //-----------------------------------------------------------------------------
 // Basic types and flags
@@ -133,8 +133,8 @@ struct ImPlotLimits {
 // Plot style structure
 struct ImPlotStyle {
     float    LineWeight;              // = 1, line weight in pixels
-    ImPlotMarker Marker;                  // = ImPlotMarker_None, marker specification
-    float    MarkerSize;              // = 5, marker size in pixels (roughly the marker's "radius")
+    ImPlotMarker Marker;              // = ImPlotMarker_None, marker specification
+    float    MarkerSize;              // = 4, marker size in pixels (roughly the marker's "radius")
     float    MarkerWeight;            // = 1, outline weight of markers in pixels
     float    ErrorBarSize;            // = 5, error bar whisker width in pixels
     float    ErrorBarWeight;          // = 1.5, error bar whisker weight in pixels
@@ -156,10 +156,10 @@ namespace ImPlot {
 // title in the plot, use double hashes (e.g. "MyPlot##Hidden"). If #x_label
 // and/or #y_label are provided, axes labels will be displayed.
 bool BeginPlot(const char* title_id,
-               const char* x_label  = NULL,
-               const char* y_label  = NULL,
-               const ImVec2& size   = ImVec2(-1,-1),
-               ImPlotFlags flags    = ImPlotFlags_Default,
+               const char* x_label      = NULL,
+               const char* y_label      = NULL,
+               const ImVec2& size       = ImVec2(-1,0),
+               ImPlotFlags flags        = ImPlotFlags_Default,
                ImPlotAxisFlags x_flags  = ImPlotAxisFlags_Default,
                ImPlotAxisFlags y_flags  = ImPlotAxisFlags_Default,
                ImPlotAxisFlags y2_flags = ImPlotAxisFlags_Auxiliary,
@@ -172,30 +172,35 @@ void EndPlot();
 // Plot Items
 //-----------------------------------------------------------------------------
 
-// Plots a standard 2D line and/or scatter plot.
-void Plot(const char* label_id, const float* values, int count, int offset = 0, int stride = sizeof(float));
-void Plot(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
-void Plot(const char* label_id, const ImVec2* data, int count, int offset = 0);
-void Plot(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
-// Plots vertical bars.
-void Bar(const char* label_id, const float* values, int count, float width = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
-void Bar(const char* label_id, const float* xs, const float* ys, int count, float width, int offset = 0, int stride = sizeof(float));
-void Bar(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float width, int offset = 0);
-// Plots horizontal bars.
-void BarH(const char* label_id, const float* values, int count, float height = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
-void BarH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset = 0, int stride = sizeof(float));
-void BarH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset = 0);
-// Plots vertical error bars.
-void ErrorBars(const char* label_id, const float* xs, const float* ys, const float* err, int count, int offset = 0, int stride = sizeof(float));
-void ErrorBars(const char* label_id, const float* xs, const float* ys, const float* neg, const float* pos, int count, int offset = 0, int stride = sizeof(float));
-void ErrorBars(const char* label_id, ImVec4 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
+// Plots a standard 2D line plot.
+void PlotLine(const char* label_id, const float* values, int count, int offset = 0, int stride = sizeof(float));
+void PlotLine(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
+void PlotLine(const char* label_id, const ImVec2* data, int count, int offset = 0);
+void PlotLine(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
+// Plots a standard 2D scatter plot.
+void PlotScatter(const char* label_id, const float* values, int count, int offset = 0, int stride = sizeof(float));
+void PlotScatter(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
+void PlotScatter(const char* label_id, const ImVec2* data, int count, int offset = 0);
+void PlotScatter(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
+// Plots a vertical bar graph.
+void PlotBars(const char* label_id, const float* values, int count, float width = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
+void PlotBars(const char* label_id, const float* xs, const float* ys, int count, float width, int offset = 0, int stride = sizeof(float));
+void PlotBars(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float width, int offset = 0);
+// Plots a horizontal bar graph.
+void PlotBarsH(const char* label_id, const float* values, int count, float height = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
+void PlotBarsH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset = 0, int stride = sizeof(float));
+void PlotBarsH(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, float height,  int offset = 0);
+// Plots vertical error bar.
+void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* err, int count, int offset = 0, int stride = sizeof(float));
+void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* neg, const float* pos, int count, int offset = 0, int stride = sizeof(float));
+void PlotErrorBars(const char* label_id, ImVec4 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
 // Plots a pie chart. If the sum of values > 1, each value will be normalized. Center and radius are in plot coordinates.
-void PieChart(const char** label_ids, float* values, int count, const ImVec2& center, float radius, bool show_percents = true, float angle0 = 90);
-// Plots digital channels.
-void Digital(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
-void Digital(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
+void PlotPieChart(const char** label_ids, float* values, int count, const ImVec2& center, float radius, bool show_percents = true, float angle0 = 90);
+// Plots digital data.
+void PlotDigital(const char* label_id, const float* xs, const float* ys, int count, int offset = 0, int stride = sizeof(float));
+void PlotDigital(const char* label_id, ImVec2 (*getter)(void* data, int idx), void* data, int count, int offset = 0);
 // Plots a text label at point x,y.
-void Text(const char* text, float x, float y, bool vertical = false, const ImVec2& pixel_offset = ImVec2(0,0));
+void PlotText(const char* text, float x, float y, bool vertical = false, const ImVec2& pixel_offset = ImVec2(0,0));
 
 //-----------------------------------------------------------------------------
 // Plot Queries
