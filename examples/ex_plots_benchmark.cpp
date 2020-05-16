@@ -68,7 +68,7 @@ public:
         ImGui::SameLine();
         ImGui::Checkbox("Animate", &animate);
         ImGui::Text("%lu lines, 1000 pts ea. @ %.3f FPS", items.size(), ImGui::GetIO().Framerate);
-        if (ImPlot::BeginPlot("##Plot")) {
+        if (ImPlot::BeginPlot("##Plot", NULL, NULL, ImVec2(-1,-1), ImPlotFlags_Default | ImPlotFlags_NoChild)) {
             if (render) {         
                 for (int i = 0; i < 100; ++i) {
                     ImPlot::PushStyleColor(ImPlotCol_Line, items[i].color);
