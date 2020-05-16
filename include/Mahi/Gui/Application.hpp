@@ -29,6 +29,8 @@
 #include <Mahi/Gui/Coroutine.hpp>
 #endif
 
+struct ImGuiContext;  ///< forward declaration
+
 namespace mahi {
 namespace gui {
 
@@ -183,12 +185,13 @@ protected:
     NVGcontext* m_vg;
 
 private:
-    Config     m_conf;        ///< Application configuration
-    util::Time m_frame_time;  ///< target time to sleep to each frame if VSync is disabled
-    util::Time m_dt;          ///< delta time (scaled)
-    util::Time m_time;        ///< Application time (scaled)
-    float      m_time_scale;  ///< time scale (default = 1, no scale)
-    Profile    m_profile;     ///< most recent Profile
+    ImGuiContext* m_imgui_context;  ///< ImGui context of this application
+    Config        m_conf;           ///< Application configuration
+    util::Time    m_frame_time;     ///< target time to sleep to each frame if VSync is disabled
+    util::Time    m_dt;             ///< delta time (scaled)
+    util::Time    m_time;           ///< Application time (scaled)
+    float         m_time_scale;     ///< time scale (default = 1, no scale)
+    Profile       m_profile;        ///< most recent Profile
 #ifdef MAHI_COROUTINES
     std::vector<util::Enumerator> m_coroutines;  /// Vector of running coroutines
 #endif
