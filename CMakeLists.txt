@@ -14,6 +14,8 @@ else()
     option(MAHI_GUI_EXAMPLES   "Turn ON to build mahi-gui example(s)" OFF)
 endif()
 
+option(MAHI_GUI_NATIVE_DIAGS   "Turn ON to build native file dialog support" ON)
+
 #===============================================================================
 # FRONT MATTER
 #===============================================================================
@@ -54,24 +56,26 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(3rdparty/glfw)
-install(TARGETS glfw EXPORT mahi-gui-targets 
+install(TARGETS glfw EXPORT mahi-gui-targets
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 # GLAD
 add_subdirectory(3rdparty/glad)
-install(TARGETS glad EXPORT mahi-gui-targets 
+install(TARGETS glad EXPORT mahi-gui-targets
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 # NATIVE FILE DIALOG
-add_subdirectory(3rdparty/nativefiledialog-extended)
-install(TARGETS nfd EXPORT mahi-gui-targets 
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+if (MAHI_GUI_NATIVE_DIAGS)
+    add_subdirectory(3rdparty/nativefiledialog-extended)
+	install(TARGETS nfd EXPORT mahi-gui-targets
+			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+			)
+endif()
 
 # IMGUI
 set(IMGUI_HEADERS
@@ -80,7 +84,7 @@ set(IMGUI_HEADERS
     3rdparty/imgui/imgui.h
     3rdparty/imgui/imstb_rectpack.h
     3rdparty/imgui/imstb_textedit.h
-    3rdparty/imgui/imstb_truetype.h    
+    3rdparty/imgui/imstb_truetype.h
     3rdparty/imgui/imgui_stdlib.h
 )
 
@@ -103,7 +107,7 @@ set(IMPLOT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/implot)
 
 # NANOVG
 add_subdirectory(3rdparty/nanovg)
-install(TARGETS nanovg EXPORT mahi-gui-targets 
+install(TARGETS nanovg EXPORT mahi-gui-targets
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
@@ -113,7 +117,7 @@ set(NANOSVG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/nanosvg/src)
 
 # CLIPPER
 add_subdirectory(3rdparty/clipper)
-install(TARGETS clipper EXPORT mahi-gui-targets 
+install(TARGETS clipper EXPORT mahi-gui-targets
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
@@ -122,8 +126,8 @@ install(TARGETS clipper EXPORT mahi-gui-targets
 # MAHI UTIL
 #===============================================================================
 
-include(FetchContent) 
-FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/mahilab/mahi-util.git) 
+include(FetchContent)
+FetchContent_Declare(mahi-util GIT_REPOSITORY https://github.com/mahilab/mahi-util.git)
 FetchContent_MakeAvailable(mahi-util)
 
 #===============================================================================
@@ -135,7 +139,7 @@ add_library(gui "")
 add_library(mahi::gui ALIAS gui)
 set_target_properties(gui PROPERTIES DEBUG_POSTFIX -d)
 target_compile_features(gui PUBLIC cxx_std_17)
-install(TARGETS gui EXPORT mahi-gui-targets 
+install(TARGETS gui EXPORT mahi-gui-targets
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
@@ -143,6 +147,9 @@ set_target_properties(gui PROPERTIES OUTPUT_NAME "mahi-gui")
 
 # defines
 target_compile_definitions(gui PUBLIC MAHI_GUI IMGUI_IMPL_OPENGL_LOADER_GLAD)
+if(MAHI_GUI_NATIVE_DIAGS)
+	target_compile_definitions(gui PUBLIC MAHI_NATIVE_DIAGS)
+endif()
 
 # add source files
 add_subdirectory(src/Mahi/Gui)
@@ -152,7 +159,7 @@ target_sources(gui PRIVATE ${IMPLOT_SRC} ${IMPLOT_HEADERS})
 
 # add include files
 file(GLOB_RECURSE MAHI_GUI_INCLUDE "include/*.hpp" "include/*.inl" "include/*.h")
-target_sources(gui PRIVATE ${MAHI_GUI_INCLUDE}) # for intellisense 
+target_sources(gui PRIVATE ${MAHI_GUI_INCLUDE}) # for intellisense
 target_include_directories(gui
 	PUBLIC
 		$<INSTALL_INTERFACE:include>
@@ -170,7 +177,9 @@ target_link_libraries(gui PUBLIC glfw)
 target_link_libraries(gui PUBLIC glad)
 target_link_libraries(gui PUBLIC nanovg)
 target_link_libraries(gui PUBLIC clipper)
-target_link_libraries(gui PUBLIC nfd)
+if(MAHI_GUI_NATIVE_DIAGS)
+	target_link_libraries(gui PUBLIC nfd)
+endif()
 if(CMAKE_SYSTEM MATCHES "Linux")
     # https://techoverflow.net/2019/04/17/how-to-fix-gcc-undefined-reference-to-std-experimental-filesystem/
     target_link_libraries(gui PUBLIC GL stdc++fs)

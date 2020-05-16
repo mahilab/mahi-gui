@@ -6,7 +6,9 @@
 #include <Mahi/Gui/Icons/IconsFontAwesome5.hpp>
 #include <Mahi/Gui/Icons/IconsFontAwesome5Brands.hpp>
 #include <Mahi/Gui/Macros.hpp>
+#if MAHI_NATIVE_DIAGS
 #include <Mahi/Gui/Native.hpp>
+#endif
 #include <Mahi/Gui/Rect.hpp>
 #include <Mahi/Gui/Sequence.hpp>
 #include <Mahi/Gui/Shape.hpp>
