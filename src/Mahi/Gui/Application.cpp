@@ -43,7 +43,7 @@ static void glfw_close_callback(GLFWwindow *window);
 static void glfw_key_callback(GLFWwindow *, int key, int scancode, int action, int mods);
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths);
 // IMGUI
-static void configureImGui(GLFWwindow *window);
+static ImGuiContext* configureImGui(GLFWwindow *window);
 }  // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,11 +55,12 @@ util::Event<void(int, const std::string &)> Application::on_error;
 Application::Application(const Config &conf) :
     m_window(nullptr),
     m_vg(nullptr),
+    m_imgui_context(nullptr),
     m_conf(conf),
     m_frame_time(Time::Zero),
     m_dt(Time::Zero),
     m_time(Time::Zero),
-    m_time_scale(1) 
+    m_time_scale(1)
 
 {
     const char* err_msg;
@@ -132,7 +133,9 @@ Application::Application(const Config &conf) :
     if (m_vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
     // configure ImGui
-    configureImGui(m_window);
+    m_imgui_context = configureImGui(m_window);
+    if (!m_imgui_context)
+        throw std::runtime_error("Failed to create ImGui context!");
 }
 
 Application::Application() :
@@ -151,13 +154,23 @@ Application::Application(int width, int height, const std::string &title, bool r
 Application::~Application() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    nvgDeleteGL3(m_vg);
-    glfwDestroyWindow(m_window);
+    if (m_imgui_context) {
+        ImGui::DestroyContext(m_imgui_context);
+        m_imgui_context = nullptr;
+    }
+    if (m_vg) {
+        nvgDeleteGL3(m_vg);
+        m_vg = nullptr;
+    }
+    if (m_window) {
+        glfwDestroyWindow(m_window);
+        m_window = nullptr;
+    }
     glfwTerminate();
 }
 
 void Application::run() {
+    ImGui::SetCurrentContext(m_imgui_context);
     ImGuiIO &   io = ImGui::GetIO();
     util::Clock clock;
     util::Clock dt_clk;
@@ -254,7 +267,7 @@ void Application::run() {
     on_application_quit.emit();
 }
 
-void Application::quit() { glfwSetWindowShouldClose(m_window, 1); }
+void Application::quit() { glfwSetWindowShouldClose(m_window, GLFW_TRUE); }
 
 util::Time Application::real_time() const { return util::seconds(glfwGetTime()); }
 
@@ -464,10 +477,10 @@ static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths
 ///////////////////////////////////////////////////////////////////////////////
 // IMGUI
 ///////////////////////////////////////////////////////////////////////////////
-static void configureImGui(GLFWwindow *window) {
+static ImGuiContext* configureImGui(GLFWwindow *window) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    auto context = ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
@@ -511,7 +524,7 @@ static void configureImGui(GLFWwindow *window) {
                                    fab_ranges);
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
-    
+
     // Main
     imStyle->WindowPadding    = ImVec2(8, 8);
     imStyle->FramePadding     = ImVec2(3, 2);
@@ -556,6 +569,8 @@ static void configureImGui(GLFWwindow *window) {
     // // create device objects and set font  (Evan added this so it may break things)
     // ImGui_ImplOpenGL3_CreateDeviceObjects();
     // ImGui::SetCurrentFont(ImGui::GetDefaultFont());
+
+    return context;
 }
 
 }  // namespace
