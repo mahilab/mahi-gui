@@ -6,6 +6,9 @@ ImPlot is an immediate mode plotting widget for [Dear ImGui](https://github.com/
 <img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots/bar.gif" width="285"> <img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots/query.gif" width="285"> 
 <img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots/views.gif" width="285"> 
 
+<img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots/noise.gif" width="285"> <img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots/stock.gif" width="285"> 
+<img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots/multiy.gif" width="285"> 
+
 ## Features
 
 - multiple plot types: 
@@ -29,6 +32,7 @@ ImPlot is an immediate mode plotting widget for [Dear ImGui](https://github.com/
 - mouse cursor location display and optional crosshairs cursor
 - customizable data getters and data striding (just like ImGui:PlotLine)
 - relatively good performance for high density plots
+- support for single and double precision data
 
 ## Usage
 
@@ -87,6 +91,10 @@ A: Not exactly, but it does give you the ability to query plot sub-ranges, with 
 
 A: Not currently. Use your OS's screen capturing mechanisms if you need to capture a plot. ImPlot is not suitable for rendering publication quality plots; it is only intended to be used as a visualization tool. Post-process your data with MATLAB and matplotlib for these purposes.
 
+**Q: Does ImPlot handle double precision data?**
+
+A: Yes, ImPlot accepts both `float` and `double` for all of its plotting functions.
+
 **Q: Can ImPlot be used with other languages/bindings?**
 
 A: Yes, you can use the C binding, [cimplot](https://github.com/cimgui/cimplot) with most high level languages. 
@@ -94,8 +102,3 @@ A: Yes, you can use the C binding, [cimplot](https://github.com/cimgui/cimplot) 
 ## Special Notes
 - By default, no anti-aliasing is done on line plots for performance reasons. If you use 4x MSAA, then you likely won't even notice. However, you can re-enable AA with the `ImPlotFlags_AntiAliased` flag.
 - If you plan to render several thousands lines or points, then you should consider enabling 32-bit indices by uncommenting `#define ImDrawIdx unsigned int` in your `imconfig.h` file, OR handling the `ImGuiBackendFlags_RendererHasVtxOffset` flag in your renderer (the official OpenGL3 renderer supports this). If you fail to do this, then you may at some point hit the maximum number of indices that can be rendered.
-
-## See Also
-[ImPlot discussion](https://github.com/ocornut/imgui/issues/3173) - ImPlot discussion issue at the official ImGui repository
-
-[imgui-plot](https://github.com/soulthreads/imgui-plot) - an alternate plotting widget by soulthreads
