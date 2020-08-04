@@ -7,9 +7,7 @@ using namespace mahi::util;
 
 class PlotDemo : public Application {
 public:
-    PlotDemo() : Application() { 
-        ImGui::StyleColorsDark();
-    }
+    PlotDemo() : Application() { }
     void update() {
         static bool p_open = true;
         ImPlot::ShowDemoWindow(&p_open);
