@@ -20,21 +20,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// ImPlot v0.4 WIP
+// ImPlot v0.5 WIP
 
 #pragma once
 #include "imgui.h"
 
+#define IMPLOT_VERSION "0.5 WIP"
+
 //-----------------------------------------------------------------------------
-// Basic types and flags
+// Forward Declarations and Basic Types
 //-----------------------------------------------------------------------------
 
-typedef int ImPlotFlags;
-typedef int ImPlotAxisFlags;
-typedef int ImPlotCol;
-typedef int ImPlotStyleVar;
-typedef int ImPlotMarker;
-typedef int ImPlotColormap;
+// Forward declarations
+struct ImPlotContext;          // ImPlot context (opaque struct, see implot_internal.h)
+
+// Enums/Flags
+typedef int ImPlotFlags;       // -> enum ImPlotFlags_
+typedef int ImPlotAxisFlags;   // -> enum ImPlotAxisFlags_
+typedef int ImPlotCol;         // -> enum ImPlotCol_
+typedef int ImPlotStyleVar;    // -> enum ImPlotStyleVar_
+typedef int ImPlotMarker;      // -> enum ImPlotMarker_
+typedef int ImPlotColormap;    // -> enum ImPlotColormap_
 
 // Options for plots.
 enum ImPlotFlags_ {
@@ -133,7 +139,7 @@ enum ImPlotColormap_ {
 struct ImPlotPoint {
     double x, y;
     ImPlotPoint()  { x = y = 0.0; }
-    ImPlotPoint(double _x, double _y) { x = _x; y = _y; }
+    ImPlotPoint(double _x, double _y)     { x = _x; y = _y; }
     double  operator[] (size_t idx) const { return (&x)[idx]; }
     double& operator[] (size_t idx)       { return (&x)[idx]; }
 #ifdef IMPLOT_POINT_CLASS_EXTRA
@@ -145,16 +151,15 @@ struct ImPlotPoint {
 struct ImPlotRange {
     double Min, Max;
     ImPlotRange();
-    bool Contains(double value) const;
-    double Size() const;
+    bool Contains(double value) const { return value >= Min && value <= Max; };
+    double Size() const               { return Max - Min; };
 };
 
 // Combination of two ranges for X and Y axes.
 struct ImPlotLimits {
     ImPlotRange X, Y;
-    ImPlotLimits();
-    bool Contains(const ImPlotPoint& p) const;
-    bool Contains(double x, double y) const;
+    bool Contains(const ImPlotPoint& p) const { return Contains(p.x, p.y); }
+    bool Contains(double x, double y) const   { return X.Contains(x) && Y.Contains(y); }
 };
 
 // Plot style structure
@@ -190,13 +195,30 @@ struct ImPlotInputMap {
 };
 
 //-----------------------------------------------------------------------------
-// Begin/End Plot
+// ImPlot End-User API
 //-----------------------------------------------------------------------------
 
 namespace ImPlot {
 
+//-----------------------------------------------------------------------------
+// ImPlot Context
+//-----------------------------------------------------------------------------
+
+// Creates a new ImPlot context. Call this after ImGui::CreateContext.
+ImPlotContext* CreateContext();
+// Destroys an ImPlot context. Call this before ImGui::DestroyContext. NULL = destroy current context
+void DestroyContext(ImPlotContext* ctx = NULL);
+// Returns the current context. NULL if not context has ben set.
+ImPlotContext* GetCurrentContext();
+// Sets the current context.
+void SetCurrentContext(ImPlotContext* ctx);
+
+//-----------------------------------------------------------------------------
+// Begin/End Plot
+//-----------------------------------------------------------------------------
+
 // Starts a 2D plotting context. If this function returns true, EndPlot() must
-// be called, e.g. "if (BeginPlot(...)) { ... EndPlot(); }"". #title_id must
+// be called, e.g. "if (BeginPlot(...)) { ... EndPlot(); }". #title_id must
 // be unique. If you need to avoid ID collisions or don't want to display a
 // title in the plot, use double hashes (e.g. "MyPlot##Hidden"). If #x_label
 // and/or #y_label are provided, axes labels will be displayed.
@@ -241,33 +263,33 @@ void PlotShaded(const char* label_id, const double* xs, const double* ys1, const
 void PlotShaded(const char* label_id, const float* xs, const float* ys, int count, float y_ref = 0, int offset = 0, int stride = sizeof(float));
 void PlotShaded(const char* label_id, const double* xs, const double* ys, int count, double y_ref = 0, int offset = 0, int stride = sizeof(double));
 
-// Plots a vertical bar graph.
+// Plots a vertical bar graph. #width and #shift are in X units.
 void PlotBars(const char* label_id, const float* values, int count, float width = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
 void PlotBars(const char* label_id, const double* values, int count, double width = 0.67f, double shift = 0, int offset = 0, int stride = sizeof(double));
 void PlotBars(const char* label_id, const float* xs, const float* ys, int count, float width, int offset = 0, int stride = sizeof(float));
 void PlotBars(const char* label_id, const double* xs, const double* ys, int count, double width, int offset = 0, int stride = sizeof(double));
 void PlotBars(const char* label_id, ImPlotPoint (*getter)(void* data, int idx), void* data, int count, double width, int offset = 0);
 
-// Plots a horizontal bar graph.
+// Plots a horizontal bar graph. # height and # shift are in Y units.
 void PlotBarsH(const char* label_id, const float* values, int count, float height = 0.67f, float shift = 0, int offset = 0, int stride = sizeof(float));
 void PlotBarsH(const char* label_id, const double* values, int count, double height = 0.67f, double shift = 0, int offset = 0, int stride = sizeof(double));
 void PlotBarsH(const char* label_id, const float* xs, const float* ys, int count, float height,  int offset = 0, int stride = sizeof(float));
 void PlotBarsH(const char* label_id, const double* xs, const double* ys, int count, double height,  int offset = 0, int stride = sizeof(double));
 void PlotBarsH(const char* label_id, ImPlotPoint (*getter)(void* data, int idx), void* data, int count, double height,  int offset = 0);
 
-// Plots vertical error bar. The label_id should match the label_id of the associated line or bar plot.
+// Plots vertical error bar. The label_id should be the same as the label_id of the associated line or bar plot.
 void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* err, int count, int offset = 0, int stride = sizeof(float));
 void PlotErrorBars(const char* label_id, const double* xs, const double* ys, const double* err, int count, int offset = 0, int stride = sizeof(double));
 void PlotErrorBars(const char* label_id, const float* xs, const float* ys, const float* neg, const float* pos, int count, int offset = 0, int stride = sizeof(float));
 void PlotErrorBars(const char* label_id, const double* xs, const double* ys, const double* neg, const double* pos, int count, int offset = 0, int stride = sizeof(double));
 
-// Plots horizontal error bars. The label_id should match the label_id of the associated line or bar plot.
+// Plots horizontal error bars. The label_id should be the same as the label_id of the associated line or bar plot.
 void PlotErrorBarsH(const char* label_id, const float* xs, const float* ys, const float* err, int count, int offset = 0, int stride = sizeof(float));
 void PlotErrorBarsH(const char* label_id, const double* xs, const double* ys, const double* err, int count, int offset = 0, int stride = sizeof(double));
 void PlotErrorBarsH(const char* label_id, const float* xs, const float* ys, const float* neg, const float* pos, int count, int offset = 0, int stride = sizeof(float));
 void PlotErrorBarsH(const char* label_id, const double* xs, const double* ys, const double* neg, const double* pos, int count, int offset = 0, int stride = sizeof(double));
 
-// Plots a pie chart. If the sum of values > 1 or normalize is true, each value will be normalized. Center and radius are in plot coordinates.
+// Plots a pie chart. If the sum of values > 1 or normalize is true, each value will be normalized. Center and radius are in plot units.
 void PlotPieChart(const char** label_ids, const float* values, int count, float x, float y, float radius, bool normalize = false, const char* label_fmt = "%.1f", float angle0 = 90);
 void PlotPieChart(const char** label_ids, const double* values, int count, double x, double y, double radius, bool normalize = false, const char* label_fmt = "%.1f", double angle0 = 90);
 
@@ -280,7 +302,7 @@ void PlotDigital(const char* label_id, const float* xs, const float* ys, int cou
 void PlotDigital(const char* label_id, const double* xs, const double* ys, int count, int offset = 0, int stride = sizeof(double));
 void PlotDigital(const char* label_id, ImPlotPoint (*getter)(void* data, int idx), void* data, int count, int offset = 0);
 
-// Plots a text label at point x,y.
+// Plots a centered text label at point x,y with optional pixel offset. Text color can be changed with ImGui::PushStyleColor(ImGuiCol_Text, ...).
 void PlotText(const char* text, float x, float y, bool vertical = false, const ImVec2& pixel_offset = ImVec2(0,0));
 void PlotText(const char* text, double x, double y, bool vertical = false, const ImVec2& pixel_offset = ImVec2(0,0));
 
@@ -346,6 +368,8 @@ int GetColormapSize();
 ImVec4 GetColormapColor(int index);
 // Linearly interpolates a color from the current colormap given t between 0 and 1.
 ImVec4 LerpColormap(float t);
+// Returns the next unused colormap color and advances the colormap. Can be used to skip colors if desired.
+ImVec4 NextColormapColor();
 
 //-----------------------------------------------------------------------------
 // Plot Utils
@@ -361,6 +385,7 @@ void SetNextPlotLimitsY(double y_min, double y_max, ImGuiCond cond = ImGuiCond_O
 // Set the X axis ticks and optionally the labels for the next plot.
 void SetNextPlotTicksX(const double* values, int n_ticks, const char** labels = NULL, bool show_default = false);
 void SetNextPlotTicksX(double x_min, double x_max, int n_ticks, const char** labels = NULL, bool show_default = false);
+
 // Set the Y axis ticks and optionally the labels for the next plot.
 void SetNextPlotTicksY(const double* values, int n_ticks, const char** labels = NULL, bool show_default = false, int y_axis = 0);
 void SetNextPlotTicksY(double y_min, double y_max, int n_ticks, const char** labels = NULL, bool show_default = false, int y_axis = 0);
@@ -375,8 +400,11 @@ ImVec2 GetPlotSize();
 
 // Convert pixels to a position in the current plot's coordinate system. A negative y_axis uses the current value of SetPlotYAxis (0 initially).
 ImPlotPoint PixelsToPlot(const ImVec2& pix, int y_axis = -1);
+ImPlotPoint PixelsToPlot(float x, float y, int y_axis = -1);
+
 // Convert a position in the current plot's coordinate system to pixels. A negative y_axis uses the current value of SetPlotYAxis (0 initially).
 ImVec2 PlotToPixels(const ImPlotPoint& plt, int y_axis = -1);
+ImVec2 PlotToPixels(double x, double y, int y_axis = -1);
 
 // Renders a vertical color scale using the current color map
 void ShowColormapScale(double scale_min, double scale_max, float height);

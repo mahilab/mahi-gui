@@ -12,6 +12,7 @@
 #include "imgui_internal.h"
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
+#include "implot.h"
 #include <stdio.h>
 #include <iostream>
 #include <stdexcept>
@@ -56,6 +57,7 @@ Application::Application(const Config &conf) :
     m_window(nullptr),
     m_vg(nullptr),
     m_imgui_context(nullptr),
+    m_implot_context(nullptr),
     m_conf(conf),
     m_frame_time(Time::Zero),
     m_dt(Time::Zero),
@@ -136,6 +138,9 @@ Application::Application(const Config &conf) :
     m_imgui_context = configureImGui(m_window);
     if (!m_imgui_context)
         throw std::runtime_error("Failed to create ImGui context!");
+    m_implot_context = ImPlot::CreateContext();
+    if (!m_implot_context)
+        throw std::runtime_error("Failed to create ImPlot context!");
 }
 
 Application::Application() :
@@ -154,6 +159,10 @@ Application::Application(int width, int height, const std::string &title, bool r
 Application::~Application() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
+    if (m_implot_context) {
+        ImPlot::DestroyContext(m_implot_context);
+        m_implot_context = nullptr;
+    }
     if (m_imgui_context) {
         ImGui::DestroyContext(m_imgui_context);
         m_imgui_context = nullptr;

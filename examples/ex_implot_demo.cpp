@@ -1,4 +1,5 @@
-// #define MAHI_GUI_NO_CONSOLE
+#define MAHI_GUI_NO_CONSOLE
+#define MAHI_GUI_USE_DISCRETE_GPU
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
 
