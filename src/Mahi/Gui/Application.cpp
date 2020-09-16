@@ -21,6 +21,7 @@
 #ifdef __linux__
 #include <string.h>
 #else
+#include <cstring>
 using std::memcpy;
 #endif
 
