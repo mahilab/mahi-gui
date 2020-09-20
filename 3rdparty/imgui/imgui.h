@@ -1,4 +1,4 @@
-// dear imgui, v1.78 WIP
+// dear imgui, v1.79 WIP
 // (headers)
 
 // Help:
@@ -34,6 +34,8 @@ Index of this file:
 // Font API (ImFontConfig, ImFontGlyph, ImFontGlyphRangesBuilder, ImFontAtlasFlags, ImFontAtlas, ImFont)
 // Platform interface for multi-viewport support (ImGuiPlatformIO, ImGuiPlatformMonitor, ImGuiViewportFlags, ImGuiViewport)
 
+// FIXME-TABLE: Add ImGuiTableSortSpecsColumn and ImGuiTableSortSpecs in "Misc data structures" section above (we don't do it right now to facilitate merging various branches)
+
 */
 
 #pragma once
@@ -60,8 +62,8 @@ Index of this file:
 
 // Version
 // (Integer encoded as XYYZZ for use in #if preprocessor conditionals. Work in progress versions typically starts at XYY99 then bounce up to XYY00, XYY01 etc. when release tagging happens)
-#define IMGUI_VERSION               "1.78 WIP"
-#define IMGUI_VERSION_NUM           17703
+#define IMGUI_VERSION               "1.79 WIP"
+#define IMGUI_VERSION_NUM           17803
 #define IMGUI_CHECKVERSION()        ImGui::DebugCheckVersionAndDataLayout(IMGUI_VERSION, sizeof(ImGuiIO), sizeof(ImGuiStyle), sizeof(ImVec2), sizeof(ImVec4), sizeof(ImDrawVert), sizeof(ImDrawIdx))
 #define IMGUI_HAS_VIEWPORT          1 // Viewport WIP branch
 #define IMGUI_HAS_DOCK              1 // Docking WIP branch
@@ -138,6 +140,8 @@ struct ImGuiPlatformMonitor;        // Multi-viewport support: user-provided bou
 struct ImGuiSizeCallbackData;       // Callback data when using SetNextWindowSizeConstraints() (rare/advanced use)
 struct ImGuiStorage;                // Helper for key->value storage
 struct ImGuiStyle;                  // Runtime data for styling/colors
+struct ImGuiTableSortSpecs;         // Sorting specifications for a table (often handling sort specs for a single column, occasionally more)
+struct ImGuiTableSortSpecsColumn;   // Sorting specification for one column of a table
 struct ImGuiTextBuffer;             // Helper to hold and append into a text buffer (~string builder)
 struct ImGuiTextFilter;             // Helper to parse and apply text filters (e.g. "aaaaa[,bbbbb][,ccccc]")
 struct ImGuiViewport;               // Viewport (generally ~1 per window to output to at the OS level. Need per-platform support to use multiple viewports)
@@ -155,7 +159,9 @@ typedef int ImGuiKey;               // -> enum ImGuiKey_             // Enum: A 
 typedef int ImGuiNavInput;          // -> enum ImGuiNavInput_        // Enum: An input identifier for navigation
 typedef int ImGuiMouseButton;       // -> enum ImGuiMouseButton_     // Enum: A mouse button identifier (0=left, 1=right, 2=middle)
 typedef int ImGuiMouseCursor;       // -> enum ImGuiMouseCursor_     // Enum: A mouse cursor identifier
+typedef int ImGuiSortDirection;     // -> enum ImGuiSortDirection_   // Enum: A sorting direction (ascending or descending)
 typedef int ImGuiStyleVar;          // -> enum ImGuiStyleVar_        // Enum: A variable identifier for styling
+typedef int ImGuiTableBgTarget;     // -> enum ImGuiTableBgTarget_   // Enum: A color target for TableSetBgColor()
 typedef int ImDrawCornerFlags;      // -> enum ImDrawCornerFlags_    // Flags: for ImDrawList::AddRect(), AddRectFilled() etc.
 typedef int ImDrawListFlags;        // -> enum ImDrawListFlags_      // Flags: for ImDrawList
 typedef int ImFontAtlasFlags;       // -> enum ImFontAtlasFlags_     // Flags: for ImFontAtlas build
@@ -172,8 +178,12 @@ typedef int ImGuiInputTextFlags;    // -> enum ImGuiInputTextFlags_  // Flags: f
 typedef int ImGuiKeyModFlags;       // -> enum ImGuiKeyModFlags_     // Flags: for io.KeyMods (Ctrl/Shift/Alt/Super)
 typedef int ImGuiPopupFlags;        // -> enum ImGuiPopupFlags_      // Flags: for OpenPopup*(), BeginPopupContext*(), IsPopupOpen()
 typedef int ImGuiSelectableFlags;   // -> enum ImGuiSelectableFlags_ // Flags: for Selectable()
+typedef int ImGuiSliderFlags;       // -> enum ImGuiSliderFlags_     // Flags: for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
 typedef int ImGuiTabBarFlags;       // -> enum ImGuiTabBarFlags_     // Flags: for BeginTabBar()
 typedef int ImGuiTabItemFlags;      // -> enum ImGuiTabItemFlags_    // Flags: for BeginTabItem()
+typedef int ImGuiTableFlags;        // -> enum ImGuiTableFlags_      // Flags: For BeginTable()
+typedef int ImGuiTableColumnFlags;  // -> enum ImGuiTableColumnFlags_// Flags: For TableSetupColumn()
+typedef int ImGuiTableRowFlags;     // -> enum ImGuiTableRowFlags_   // Flags: For TableNextRow()
 typedef int ImGuiTreeNodeFlags;     // -> enum ImGuiTreeNodeFlags_   // Flags: for TreeNode(), TreeNodeEx(), CollapsingHeader()
 typedef int ImGuiViewportFlags;     // -> enum ImGuiViewportFlags_   // Flags: for ImGuiViewport
 typedef int ImGuiWindowFlags;       // -> enum ImGuiWindowFlags_     // Flags: for Begin(), BeginChild()
@@ -345,8 +355,8 @@ namespace ImGui
     // Windows Scrolling
     IMGUI_API float         GetScrollX();                                                   // get scrolling amount [0..GetScrollMaxX()]
     IMGUI_API float         GetScrollY();                                                   // get scrolling amount [0..GetScrollMaxY()]
-    IMGUI_API float         GetScrollMaxX();                                                // get maximum scrolling amount ~~ ContentSize.X - WindowSize.X
-    IMGUI_API float         GetScrollMaxY();                                                // get maximum scrolling amount ~~ ContentSize.Y - WindowSize.Y
+    IMGUI_API float         GetScrollMaxX();                                                // get maximum scrolling amount ~~ ContentSize.x - WindowSize.x
+    IMGUI_API float         GetScrollMaxY();                                                // get maximum scrolling amount ~~ ContentSize.y - WindowSize.y
     IMGUI_API void          SetScrollX(float scroll_x);                                     // set scrolling amount [0..GetScrollMaxX()]
     IMGUI_API void          SetScrollY(float scroll_y);                                     // set scrolling amount [0..GetScrollMaxY()]
     IMGUI_API void          SetScrollHereX(float center_x_ratio = 0.5f);                    // adjust scrolling amount to make current cursor position visible. center_x_ratio=0.0: left, 0.5: center, 1.0: right. When using to make a "default/current item" visible, consider using SetItemDefaultFocus() instead.
@@ -470,43 +480,50 @@ namespace ImGui
     IMGUI_API bool          Combo(const char* label, int* current_item, const char* items_separated_by_zeros, int popup_max_height_in_items = -1);      // Separate items with \0 within a string, end item-list with \0\0. e.g. "One\0Two\0Three\0"
     IMGUI_API bool          Combo(const char* label, int* current_item, bool(*items_getter)(void* data, int idx, const char** out_text), void* data, int items_count, int popup_max_height_in_items = -1);
 
-    // Widgets: Drags
+    // Widgets: Drag Sliders
     // - CTRL+Click on any drag box to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
     // - For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function argument is the same as 'float* v', the array syntax is just a way to document the number of elements that are expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
     // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
+    // - Format string may also be set to NULL or use the default format ("%f" or "%d").
     // - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1). For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
     // - Use v_min < v_max to clamp edits to given limits. Note that CTRL+Click manual input can override those limits.
     // - Use v_max = FLT_MAX / INT_MAX etc to avoid clamping to a maximum, same with v_min = -FLT_MAX / INT_MIN to avoid clamping to a minimum.
-    IMGUI_API bool          DragFloat(const char* label, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f);     // If v_min >= v_max we have no bound
-    IMGUI_API bool          DragFloat2(const char* label, float v[2], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          DragFloat3(const char* label, float v[3], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          DragFloat4(const char* label, float v[4], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", const char* format_max = NULL, float power = 1.0f);
-    IMGUI_API bool          DragInt(const char* label, int* v, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d");                                       // If v_min >= v_max we have no bound
-    IMGUI_API bool          DragInt2(const char* label, int v[2], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d");
-    IMGUI_API bool          DragInt3(const char* label, int v[3], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d");
-    IMGUI_API bool          DragInt4(const char* label, int v[4], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d");
-    IMGUI_API bool          DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", const char* format_max = NULL);
-    IMGUI_API bool          DragScalar(const char* label, ImGuiDataType data_type, void* p_data, float v_speed, const void* p_min = NULL, const void* p_max = NULL, const char* format = NULL, float power = 1.0f);
-    IMGUI_API bool          DragScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, float v_speed, const void* p_min = NULL, const void* p_max = NULL, const char* format = NULL, float power = 1.0f);
+    // - We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it easier to swap them.
+    // - Legacy: Pre-1.78 there are DragXXX() function signatures that takes a final `float power=1.0f' argument instead of the `ImGuiSliderFlags flags=0' argument.
+    //   If you get a warning converting a float to ImGuiSliderFlags, read https://github.com/ocornut/imgui/issues/3361
+    IMGUI_API bool          DragFloat(const char* label, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);     // If v_min >= v_max we have no bound
+    IMGUI_API bool          DragFloat2(const char* label, float v[2], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragFloat3(const char* label, float v[3], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragFloat4(const char* label, float v[4], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragFloatRange2(const char* label, float* v_current_min, float* v_current_max, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", const char* format_max = NULL, ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragInt(const char* label, int* v, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0);  // If v_min >= v_max we have no bound
+    IMGUI_API bool          DragInt2(const char* label, int v[2], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragInt3(const char* label, int v[3], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragInt4(const char* label, int v[4], float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragIntRange2(const char* label, int* v_current_min, int* v_current_max, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", const char* format_max = NULL, ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragScalar(const char* label, ImGuiDataType data_type, void* p_data, float v_speed, const void* p_min = NULL, const void* p_max = NULL, const char* format = NULL, ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          DragScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, float v_speed, const void* p_min = NULL, const void* p_max = NULL, const char* format = NULL, ImGuiSliderFlags flags = 0);
 
-    // Widgets: Sliders
+    // Widgets: Regular Sliders
     // - CTRL+Click on any slider to turn them into an input box. Manually input values aren't clamped and can go off-bounds.
     // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
-    IMGUI_API bool          SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);     // adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display. Use power!=1.0 for power curve sliders
-    IMGUI_API bool          SliderFloat2(const char* label, float v[2], float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          SliderFloat3(const char* label, float v[3], float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          SliderFloat4(const char* label, float v[4], float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          SliderAngle(const char* label, float* v_rad, float v_degrees_min = -360.0f, float v_degrees_max = +360.0f, const char* format = "%.0f deg");
-    IMGUI_API bool          SliderInt(const char* label, int* v, int v_min, int v_max, const char* format = "%d");
-    IMGUI_API bool          SliderInt2(const char* label, int v[2], int v_min, int v_max, const char* format = "%d");
-    IMGUI_API bool          SliderInt3(const char* label, int v[3], int v_min, int v_max, const char* format = "%d");
-    IMGUI_API bool          SliderInt4(const char* label, int v[4], int v_min, int v_max, const char* format = "%d");
-    IMGUI_API bool          SliderScalar(const char* label, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format = NULL, float power = 1.0f);
-    IMGUI_API bool          SliderScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format = NULL, float power = 1.0f);
-    IMGUI_API bool          VSliderFloat(const char* label, const ImVec2& size, float* v, float v_min, float v_max, const char* format = "%.3f", float power = 1.0f);
-    IMGUI_API bool          VSliderInt(const char* label, const ImVec2& size, int* v, int v_min, int v_max, const char* format = "%d");
-    IMGUI_API bool          VSliderScalar(const char* label, const ImVec2& size, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format = NULL, float power = 1.0f);
+    // - Format string may also be set to NULL or use the default format ("%f" or "%d").
+    // - Legacy: Pre-1.78 there are SliderXXX() function signatures that takes a final `float power=1.0f' argument instead of the `ImGuiSliderFlags flags=0' argument.
+    //   If you get a warning converting a float to ImGuiSliderFlags, read https://github.com/ocornut/imgui/issues/3361
+    IMGUI_API bool          SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);     // adjust format to decorate the value with a prefix or a suffix for in-slider labels or unit display.
+    IMGUI_API bool          SliderFloat2(const char* label, float v[2], float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderFloat3(const char* label, float v[3], float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderFloat4(const char* label, float v[4], float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderAngle(const char* label, float* v_rad, float v_degrees_min = -360.0f, float v_degrees_max = +360.0f, const char* format = "%.0f deg", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderInt(const char* label, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderInt2(const char* label, int v[2], int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderInt3(const char* label, int v[3], int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderInt4(const char* label, int v[4], int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderScalar(const char* label, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format = NULL, ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          SliderScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format = NULL, ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          VSliderFloat(const char* label, const ImVec2& size, float* v, float v_min, float v_max, const char* format = "%.3f", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          VSliderInt(const char* label, const ImVec2& size, int* v, int v_min, int v_max, const char* format = "%d", ImGuiSliderFlags flags = 0);
+    IMGUI_API bool          VSliderScalar(const char* label, const ImVec2& size, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format = NULL, ImGuiSliderFlags flags = 0);
 
     // Widgets: Input with Keyboard
     // - If you want to use InputText() with std::string or any custom dynamic string type, see misc/cpp/imgui_stdlib.h and comments in imgui_demo.cpp.
@@ -653,6 +670,40 @@ namespace ImGui
     IMGUI_API float         GetColumnOffset(int column_index = -1);                             // get position of column line (in pixels, from the left side of the contents region). pass -1 to use current column, otherwise 0..GetColumnsCount() inclusive. column 0 is typically 0.0f
     IMGUI_API void          SetColumnOffset(int column_index, float offset_x);                  // set position of column line (in pixels, from the left side of the contents region). pass -1 to use current column
     IMGUI_API int           GetColumnsCount();
+
+    // Tables
+    // [ALPHA API] API will evolve! (FIXME-TABLE)
+    // - Full-featured replacement for old Columns API
+    // - In most situations you can use TableNextRow() + TableSetColumnIndex() to populate a table.
+    // - If you are using tables as a sort of grid, populating every columns with the same type of contents,
+    //   you may prefer using TableNextCell() instead of TableNextRow() + TableSetColumnIndex().
+    // - See Demo->Tables for details.
+    // - See ImGuiTableFlags_ and ImGuiTableColumnsFlags_ enums for a description of available flags.
+    #define IMGUI_HAS_TABLE 1
+    IMGUI_API bool          BeginTable(const char* str_id, int columns_count, ImGuiTableFlags flags = 0, const ImVec2& outer_size = ImVec2(0, 0), float inner_width = 0.0f);
+    IMGUI_API void          EndTable();                                 // only call EndTable() if BeginTable() returns true!
+    IMGUI_API void          TableNextRow(ImGuiTableRowFlags row_flags = 0, float min_row_height = 0.0f); // append into the first cell of a new row.
+    IMGUI_API bool          TableNextCell();                            // append into the next column (next column, or next row if currently in last column). Return true if column is visible.
+    IMGUI_API bool          TableSetColumnIndex(int column_n);          // append into the specified column. Return true if column is visible.
+    IMGUI_API int           TableGetColumnIndex();                      // return current column index.
+    IMGUI_API const char*   TableGetColumnName(int column_n = -1);      // return NULL if column didn't have a name declared by TableSetupColumn(). Pass -1 to use current column.
+    IMGUI_API bool          TableGetColumnIsVisible(int column_n = -1); // return true if column is visible. Same value is also returned by TableNextCell() and TableSetColumnIndex(). Pass -1 to use current column.
+    IMGUI_API bool          TableGetColumnIsSorted(int column_n = -1);  // return true if column is included in the sort specs. Rarely used, can be useful to tell if a data change should trigger resort. Equivalent to test ImGuiTableSortSpecs's ->ColumnsMask & (1 << column_n). Pass -1 to use current column.
+    IMGUI_API int           TableGetHoveredColumn();                    // return hovered column. return -1 when table is not hovered. return columns_count if the unused space at the right of visible columns is hovered.
+    IMGUI_API void          TableSetBgColor(ImGuiTableBgTarget bg_target, ImU32 color, int column_n = -1);  // change the color of a cell, row, or column. See ImGuiTableBgTarget_ flags for details.
+    // Tables: Headers & Columns declaration
+    // - Use TableSetupColumn() to specify label, resizing policy, default width, id, various other flags etc.
+    // - The name passed to TableSetupColumn() is used by TableAutoHeaders() and by the context-menu
+    // - Use TableAutoHeaders() to submit the whole header row, otherwise you may treat the header row as a regular row, manually call TableHeader() and other widgets.
+    // - Headers are required to perform some interactions: reordering, sorting, context menu (FIXME-TABLE: context menu should work without!)
+    IMGUI_API void          TableSetupColumn(const char* label, ImGuiTableColumnFlags flags = 0, float init_width_or_weight = -1.0f, ImU32 user_id = 0);
+    IMGUI_API void          TableAutoHeaders();                         // submit all headers cells based on data provided to TableSetupColumn() + submit context menu
+    IMGUI_API void          TableHeader(const char* label);             // submit one header cell manually.
+    // Tables: Sorting
+    // - Call TableGetSortSpecs() to retrieve latest sort specs for the table. Return value will be NULL if no sorting.
+    // - You can sort your data again when 'SpecsChanged == true'. It will be true with sorting specs have changed since last call, or the first time.
+    // - Lifetime: don't hold on this pointer over multiple frames or past any subsequent call to BeginTable()!
+    IMGUI_API const ImGuiTableSortSpecs* TableGetSortSpecs();           // get latest sort specs for the table (NULL if not sorting).
 
     // Tab Bars, Tabs
     // Note: Tabs are automatically created by the docking system. Use this to create tab bars/tabs yourself without docking being involved.
@@ -890,6 +941,7 @@ enum ImGuiInputTextFlags_
     ImGuiInputTextFlags_NoUndoRedo          = 1 << 16,  // Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own undo/redo stack you need e.g. to call ClearActiveID().
     ImGuiInputTextFlags_CharsScientific     = 1 << 17,  // Allow 0123456789.+-*/eE (Scientific notation input)
     ImGuiInputTextFlags_CallbackResize      = 1 << 18,  // Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow. Notify when the string wants to be resized (for string types which hold a cache of their Size). You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stdlib.h for an example of using this)
+    ImGuiInputTextFlags_CallbackEdit        = 1 << 19,  // Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)
     // [Internal]
     ImGuiInputTextFlags_Multiline           = 1 << 20,  // For internal use by InputTextMultiline()
     ImGuiInputTextFlags_NoMarkEdited        = 1 << 21   // For internal use by functions using InputText() before reformatting data
@@ -990,6 +1042,126 @@ enum ImGuiTabItemFlags_
     ImGuiTabItemFlags_NoTooltip                     = 1 << 4    // Disable tooltip for the given tab
 };
 
+// Flags for ImGui::BeginTable()
+// - Important! Sizing policies have particularly complex and subtle side effects, more so than you would expect.
+//   Read comments/demos carefully + experiment with live demos to get acquainted with them.
+// - The default sizing policy for columns depends on whether the ScrollX flag is set on the table:
+//   When ScrollX is off:
+//    - Table defaults to ImGuiTableFlags_SizingPolicyStretchX -> all Columns defaults to ImGuiTableColumnFlags_WidthStretch.
+//    - Columns sizing policy allowed: Fixed/Auto or Stretch.
+//    - Stretch Columns will share the width available in table.
+//    - Fixed Columns will generally obtain their requested width unless the Table cannot fit them all.
+//   When ScrollX is on:
+//    - Table defaults to ImGuiTableFlags_SizingPolicyFixedX -> all Columns defaults to ImGuiTableColumnFlags_WidthFixed.
+//    - Columns sizing policy allowed: Fixed/Auto mostly! Using Stretch columns OFTEN DOES NOT MAKE SENSE if ScrollX is on, UNLESS you have specified a value for 'inner_width' in BeginTable().
+//    - Fixed Columns can be enlarged as needed. Table will show an horizontal scrollbar if needed. 
+//    - Stretch Columns, if any, will calculate their width using inner_width, assuming no scrolling (it really doesn't make sense to do otherwise). 
+// - Mixing up columns with different sizing policy is possible BUT can be tricky and has some side-effects and restrictions.
+//   (their visible order and the scrolling state have subtle but necessary effects on how they can be manually resized).
+//   The typical use of mixing sizing policies is to have ScrollX disabled, one or two Stretch Column and many Fixed Columns.
+enum ImGuiTableFlags_
+{
+    // Features
+    ImGuiTableFlags_None                            = 0,
+    ImGuiTableFlags_Resizable                       = 1 << 0,   // Allow resizing columns.
+    ImGuiTableFlags_Reorderable                     = 1 << 1,   // Allow reordering columns (need calling TableSetupColumn() + TableAutoHeaders() or TableHeaders() to display headers)
+    ImGuiTableFlags_Hideable                        = 1 << 2,   // Allow hiding columns (with right-click on header) (FIXME-TABLE: allow without headers).
+    ImGuiTableFlags_Sortable                        = 1 << 3,   // Allow sorting on one column (sort_specs_count will always be == 1). Call TableGetSortSpecs() to obtain sort specs.
+    ImGuiTableFlags_MultiSortable                   = 1 << 4,   // Allow sorting on multiple columns by holding Shift (sort_specs_count may be > 1). Call TableGetSortSpecs() to obtain sort specs.
+    ImGuiTableFlags_NoSavedSettings                 = 1 << 5,   // Disable persisting columns order, width and sort settings in the .ini file.
+    // Decoration
+    ImGuiTableFlags_RowBg                           = 1 << 6,   // Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent to calling TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually)
+    ImGuiTableFlags_BordersInnerH                   = 1 << 7,   // Draw horizontal borders between rows.
+    ImGuiTableFlags_BordersOuterH                   = 1 << 8,   // Draw horizontal borders at the top and bottom.
+    ImGuiTableFlags_BordersInnerV                   = 1 << 9,   // Draw vertical borders between columns.
+    ImGuiTableFlags_BordersOuterV                   = 1 << 10,  // Draw vertical borders on the left and right sides.
+    ImGuiTableFlags_BordersH                        = ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_BordersOuterH, // Draw horizontal borders.
+    ImGuiTableFlags_BordersV                        = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersOuterV, // Draw vertical borders.
+    ImGuiTableFlags_BordersInner                    = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersInnerH, // Draw inner borders.
+    ImGuiTableFlags_BordersOuter                    = ImGuiTableFlags_BordersOuterV | ImGuiTableFlags_BordersOuterH, // Draw outer borders.
+    ImGuiTableFlags_Borders                         = ImGuiTableFlags_BordersInner | ImGuiTableFlags_BordersOuter,   // Draw all borders.
+    ImGuiTableFlags_BordersFullHeightV              = 1 << 11,  // Borders covers all rows even when Headers are being used. Allow resizing from any rows.
+    // Padding, Sizing
+    ImGuiTableFlags_NoClipX                         = 1 << 14,  // Disable pushing clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow)
+    ImGuiTableFlags_SizingPolicyFixedX              = 1 << 15,  // Default if ScrollX is on. Columns will default to use _WidthFixed or _WidthAlwaysAutoResize policy. Read description above for more details.
+    ImGuiTableFlags_SizingPolicyStretchX            = 1 << 16,  // Default if ScrollX is off. Columns will default to use _WidthStretch policy. Read description above for more details.
+    ImGuiTableFlags_NoHeadersWidth                  = 1 << 17,  // Disable header width contribution to automatic width calculation.
+    ImGuiTableFlags_NoHostExtendY                   = 1 << 18,  // (FIXME-TABLE: Reword as SizingPolicy?) Disable extending past the limit set by outer_size.y, only meaningful when neither of ScrollX|ScrollY are set (data below the limit will be clipped and not visible)
+    ImGuiTableFlags_NoKeepColumnsVisible            = 1 << 19,  // (FIXME-TABLE) Disable code that keeps column always minimally visible when table width gets too small and horizontal scrolling is off.
+    // Scrolling
+    ImGuiTableFlags_ScrollX                         = 1 << 20,  // Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Because this create a child window, ScrollY is currently generally recommended when using ScrollX.
+    ImGuiTableFlags_ScrollY                         = 1 << 21,  // Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size.
+    ImGuiTableFlags_Scroll                          = ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY,
+    ImGuiTableFlags_ScrollFreezeTopRow              = 1 << 22,  // We can lock 1 to 3 rows (starting from the top). Use with ScrollY enabled.
+    ImGuiTableFlags_ScrollFreeze2Rows               = 2 << 22,
+    ImGuiTableFlags_ScrollFreeze3Rows               = 3 << 22,
+    ImGuiTableFlags_ScrollFreezeLeftColumn          = 1 << 24,  // We can lock 1 to 3 columns (starting from the left). Use with ScrollX enabled.
+    ImGuiTableFlags_ScrollFreeze2Columns            = 2 << 24,
+    ImGuiTableFlags_ScrollFreeze3Columns            = 3 << 24,
+
+    // [Internal] Combinations and masks
+    ImGuiTableFlags_SizingPolicyMaskX_              = ImGuiTableFlags_SizingPolicyStretchX | ImGuiTableFlags_SizingPolicyFixedX,
+    ImGuiTableFlags_ScrollFreezeRowsShift_          = 22,
+    ImGuiTableFlags_ScrollFreezeColumnsShift_       = 24,
+    ImGuiTableFlags_ScrollFreezeRowsMask_           = 0x03 << ImGuiTableFlags_ScrollFreezeRowsShift_,
+    ImGuiTableFlags_ScrollFreezeColumnsMask_        = 0x03 << ImGuiTableFlags_ScrollFreezeColumnsShift_
+};
+
+// Flags for ImGui::TableSetupColumn()
+// FIXME-TABLE: Rename to ImGuiColumns_*, stick old columns api flags in there under an obsolete api block
+enum ImGuiTableColumnFlags_
+{
+    ImGuiTableColumnFlags_None                      = 0,
+    ImGuiTableColumnFlags_DefaultHide               = 1 << 0,   // Default as a hidden column.
+    ImGuiTableColumnFlags_DefaultSort               = 1 << 1,   // Default as a sorting column.
+    ImGuiTableColumnFlags_WidthFixed                = 1 << 2,   // Column will keep a fixed size, preferable with horizontal scrolling enabled (default if table sizing policy is SizingPolicyFixedX and table is resizable).
+    ImGuiTableColumnFlags_WidthStretch              = 1 << 3,   // Column will stretch, preferable with horizontal scrolling disabled (default if table sizing policy is SizingPolicyStretchX).
+    ImGuiTableColumnFlags_WidthAlwaysAutoResize     = 1 << 4,   // Column will keep resizing based on submitted contents (with a one frame delay) == Fixed with auto resize (default if table sizing policy is SizingPolicyFixedX and table is not resizable).
+    ImGuiTableColumnFlags_NoResize                  = 1 << 5,   // Disable manual resizing.
+    ImGuiTableColumnFlags_NoClipX                   = 1 << 6,   // Disable clipping for this column (all NoClipX columns will render in a same draw command).
+    ImGuiTableColumnFlags_NoSort                    = 1 << 7,   // Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table).
+    ImGuiTableColumnFlags_NoSortAscending           = 1 << 8,   // Disable ability to sort in the ascending direction.
+    ImGuiTableColumnFlags_NoSortDescending          = 1 << 9,   // Disable ability to sort in the descending direction.
+    ImGuiTableColumnFlags_NoHide                    = 1 << 10,  // Disable hiding this column.
+    ImGuiTableColumnFlags_NoHeaderWidth             = 1 << 11,  // Header width don't contribute to automatic column width.
+    ImGuiTableColumnFlags_PreferSortAscending       = 1 << 12,  // Make the initial sort direction Ascending when first sorting on this column (default).
+    ImGuiTableColumnFlags_PreferSortDescending      = 1 << 13,  // Make the initial sort direction Descending when first sorting on this column.
+    ImGuiTableColumnFlags_IndentEnable              = 1 << 14,  // Use current Indent value when entering cell (default for 1st column).
+    ImGuiTableColumnFlags_IndentDisable             = 1 << 15,  // Ignore current Indent value when entering cell (default for columns after the 1st one). Indentation changes _within_ the cell will still be honored.
+    ImGuiTableColumnFlags_NoReorder                 = 1 << 16,  // Disable reordering this column, this will also prevent other columns from crossing over this column.
+
+    // [Internal] Combinations and masks
+    ImGuiTableColumnFlags_WidthMask_                = ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_WidthStretch | ImGuiTableColumnFlags_WidthAlwaysAutoResize,
+    ImGuiTableColumnFlags_IndentMask_               = ImGuiTableColumnFlags_IndentEnable | ImGuiTableColumnFlags_IndentDisable,
+    ImGuiTableColumnFlags_NoDirectResize_           = 1 << 20   // [Internal] Disable user resizing this column directly (it may however we resized indirectly from its left edge)
+};
+
+// Flags for ImGui::TableNextRow()
+enum ImGuiTableRowFlags_
+{
+    ImGuiTableRowFlags_None                         = 0,
+    ImGuiTableRowFlags_Headers                      = 1 << 0    // Identify header row (set default background color + width of its contents accounted different for auto column width)
+};
+
+// Enum for ImGui::TableSetBgColor()
+// Background colors are rendering in 3 layers:
+//  - Layer 0: draw with RowBg0 color if set, otherwise draw with ColumnBg0 if set.
+//  - Layer 1: draw with RowBg1 color if set, otherwise draw with ColumnBg1 if set.
+//  - Layer 2: draw with CellBg color if set.
+// The purpose of the two row/columns layers is to let you decide if a background color changes should override or blend with the existing color.
+// When using ImGuiTableFlags_RowBg on the table, each row has the RowBg0 color automatically set for odd/even rows.
+// If you set the color of RowBg0 target, your color will override the existing RowBg0 color.
+// If you set the color of RowBg1 or ColumnBg1 target, your color will blend over the RowBg0 color.
+enum ImGuiTableBgTarget_
+{
+    ImGuiTableBgTarget_None                         = 0,
+    ImGuiTableBgTarget_ColumnBg0                    = 1,        // FIXME-TABLE: Todo. Set column background color 0 (generally used for background
+    ImGuiTableBgTarget_ColumnBg1                    = 2,        // FIXME-TABLE: Todo. Set column background color 1 (generally used for selection marking)
+    ImGuiTableBgTarget_RowBg0                       = 3,        // Set row background color 0 (generally used for background, automatically set when ImGuiTableFlags_RowBg is used)
+    ImGuiTableBgTarget_RowBg1                       = 4,        // Set row background color 1 (generally used for selection marking)
+    ImGuiTableBgTarget_CellBg                       = 5         // Set cell background color (top-most color)
+};
+
 // Flags for ImGui::IsWindowFocused()
 enum ImGuiFocusedFlags_
 {
@@ -1080,6 +1252,14 @@ enum ImGuiDir_
     ImGuiDir_Up      = 2,
     ImGuiDir_Down    = 3,
     ImGuiDir_COUNT
+};
+
+// A sorting direction
+enum ImGuiSortDirection_
+{
+    ImGuiSortDirection_None         = 0,
+    ImGuiSortDirection_Ascending    = 1,    // Ascending = 0->9, A->Z etc.
+    ImGuiSortDirection_Descending   = 2     // Descending = 9->0, Z->A etc.
 };
 
 // User fill ImGuiIO.KeyMap[] array with indices into the ImGuiIO.KeysDown[512] array
@@ -1242,6 +1422,11 @@ enum ImGuiCol_
     ImGuiCol_PlotLinesHovered,
     ImGuiCol_PlotHistogram,
     ImGuiCol_PlotHistogramHovered,
+    ImGuiCol_TableHeaderBg,         // Table header background
+    ImGuiCol_TableBorderStrong,     // Table outer and header borders (prefer using Alpha=1.0 here)
+    ImGuiCol_TableBorderLight,      // Table inner borders (prefer using Alpha=1.0 here)
+    ImGuiCol_TableRowBg,            // Table row background (even rows)
+    ImGuiCol_TableRowBgAlt,         // Table row background (odd rows)
     ImGuiCol_TextSelectedBg,
     ImGuiCol_DragDropTarget,
     ImGuiCol_NavHighlight,          // Gamepad/keyboard: current highlighted item
@@ -1283,6 +1468,7 @@ enum ImGuiStyleVar_
     ImGuiStyleVar_ItemSpacing,         // ImVec2    ItemSpacing
     ImGuiStyleVar_ItemInnerSpacing,    // ImVec2    ItemInnerSpacing
     ImGuiStyleVar_IndentSpacing,       // float     IndentSpacing
+    ImGuiStyleVar_CellPadding,         // ImVec2    CellPadding
     ImGuiStyleVar_ScrollbarSize,       // float     ScrollbarSize
     ImGuiStyleVar_ScrollbarRounding,   // float     ScrollbarRounding
     ImGuiStyleVar_GrabMinSize,         // float     GrabMinSize
@@ -1355,6 +1541,18 @@ enum ImGuiColorEditFlags_
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
     , ImGuiColorEditFlags_RGB = ImGuiColorEditFlags_DisplayRGB, ImGuiColorEditFlags_HSV = ImGuiColorEditFlags_DisplayHSV, ImGuiColorEditFlags_HEX = ImGuiColorEditFlags_DisplayHex  // [renamed in 1.69]
 #endif
+};
+
+// Flags for DragFloat(), DragInt(), SliderFloat(), SliderInt() etc.
+// We use the same sets of flags for DragXXX() and SliderXXX() functions as the features are the same and it makes it easier to swap them.
+enum ImGuiSliderFlags_
+{
+    ImGuiSliderFlags_None                   = 0,
+    ImGuiSliderFlags_ClampOnInput           = 1 << 4,       // Clamp value to min/max bounds when input manually with CTRL+Click. By default CTRL+Click allows going out of bounds.
+    ImGuiSliderFlags_Logarithmic            = 1 << 5,       // Make the widget logarithmic (linear otherwise). Consider using ImGuiSliderFlags_NoRoundToFormat with this if using a format-string with small amount of digits.
+    ImGuiSliderFlags_NoRoundToFormat        = 1 << 6,       // Disable rounding underlying value to match precision of the display format string (e.g. %.3f values are rounded to those 3 digits)
+    ImGuiSliderFlags_NoInput                = 1 << 7,       // Disable CTRL+Click or Enter key allowing to input text directly into the widget
+    ImGuiSliderFlags_InvalidMask_           = 0x7000000F    // [Internal] We treat using those bits as being potentially a 'float power' argument from the previous API that has got miscast to this enum, and will trigger an assert if needed.
 };
 
 // Identify a mouse button.
@@ -1511,6 +1709,7 @@ struct ImGuiStyle
     float       FrameBorderSize;            // Thickness of border around frames. Generally set to 0.0f or 1.0f. (Other values are not well tested and more CPU/GPU costly).
     ImVec2      ItemSpacing;                // Horizontal and vertical spacing between widgets/lines.
     ImVec2      ItemInnerSpacing;           // Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label).
+    ImVec2      CellPadding;                // Padding within a table cell
     ImVec2      TouchExtraPadding;          // Expand reactive bounding box for touch-based system where touch position is not accurate enough. Unfortunately we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too much!
     float       IndentSpacing;              // Horizontal indentation when e.g. entering a tree node. Generally == (FontSize + FramePadding.x*2).
     float       ColumnsMinSpacing;          // Minimum horizontal spacing between two columns. Preferably > (FramePadding.x + 1).
@@ -1518,6 +1717,7 @@ struct ImGuiStyle
     float       ScrollbarRounding;          // Radius of grab corners for scrollbar.
     float       GrabMinSize;                // Minimum width/height of a grab box for slider/scrollbar.
     float       GrabRounding;               // Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs.
+    float       LogSliderDeadzone;          // The size in pixels of the dead-zone around zero on logarithmic sliders that cross zero.
     float       TabRounding;                // Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs.
     float       TabBorderSize;              // Thickness of border around tabs.
     float       TabMinWidthForUnselectedCloseButton; // Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected.
@@ -1696,9 +1896,10 @@ struct ImGuiIO
 // Shared state of InputText(), passed as an argument to your callback when a ImGuiInputTextFlags_Callback* flag is used.
 // The callback function should return 0 by default.
 // Callbacks (follow a flag name and see comments in ImGuiInputTextFlags_ declarations for more details)
+// - ImGuiInputTextFlags_CallbackEdit:        Callback on buffer edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)
+// - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
 // - ImGuiInputTextFlags_CallbackCompletion:  Callback on pressing TAB
 // - ImGuiInputTextFlags_CallbackHistory:     Callback on pressing Up/Down arrows
-// - ImGuiInputTextFlags_CallbackAlways:      Callback on each iteration
 // - ImGuiInputTextFlags_CallbackCharFilter:  Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or discard, or return 1 in callback to discard.
 // - ImGuiInputTextFlags_CallbackResize:      Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow.
 struct ImGuiInputTextCallbackData
@@ -1725,7 +1926,9 @@ struct ImGuiInputTextCallbackData
     IMGUI_API ImGuiInputTextCallbackData();
     IMGUI_API void      DeleteChars(int pos, int bytes_count);
     IMGUI_API void      InsertChars(int pos, const char* text, const char* text_end = NULL);
-    bool                HasSelection() const { return SelectionStart != SelectionEnd; }
+    void                SelectAll()             { SelectionStart = 0; SelectionEnd = BufTextLen; }
+    void                ClearSelection()        { SelectionStart = SelectionEnd = BufTextLen; }
+    bool                HasSelection() const    { return SelectionStart != SelectionEnd; }
 };
 
 // Resizing callback data to apply custom constraint. As enabled by SetNextWindowSizeConstraints(). Callback is called during the next Begin().
@@ -1781,6 +1984,29 @@ struct ImGuiPayload
     bool IsDelivery() const                 { return Delivery; }
 };
 
+// Sorting specification for one column of a table (sizeof == 8 bytes)
+struct ImGuiTableSortSpecsColumn
+{
+    ImGuiID                     ColumnUserID;       // User id of the column (if specified by a TableSetupColumn() call)
+    ImU8                        ColumnIndex;        // Index of the column
+    ImU8                        SortOrder;          // Index within parent ImGuiTableSortSpecs (always stored in order starting from 0, tables sorted on a single criteria will always have a 0 here)
+    ImGuiSortDirection          SortDirection : 8;  // ImGuiSortDirection_Ascending or ImGuiSortDirection_Descending (you can use this or SortSign, whichever is more convenient for your sort function)
+
+    ImGuiTableSortSpecsColumn() { ColumnUserID = 0; ColumnIndex = 0; SortOrder = 0; SortDirection = ImGuiSortDirection_Ascending; }
+};
+
+// Sorting specifications for a table (often handling sort specs for a single column, occasionally more)
+// Obtained by calling TableGetSortSpecs()
+struct ImGuiTableSortSpecs
+{
+    const ImGuiTableSortSpecsColumn* Specs;         // Pointer to sort spec array.
+    int                         SpecsCount;         // Sort spec count. Most often 1 unless e.g. ImGuiTableFlags_MultiSortable is enabled.
+    bool                        SpecsChanged;       // Set to true by TableGetSortSpecs() call if the specs have changed since the previous call. Use this to sort again!
+    ImU64                       ColumnsMask;        // Set to the mask of column indexes included in the Specs array. e.g. (1 << N) when column N is sorted.
+
+    ImGuiTableSortSpecs()       { Specs = NULL; SpecsCount = 0; SpecsChanged = false; ColumnsMask = 0x00; }
+};
+
 //-----------------------------------------------------------------------------
 // Obsolete functions (Will be removed! Read 'API BREAKING CHANGES' section in imgui.cpp for details)
 // Please keep your copy of dear imgui up to date! Occasionally set '#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS' in imconfig.h to stay ahead.
@@ -1789,6 +2015,20 @@ struct ImGuiPayload
 #ifndef IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 namespace ImGui
 {
+    // OBSOLETED in 1.78 (from August 2020)
+    // Old drag/sliders functions that took a 'float power = 1.0' argument instead of flags
+    IMGUI_API bool      DragScalar(const char* label, ImGuiDataType data_type, void* p_data, float v_speed, const void* p_min, const void* p_max, const char* format, float power);
+    IMGUI_API bool      DragScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, float v_speed, const void* p_min, const void* p_max, const char* format, float power);
+    static inline bool  DragFloat(const char* label, float* v, float v_speed, float v_min, float v_max, const char* format, float power)    { return DragScalar(label, ImGuiDataType_Float, v, v_speed, &v_min, &v_max, format, power); }
+    static inline bool  DragFloat2(const char* label, float v[2], float v_speed, float v_min, float v_max, const char* format, float power) { return DragScalarN(label, ImGuiDataType_Float, v, 2, v_speed, &v_min, &v_max, format, power); }
+    static inline bool  DragFloat3(const char* label, float v[3], float v_speed, float v_min, float v_max, const char* format, float power) { return DragScalarN(label, ImGuiDataType_Float, v, 3, v_speed, &v_min, &v_max, format, power); }
+    static inline bool  DragFloat4(const char* label, float v[4], float v_speed, float v_min, float v_max, const char* format, float power) { return DragScalarN(label, ImGuiDataType_Float, v, 4, v_speed, &v_min, &v_max, format, power); }
+    IMGUI_API bool      SliderScalar(const char* label, ImGuiDataType data_type, void* p_data, const void* p_min, const void* p_max, const char* format, float power);
+    IMGUI_API bool      SliderScalarN(const char* label, ImGuiDataType data_type, void* p_data, int components, const void* p_min, const void* p_max, const char* format, float power);
+    static inline bool  SliderFloat(const char* label, float* v, float v_min, float v_max, const char* format, float power)                 { return SliderScalar(label, ImGuiDataType_Float, v, &v_min, &v_max, format, power); }
+    static inline bool  SliderFloat2(const char* label, float v[2], float v_min, float v_max, const char* format, float power)              { return SliderScalarN(label, ImGuiDataType_Float, v, 2, &v_min, &v_max, format, power); }
+    static inline bool  SliderFloat3(const char* label, float v[3], float v_min, float v_max, const char* format, float power)              { return SliderScalarN(label, ImGuiDataType_Float, v, 3, &v_min, &v_max, format, power); }
+    static inline bool  SliderFloat4(const char* label, float v[4], float v_min, float v_max, const char* format, float power)              { return SliderScalarN(label, ImGuiDataType_Float, v, 4, &v_min, &v_max, format, power); }
     // OBSOLETED in 1.77 (from June 2020)
     static inline bool  OpenPopupOnItemClick(const char* str_id = NULL, ImGuiMouseButton mb = 1)          { return OpenPopupContextItem(str_id, mb); } // Passing a mouse button to ImGuiPopupFlags is legal
     static inline bool  BeginPopupContextWindow(const char* str_id, ImGuiMouseButton mb, bool over_items) { return BeginPopupContextWindow(str_id, mb | (over_items ? 0 : ImGuiPopupFlags_NoOpenOverItems)); }

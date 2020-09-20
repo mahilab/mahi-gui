@@ -1,4 +1,4 @@
-// dear imgui, v1.78 WIP
+// dear imgui, v1.79 WIP
 // (main code and documentation)
 
 // Help:
@@ -383,6 +383,15 @@ CODE
  - 2020/XX/XX (1.XX) - Moved IME support functions from io.ImeSetInputScreenPosFn, io.ImeWindowHandle to the PlatformIO api.
 
 
+ - 2020/08/17 (1.78) - obsoleted use of the trailing 'float power=1.0f' parameter for DragFloat(), DragFloat2(), DragFloat3(), DragFloat4(), DragFloatRange2(), DragScalar(), DragScalarN(), SliderFloat(), SliderFloat2(), SliderFloat3(), SliderFloat4(), SliderScalar(), SliderScalarN(), VSliderFloat() and VSliderScalar().
+                       replaced the 'float power=1.0f' argument with integer-based flags defaulting to 0 (as with all our flags).
+                       worked out a backward-compatibility scheme so hopefully most C++ codebase should not be affected. in short, when calling those functions:
+                       - if you omitted the 'power' parameter (likely!), you are not affected.
+                       - if you set the 'power' parameter to 1.0f (same as previous default value): 1/ your compiler may warn on float>int conversion, 2/ everything else will work. 3/ you can replace the 1.0f value with 0 to fix the warning, and be technically correct.
+                       - if you set the 'power' parameter to >1.0f (to enable non-linear editing): 1/ your compiler may warn on float>int conversion, 2/ code will assert at runtime, 3/ in case asserts are disabled, the code will not crash and enable the _Logarithmic flag. 4/ you can replace the >1.0f value with ImGuiSliderFlags_Logarithmic to fix the warning/assert and get a _similar_ effect as previous uses of power >1.0f.
+                       see https://github.com/ocornut/imgui/issues/3361 for all details.
+                       kept inline redirection functions (will obsolete) apart for: DragFloatRange2(), VSliderFloat(), VSliderScalar(). For those three the 'float power=1.0f' version were removed directly as they were most unlikely ever used.
+                     - obsoleted use of v_min > v_max in DragInt, DragFloat, DragScalar to lock edits (introduced in 1.73, was not demoed nor documented very), will be replaced by a more generic ReadOnly feature. You may use the ImGuiSliderFlags_ReadOnly internal flag in the meantime.
  - 2020/06/23 (1.77) - removed BeginPopupContextWindow(const char*, int mouse_button, bool also_over_items) in favor of BeginPopupContextWindow(const char*, ImGuiPopupFlags flags) with ImGuiPopupFlags_NoOverItems.
  - 2020/06/15 (1.77) - renamed OpenPopupOnItemClick() to OpenPopupContextItem(). Kept inline redirection function (will obsolete).
  - 2020/06/15 (1.77) - removed CalcItemRectClosestPoint() entry point which was made obsolete and asserting in December 2017.
@@ -659,9 +668,9 @@ CODE
  Q&A: Usage
  ----------
 
+ Q: Why is my widget not reacting when I click on it?
  Q: How can I have widgets with an empty label?
  Q: How can I have multiple widgets with the same label?
- Q: Why are multiple widgets reacting when I interact with one?
  Q: How can I display an image? What is ImTextureID, how does it works?
  Q: How can I use my own math types instead of ImVec2/ImVec4?
  Q: How can I interact with standard C++ types (such as std::string and std::vector)?
@@ -811,7 +820,7 @@ static const float WINDOWS_MOUSE_WHEEL_SCROLL_LOCK_TIMER    = 2.00f;    // Lock 
 
 // Docking
 static const float DOCKING_TRANSPARENT_PAYLOAD_ALPHA        = 0.50f;    // For use with io.ConfigDockingTransparentPayload. Apply to Viewport _or_ WindowBg in host viewport.
-static const float DOCKING_SPLITTER_SIZE                    = 2.0f; 
+static const float DOCKING_SPLITTER_SIZE                    = 2.0f;
 
 //-------------------------------------------------------------------------
 // [SECTION] FORWARD DECLARATIONS
@@ -820,7 +829,7 @@ static const float DOCKING_SPLITTER_SIZE                    = 2.0f;
 static void             SetCurrentWindow(ImGuiWindow* window);
 static void             FindHoveredWindow();
 static ImGuiWindow*     CreateNewWindow(const char* name, ImGuiWindowFlags flags);
-static ImVec2           CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window, bool snap_on_edges);
+static ImVec2           CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window);
 
 static void             AddDrawListToDrawData(ImVector<ImDrawList*>* out_list, ImDrawList* draw_list);
 static void             AddWindowToSortBuffer(ImVector<ImGuiWindow*>* out_sorted_windows, ImGuiWindow* window);
@@ -945,6 +954,7 @@ ImGuiStyle::ImGuiStyle()
     FrameBorderSize         = 0.0f;             // Thickness of border around frames. Generally set to 0.0f or 1.0f. Other values not well tested.
     ItemSpacing             = ImVec2(8,4);      // Horizontal and vertical spacing between widgets/lines
     ItemInnerSpacing        = ImVec2(4,4);      // Horizontal and vertical spacing between within elements of a composed widget (e.g. a slider and its label)
+    CellPadding             = ImVec2(4,2);      // Padding within a table cell
     TouchExtraPadding       = ImVec2(0,0);      // Expand reactive bounding box for touch-based system where touch position is not accurate enough. Unfortunately we don't sort widgets so priority on overlap will always be given to the first widget. So don't grow this too much!
     IndentSpacing           = 21.0f;            // Horizontal spacing when e.g. entering a tree node. Generally == (FontSize + FramePadding.x*2).
     ColumnsMinSpacing       = 6.0f;             // Minimum horizontal spacing between two columns. Preferably > (FramePadding.x + 1).
@@ -952,6 +962,7 @@ ImGuiStyle::ImGuiStyle()
     ScrollbarRounding       = 9.0f;             // Radius of grab corners rounding for scrollbar
     GrabMinSize             = 10.0f;            // Minimum width/height of a grab box for slider/scrollbar
     GrabRounding            = 0.0f;             // Radius of grabs corners rounding. Set to 0.0f to have rectangular slider grabs.
+    LogSliderDeadzone       = 4.0f;             // The size in pixels of the dead-zone around zero on logarithmic sliders that cross zero.
     TabRounding             = 4.0f;             // Radius of upper corners of a tab. Set to 0.0f to have rectangular tabs.
     TabBorderSize           = 0.0f;             // Thickness of border around tabs.
     TabMinWidthForUnselectedCloseButton = 0.0f; // Minimum width for close button to appears on an unselected tab when hovered. Set to 0.0f to always show when hovering, set to FLT_MAX to never show close button unless selected.
@@ -984,6 +995,7 @@ void ImGuiStyle::ScaleAllSizes(float scale_factor)
     FrameRounding = ImFloor(FrameRounding * scale_factor);
     ItemSpacing = ImFloor(ItemSpacing * scale_factor);
     ItemInnerSpacing = ImFloor(ItemInnerSpacing * scale_factor);
+    CellPadding = ImFloor(CellPadding * scale_factor);
     TouchExtraPadding = ImFloor(TouchExtraPadding * scale_factor);
     IndentSpacing = ImFloor(IndentSpacing * scale_factor);
     ColumnsMinSpacing = ImFloor(ColumnsMinSpacing * scale_factor);
@@ -991,6 +1003,7 @@ void ImGuiStyle::ScaleAllSizes(float scale_factor)
     ScrollbarRounding = ImFloor(ScrollbarRounding * scale_factor);
     GrabMinSize = ImFloor(GrabMinSize * scale_factor);
     GrabRounding = ImFloor(GrabRounding * scale_factor);
+    LogSliderDeadzone = ImFloor(LogSliderDeadzone * scale_factor);
     TabRounding = ImFloor(TabRounding * scale_factor);
     if (TabMinWidthForUnselectedCloseButton != FLT_MAX)
         TabMinWidthForUnselectedCloseButton = ImFloor(TabMinWidthForUnselectedCloseButton * scale_factor);
@@ -2154,6 +2167,14 @@ void ImGuiTextBuffer::appendfv(const char* fmt, va_list args)
 // the API mid-way through development and support two ways to using the clipper, needs some rework (see TODO)
 //-----------------------------------------------------------------------------
 
+// FIXME-TABLE: This prevents us from using ImGuiListClipper _inside_ a table cell.
+// The problem we have is that without a Begin/End scheme for rows using the clipper is ambiguous.
+static bool GetSkipItemForListClipping()
+{
+    ImGuiContext& g = *GImGui;
+    return (g.CurrentTable ? g.CurrentTable->HostSkipItems : g.CurrentWindow->SkipItems);
+}
+
 // Helper to calculate coarse clipping of large list of evenly sized items.
 // NB: Prefer using the ImGuiListClipper higher-level helper if you can! Read comments and instructions there on how those use this sort of pattern.
 // NB: 'items_count' is only used to clamp the result, if you don't know your count you can use INT_MAX
@@ -2168,7 +2189,7 @@ void ImGui::CalcListClipping(int items_count, float items_height, int* out_items
         *out_items_display_end = items_count;
         return;
     }
-    if (window->SkipItems)
+    if (GetSkipItemForListClipping())
     {
         *out_items_display_start = *out_items_display_end = 0;
         return;
@@ -2204,12 +2225,20 @@ static void SetCursorPosYAndSetupForPrevLine(float pos_y, float line_height)
     // The clipper should probably have a 4th step to display the last item in a regular manner.
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
+    float off_y = pos_y - window->DC.CursorPos.y;
     window->DC.CursorPos.y = pos_y;
     window->DC.CursorMaxPos.y = ImMax(window->DC.CursorMaxPos.y, pos_y);
     window->DC.CursorPosPrevLine.y = window->DC.CursorPos.y - line_height;  // Setting those fields so that SetScrollHereY() can properly function after the end of our clipper usage.
     window->DC.PrevLineSize.y = (line_height - g.Style.ItemSpacing.y);      // If we end up needing more accurate data (to e.g. use SameLine) we may as well make the clipper have a fourth step to let user process and display the last item in their list.
     if (ImGuiColumns* columns = window->DC.CurrentColumns)
-        columns->LineMinY = window->DC.CursorPos.y;                         // Setting this so that cell Y position are set properly
+        columns->LineMinY = window->DC.CursorPos.y;                         // Setting this so that cell Y position are set properly // FIXME-TABLE
+    if (ImGuiTable* table = g.CurrentTable)
+    {
+        if (table->IsInsideRow)
+            ImGui::TableEndRow(table);
+        table->RowPosY2 = window->DC.CursorPos.y;
+        table->RowBgColorCounter += (int)((off_y / line_height) + 0.5f);
+    }
 }
 
 // Use case A: Begin() called from constructor with items_height<0, then called again from Sync() in StepNo 1
@@ -2219,6 +2248,10 @@ void ImGuiListClipper::Begin(int count, float items_height)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
+
+    if (ImGuiTable* table = g.CurrentTable)
+        if (table->IsInsideRow)
+            ImGui::TableEndRow(table);
 
     StartPosY = window->DC.CursorPos.y;
     ItemsHeight = items_height;
@@ -2250,7 +2283,11 @@ bool ImGuiListClipper::Step()
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
 
-    if (ItemsCount == 0 || window->SkipItems)
+    ImGuiTable* table = g.CurrentTable;
+    if (table && table->IsInsideRow)
+        ImGui::TableEndRow(table);
+
+    if (ItemsCount == 0 || GetSkipItemForListClipping())
     {
         ItemsCount = -1;
         return false;
@@ -2266,8 +2303,21 @@ bool ImGuiListClipper::Step()
     if (StepNo == 1) // Step 1: the clipper infer height from first element, calculate the actual range of elements to display, and position the cursor before the first element.
     {
         if (ItemsCount == 1) { ItemsCount = -1; return false; }
-        float items_height = window->DC.CursorPos.y - StartPosY;
-        IM_ASSERT(items_height > 0.0f);   // If this triggers, it means Item 0 hasn't moved the cursor vertically
+
+        float items_height;
+        if (table)
+        {
+            const float pos_y1 = table->RowPosY1;   // Using this instead of StartPosY to handle clipper straddling the frozen row
+            const float pos_y2 = table->RowPosY2;   // Using this instead of CursorPos.y to take account of tallest cell.
+            items_height = pos_y2 - pos_y1;
+            window->DC.CursorPos.y = pos_y2;
+            IM_ASSERT(items_height > 0.0f);   // If this triggers, it means Item 0 hasn't moved the cursor vertically
+        }
+        else
+        {
+            items_height = window->DC.CursorPos.y - StartPosY;
+            IM_ASSERT(items_height > 0.0f);         // If this triggers, it means Item 0 hasn't moved the cursor vertically
+        }
         Begin(ItemsCount - 1, items_height);
         DisplayStart++;
         DisplayEnd++;
@@ -2386,6 +2436,7 @@ static const ImGuiStyleVarInfo GStyleVarInfo[] =
     { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, ItemSpacing) },         // ImGuiStyleVar_ItemSpacing
     { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, ItemInnerSpacing) },    // ImGuiStyleVar_ItemInnerSpacing
     { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, IndentSpacing) },       // ImGuiStyleVar_IndentSpacing
+    { ImGuiDataType_Float, 2, (ImU32)IM_OFFSETOF(ImGuiStyle, CellPadding) },         // ImGuiStyleVar_CellPadding
     { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ScrollbarSize) },       // ImGuiStyleVar_ScrollbarSize
     { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, ScrollbarRounding) },   // ImGuiStyleVar_ScrollbarRounding
     { ImGuiDataType_Float, 1, (ImU32)IM_OFFSETOF(ImGuiStyle, GrabMinSize) },         // ImGuiStyleVar_GrabMinSize
@@ -2495,6 +2546,11 @@ const char* ImGui::GetStyleColorName(ImGuiCol idx)
     case ImGuiCol_PlotLinesHovered: return "PlotLinesHovered";
     case ImGuiCol_PlotHistogram: return "PlotHistogram";
     case ImGuiCol_PlotHistogramHovered: return "PlotHistogramHovered";
+    case ImGuiCol_TableHeaderBg: return "TableHeaderBg";
+    case ImGuiCol_TableBorderStrong: return "TableBorderStrong";
+    case ImGuiCol_TableBorderLight: return "TableBorderLight";
+    case ImGuiCol_TableRowBg: return "TableRowBg";
+    case ImGuiCol_TableRowBgAlt: return "TableRowBgAlt";
     case ImGuiCol_TextSelectedBg: return "TextSelectedBg";
     case ImGuiCol_DragDropTarget: return "DragDropTarget";
     case ImGuiCol_NavHighlight: return "NavHighlight";
@@ -2928,6 +2984,7 @@ static void SetCurrentWindow(ImGuiWindow* window)
 {
     ImGuiContext& g = *GImGui;
     g.CurrentWindow = window;
+    g.CurrentTable = window ? window->DC.CurrentTable : NULL;
     if (window)
         g.FontSize = g.DrawListSharedData.FontSize = window->CalcFontSize();
 }
@@ -2979,6 +3036,7 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
     }
     g.ActiveId = id;
     g.ActiveIdAllowOverlap = false;
+    g.ActiveIdNoClearOnFocusLoss = false;
     g.ActiveIdWindow = window;
     g.ActiveIdHasBeenEditedThisFrame = false;
     if (id)
@@ -2996,7 +3054,7 @@ void ImGui::SetActiveID(ImGuiID id, ImGuiWindow* window)
 
 void ImGui::ClearActiveID()
 {
-    SetActiveID(0, NULL);
+    SetActiveID(0, NULL); // g.ActiveId = 0;
 }
 
 void ImGui::SetHoveredID(ImGuiID id)
@@ -3156,6 +3214,15 @@ bool ImGui::IsClippedEx(const ImRect& bb, ImGuiID id, bool clip_even_when_logged
             if (clip_even_when_logged || !g.LogEnabled)
                 return true;
     return false;
+}
+
+// This is also inlined in ItemAdd()
+// Note: if ImGuiItemStatusFlags_HasDisplayRect is set, user needs to set window->DC.LastItemDisplayRect!
+void ImGui::SetLastItemData(ImGuiWindow* window, ImGuiID item_id, ImGuiItemStatusFlags item_flags, const ImRect& item_rect)
+{
+    window->DC.LastItemId = item_id;
+    window->DC.LastItemStatusFlags = item_flags;
+    window->DC.LastItemRect = item_rect;
 }
 
 // Process TAB/Shift+TAB. Be mindful that this function may _clear_ the ActiveID when tabbing out.
@@ -3392,7 +3459,8 @@ void ImGui::StartMouseMovingWindow(ImGuiWindow* window)
     FocusWindow(window);
     SetActiveID(window->MoveId, window);
     g.NavDisableHighlight = true;
-    g.ActiveIdClickOffset = g.IO.MousePos - window->RootWindow->Pos;
+    g.ActiveIdNoClearOnFocusLoss = true;
+    g.ActiveIdClickOffset = g.IO.MouseClickedPos[0] - window->RootWindow->Pos;
 
     bool can_move_window = true;
     if ((window->Flags & ImGuiWindowFlags_NoMove) || (window->RootWindow->Flags & ImGuiWindowFlags_NoMove))
@@ -3425,15 +3493,9 @@ void ImGui::StartMouseMovingWindowOrNode(ImGuiWindow* window, ImGuiDockNode* nod
     const bool clicked = IsMouseClicked(0);
     const bool dragging = IsMouseDragging(0, g.IO.MouseDragThreshold * 1.70f);
     if (can_undock_node && dragging)
-    {
-        DockContextQueueUndockNode(&g, node);
-        g.ActiveIdClickOffset = g.IO.MouseClickedPos[0] - node->Pos;
-    }
+        DockContextQueueUndockNode(&g, node); // Will lead to DockNodeStartMouseMovingWindow() -> StartMouseMovingWindow() being called next frame
     else if (!can_undock_node && (clicked || dragging) && g.MovingWindow != window)
-    {
         StartMouseMovingWindow(window);
-        g.ActiveIdClickOffset = g.IO.MouseClickedPos[0] - window->RootWindow->Pos;
-    }
 }
 
 // Handle mouse moving window
@@ -3524,8 +3586,8 @@ void ImGui::UpdateMouseMovingWindowEndFrame()
                     if (!root_window->TitleBarRect().Contains(g.IO.MouseClickedPos[0]))
                         g.MovingWindow = NULL;
 
-            // Cancel moving if clicked over an item which was disabled or inhibited by popups
-            if (g.HoveredId == 0 && g.HoveredIdDisabled)
+            // Cancel moving if clicked over an item which was disabled or inhibited by popups (note that we know HoveredId == 0 already)
+            if (g.HoveredIdDisabled)
                 g.MovingWindow = NULL;
         }
         else if (root_window == NULL && g.NavWindow != NULL && GetTopMostPopupModal() == NULL)
@@ -4074,15 +4136,7 @@ void ImGui::Initialize(ImGuiContext* context)
 
 #ifdef IMGUI_HAS_TABLE
     // Add .ini handle for ImGuiTable type
-    {
-        ImGuiSettingsHandler ini_handler;
-        ini_handler.TypeName = "Table";
-        ini_handler.TypeHash = ImHashStr("Table");
-        ini_handler.ReadOpenFn = TableSettingsHandler_ReadOpen;
-        ini_handler.ReadLineFn = TableSettingsHandler_ReadLine;
-        ini_handler.WriteAllFn = TableSettingsHandler_WriteAll;
-        g.SettingsHandlers.push_back(ini_handler);
-    }
+    TableSettingsInstallHandler(context);
 #endif // #ifdef IMGUI_HAS_TABLE
 
 #ifdef IMGUI_HAS_DOCK
@@ -4168,6 +4222,10 @@ void ImGui::Shutdown(ImGuiContext* context)
     g.TabBars.Clear();
     g.CurrentTabBarStack.clear();
     g.ShrinkWidthBuffer.clear();
+
+    g.Tables.Clear();
+    g.CurrentTableStack.clear();
+    g.DrawChannelsTempMergeBuffer.clear();
 
     g.ClipboardHandlerData.clear();
     g.MenusIdSubmittedThisFrame.clear();
@@ -6047,10 +6105,6 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->DC.MenuBarOffset.x = ImMax(ImMax(window->WindowPadding.x, style.ItemSpacing.x), g.NextWindowData.MenuBarOffsetMinVal.x);
         window->DC.MenuBarOffset.y = g.NextWindowData.MenuBarOffsetMinVal.y;
 
-        // Lock menu offset so size calculation can use it as menu-bar windows need a minimum size.
-        window->DC.MenuBarOffset.x = ImMax(ImMax(window->WindowPadding.x, style.ItemSpacing.x), g.NextWindowData.MenuBarOffsetMinVal.x);
-        window->DC.MenuBarOffset.y = g.NextWindowData.MenuBarOffsetMinVal.y;
-
         // Collapse window by double-clicking on title bar
         // At this point we don't have a clipping rectangle setup yet, so we can use the title bar area for hit detection and drawing
         if (!(flags & ImGuiWindowFlags_NoTitleBar) && !(flags & ImGuiWindowFlags_NoCollapse) && !window->DockIsActive)
@@ -6390,7 +6444,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->ScrollMax.y = ImMax(0.0f, window->ContentSize.y + window->WindowPadding.y * 2.0f - window->InnerRect.GetHeight());
 
         // Apply scrolling
-        window->Scroll = CalcNextScrollFromScrollTargetAndClamp(window, true);
+        window->Scroll = CalcNextScrollFromScrollTargetAndClamp(window);
         window->ScrollTarget = ImVec2(FLT_MAX, FLT_MAX);
 
         // DRAWING
@@ -6472,6 +6526,7 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         window->WorkRect.Min.y = ImFloor(window->InnerRect.Min.y - window->Scroll.y + ImMax(window->WindowPadding.y, window->WindowBorderSize));
         window->WorkRect.Max.x = window->WorkRect.Min.x + work_rect_size_x;
         window->WorkRect.Max.y = window->WorkRect.Min.y + work_rect_size_y;
+        window->ParentWorkRect = window->WorkRect;
 
         // [LEGACY] Content Region
         // FIXME-OBSOLETE: window->ContentRegionRect.Max is currently very misleading / partly faulty, but some BeginChild() patterns relies on it.
@@ -6581,17 +6636,9 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         // We fill last item data based on Title Bar/Tab, in order for IsItemHovered() and IsItemActive() to be usable after Begin().
         // This is useful to allow creating context menus on title bar only, etc.
         if (window->DockIsActive)
-        {
-            window->DC.LastItemId = window->ID;
-            window->DC.LastItemStatusFlags = window->DockTabItemStatusFlags;
-            window->DC.LastItemRect = window->DockTabItemRect;
-        }
+            SetLastItemData(window, window->ID, window->DockTabItemStatusFlags, window->DockTabItemRect);
         else
-        {
-            window->DC.LastItemId = window->MoveId;
-            window->DC.LastItemStatusFlags = IsMouseHoveringRect(title_bar_rect.Min, title_bar_rect.Max, false) ? ImGuiItemStatusFlags_HoveredRect : 0;
-            window->DC.LastItemRect = title_bar_rect;
-        }
+            SetLastItemData(window, window->MoveId, IsMouseHoveringRect(title_bar_rect.Min, title_bar_rect.Max, false) ? ImGuiItemStatusFlags_HoveredRect : 0, title_bar_rect);
 
 #ifdef IMGUI_ENABLE_TEST_ENGINE
         if (!(window->Flags & ImGuiWindowFlags_NoTitleBar))
@@ -6720,7 +6767,7 @@ void ImGui::BringWindowToDisplayFront(ImGuiWindow* window)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* current_front_window = g.Windows.back();
-    if (current_front_window == window || current_front_window->RootWindow == window)
+    if (current_front_window == window || current_front_window->RootWindow == window) // Cheap early out (could be better)
         return;
     for (int i = g.Windows.Size - 2; i >= 0; i--) // We can ignore the top-most window
         if (g.Windows[i] == window)
@@ -6777,8 +6824,9 @@ void ImGui::FocusWindow(ImGuiWindow* window)
     // - Focus a window while an InputText in another window is active, if focus happens before the old InputText can run.
     // - When using Nav to activate menu items (due to timing of activating on press->new window appears->losing ActiveId)
     // - Using dock host items (tab, collapse button) can trigger this before we redirect the ActiveIdWindow toward the child window.
-    if (g.ActiveId != 0 && g.ActiveIdWindow && g.ActiveIdWindow->RootWindowDockStop != focus_front_window && !active_id_window_is_dock_node_host)
-        ClearActiveID();
+    if (g.ActiveId != 0 && g.ActiveIdWindow && g.ActiveIdWindow->RootWindowDockStop != focus_front_window)
+        if (!g.ActiveIdNoClearOnFocusLoss && !active_id_window_is_dock_node_host)
+            ClearActiveID();
 
     // Passing NULL allow to disable keyboard focus
     if (!window)
@@ -7530,6 +7578,7 @@ static void ImGui::ErrorCheckNewFrameSanityChecks()
         for (int monitor_n = 0; monitor_n < g.PlatformIO.Monitors.Size; monitor_n++)
         {
             ImGuiPlatformMonitor& mon = g.PlatformIO.Monitors[monitor_n];
+            mon = mon;
             IM_ASSERT(mon.MainSize.x > 0.0f && mon.MainSize.y > 0.0f && "Monitor main bounds not setup properly.");
             IM_ASSERT(ImRect(mon.MainPos, mon.MainPos + mon.MainSize).Contains(ImRect(mon.WorkPos, mon.WorkPos + mon.WorkSize)) && "Monitor work bounds not setup properly. If you don't have work area information, just copy MainPos/MainSize into them.");
             IM_ASSERT(mon.DpiScale != 0.0f);
@@ -7696,6 +7745,7 @@ bool ImGui::ItemAdd(const ImRect& bb, ImGuiID id, const ImRect* nav_bb_arg)
 #endif
     }
 
+    // Equivalent to calling SetLastItemData()
     window->DC.LastItemId = id;
     window->DC.LastItemRect = bb;
     window->DC.LastItemStatusFlags = ImGuiItemStatusFlags_None;
@@ -7937,7 +7987,7 @@ ImVec2 ImGui::GetContentRegionMax()
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
     ImVec2 mx = window->ContentRegionRect.Max - window->Pos;
-    if (window->DC.CurrentColumns)
+    if (window->DC.CurrentColumns || g.CurrentTable)
         mx.x = window->WorkRect.Max.x - window->Pos.x;
     return mx;
 }
@@ -7948,7 +7998,7 @@ ImVec2 ImGui::GetContentRegionMaxAbs()
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
     ImVec2 mx = window->ContentRegionRect.Max;
-    if (window->DC.CurrentColumns)
+    if (window->DC.CurrentColumns || g.CurrentTable)
         mx.x = window->WorkRect.Max.x;
     return mx;
 }
@@ -8063,30 +8113,20 @@ void ImGui::EndGroup()
 // [SECTION] SCROLLING
 //-----------------------------------------------------------------------------
 
-static ImVec2 CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window, bool snap_on_edges)
+static ImVec2 CalcNextScrollFromScrollTargetAndClamp(ImGuiWindow* window)
 {
-    ImGuiContext& g = *GImGui;
     ImVec2 scroll = window->Scroll;
     if (window->ScrollTarget.x < FLT_MAX)
     {
         float cr_x = window->ScrollTargetCenterRatio.x;
         float target_x = window->ScrollTarget.x;
-        if (snap_on_edges && cr_x <= 0.0f && target_x <= window->WindowPadding.x)
-            target_x = 0.0f;
-        else if (snap_on_edges && cr_x >= 1.0f && target_x >= window->ContentSize.x + window->WindowPadding.x + g.Style.ItemSpacing.x)
-            target_x = window->ContentSize.x + window->WindowPadding.x * 2.0f;
         scroll.x = target_x - cr_x * (window->SizeFull.x - window->ScrollbarSizes.x);
     }
     if (window->ScrollTarget.y < FLT_MAX)
     {
-        // 'snap_on_edges' allows for a discontinuity at the edge of scrolling limits to take account of WindowPadding so that scrolling to make the last item visible scroll far enough to see the padding.
         float decoration_up_height = window->TitleBarHeight() + window->MenuBarHeight();
         float cr_y = window->ScrollTargetCenterRatio.y;
         float target_y = window->ScrollTarget.y;
-        if (snap_on_edges && cr_y <= 0.0f && target_y <= window->WindowPadding.y)
-            target_y = 0.0f;
-        if (snap_on_edges && cr_y >= 1.0f && target_y >= window->ContentSize.y + window->WindowPadding.y + g.Style.ItemSpacing.y)
-            target_y = window->ContentSize.y + window->WindowPadding.y * 2.0f;
         scroll.y = target_y - cr_y * (window->SizeFull.y - window->ScrollbarSizes.y - decoration_up_height);
     }
     scroll.x = IM_FLOOR(ImMax(scroll.x, 0.0f));
@@ -8118,7 +8158,7 @@ ImVec2 ImGui::ScrollToBringRectIntoView(ImGuiWindow* window, const ImRect& item_
         else if (item_rect.Max.y >= window_rect.Max.y)
             SetScrollFromPosY(window, item_rect.Max.y - window->Pos.y + g.Style.ItemSpacing.y, 1.0f);
 
-        ImVec2 next_scroll = CalcNextScrollFromScrollTargetAndClamp(window, false);
+        ImVec2 next_scroll = CalcNextScrollFromScrollTargetAndClamp(window);
         delta_scroll = next_scroll - window->Scroll;
     }
 
@@ -8179,10 +8219,10 @@ void ImGui::SetScrollY(ImGuiWindow* window, float new_scroll_y)
     window->ScrollTargetCenterRatio.y = 0.0f;
 }
 
-
+// Note that a local position will vary depending on initial scroll value
+// We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
 void ImGui::SetScrollFromPosX(ImGuiWindow* window, float local_x, float center_x_ratio)
 {
-    // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
     IM_ASSERT(center_x_ratio >= 0.0f && center_x_ratio <= 1.0f);
     window->ScrollTarget.x = IM_FLOOR(local_x + window->Scroll.x);
     window->ScrollTargetCenterRatio.x = center_x_ratio;
@@ -8190,10 +8230,8 @@ void ImGui::SetScrollFromPosX(ImGuiWindow* window, float local_x, float center_x
 
 void ImGui::SetScrollFromPosY(ImGuiWindow* window, float local_y, float center_y_ratio)
 {
-    // We store a target position so centering can occur on the next frame when we are guaranteed to have a known window size
     IM_ASSERT(center_y_ratio >= 0.0f && center_y_ratio <= 1.0f);
-    const float decoration_up_height = window->TitleBarHeight() + window->MenuBarHeight();
-    local_y -= decoration_up_height;
+    local_y -= window->TitleBarHeight() + window->MenuBarHeight(); // FIXME: Would be nice to have a more standardized access to our scrollable/client rect
     window->ScrollTarget.y = IM_FLOOR(local_y + window->Scroll.y);
     window->ScrollTargetCenterRatio.y = center_y_ratio;
 }
@@ -8210,15 +8248,34 @@ void ImGui::SetScrollFromPosY(float local_y, float center_y_ratio)
     SetScrollFromPosY(g.CurrentWindow, local_y, center_y_ratio);
 }
 
+// Tweak: snap on edges when aiming at an item very close to the edge,
+// So the difference between WindowPadding and ItemSpacing will be in the visible area after scrolling.
+// When we refactor the scrolling API this may be configurable with a flag?
+// Note that the effect for this won't be visible on X axis with default Style settings as WindowPadding.x == ItemSpacing.x by default.
+static float CalcScrollSnap(float target, float snap_min, float snap_max, float snap_threshold, float center_ratio)
+{
+    if (target <= snap_min + snap_threshold)
+        return ImLerp(snap_min, target, center_ratio);
+    if (target >= snap_max - snap_threshold)
+        return ImLerp(target, snap_max, center_ratio);
+    return target;
+}
+
 // center_x_ratio: 0.0f left of last item, 0.5f horizontal center of last item, 1.0f right of last item.
 void ImGui::SetScrollHereX(float center_x_ratio)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    float target_x = window->DC.LastItemRect.Min.x - window->Pos.x; // Left of last item, in window space
-    float last_item_width = window->DC.LastItemRect.GetWidth();
-    target_x += (last_item_width * center_x_ratio) + (g.Style.ItemSpacing.x * (center_x_ratio - 0.5f) * 2.0f); // Precisely aim before, in the middle or after the last item.
-    SetScrollFromPosX(target_x, center_x_ratio);
+    float spacing_x = g.Style.ItemSpacing.x;
+    float target_x = ImLerp(window->DC.LastItemRect.Min.x - spacing_x, window->DC.LastItemRect.Max.x + spacing_x, center_x_ratio);
+
+    // Tweak: snap on edges when aiming at an item very close to the edge
+    const float snap_x_threshold = ImMax(0.0f, window->WindowPadding.x - spacing_x);
+    const float snap_x_min = window->DC.CursorStartPos.x - window->WindowPadding.x;
+    const float snap_x_max = window->DC.CursorStartPos.x + window->ContentSize.x + window->WindowPadding.x;
+    target_x = CalcScrollSnap(target_x, snap_x_min, snap_x_max, snap_x_threshold, center_x_ratio);
+
+    SetScrollFromPosX(window, target_x - window->Pos.x, center_x_ratio);
 }
 
 // center_y_ratio: 0.0f top of last item, 0.5f vertical center of last item, 1.0f bottom of last item.
@@ -8226,9 +8283,16 @@ void ImGui::SetScrollHereY(float center_y_ratio)
 {
     ImGuiContext& g = *GImGui;
     ImGuiWindow* window = g.CurrentWindow;
-    float target_y = window->DC.CursorPosPrevLine.y - window->Pos.y; // Top of last item, in window space
-    target_y += (window->DC.PrevLineSize.y * center_y_ratio) + (g.Style.ItemSpacing.y * (center_y_ratio - 0.5f) * 2.0f); // Precisely aim above, in the middle or below the last line.
-    SetScrollFromPosY(target_y, center_y_ratio);
+    float spacing_y = g.Style.ItemSpacing.y;
+    float target_y = ImLerp(window->DC.CursorPosPrevLine.y - spacing_y, window->DC.CursorPosPrevLine.y + window->DC.PrevLineSize.y + spacing_y, center_y_ratio);
+
+    // Tweak: snap on edges when aiming at an item very close to the edge
+    const float snap_y_threshold = ImMax(0.0f, window->WindowPadding.y - spacing_y);
+    const float snap_y_min = window->DC.CursorStartPos.y - window->WindowPadding.y;
+    const float snap_y_max = window->DC.CursorStartPos.y + window->ContentSize.y + window->WindowPadding.y;
+    target_y = CalcScrollSnap(target_y, snap_y_min, snap_y_max, snap_y_threshold, center_y_ratio);
+
+    SetScrollFromPosY(window, target_y - window->Pos.y, center_y_ratio);
 }
 
 //-----------------------------------------------------------------------------
@@ -8405,13 +8469,14 @@ void ImGui::OpenPopupEx(ImGuiID id, ImGuiPopupFlags popup_flags)
     }
 }
 
+// When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
+// This function closes any popups that are over 'ref_window'.
 void ImGui::ClosePopupsOverWindow(ImGuiWindow* ref_window, bool restore_focus_to_window_under_popup)
 {
     ImGuiContext& g = *GImGui;
     if (g.OpenPopupStack.Size == 0)
         return;
 
-    // When popups are stacked, clicking on a lower level popups puts focus back to it and close popups above it.
     // Don't close our own child popup windows.
     int popup_count_to_keep = 0;
     if (ref_window)
@@ -8426,13 +8491,20 @@ void ImGui::ClosePopupsOverWindow(ImGuiWindow* ref_window, bool restore_focus_to
             if (popup.Window->Flags & ImGuiWindowFlags_ChildWindow)
                 continue;
 
-            // Trim the stack when popups are not direct descendant of the reference window (the reference window is often the NavWindow)
-            bool popup_or_descendent_is_ref_window = false;
-            for (int m = popup_count_to_keep; m < g.OpenPopupStack.Size && !popup_or_descendent_is_ref_window; m++)
-                if (ImGuiWindow* popup_window = g.OpenPopupStack[m].Window)
+            // Trim the stack unless the popup is a direct parent of the reference window (the reference window is often the NavWindow)
+            // - With this stack of window, clicking/focusing Popup1 will close Popup2 and Popup3:
+            //     Window -> Popup1 -> Popup2 -> Popup3
+            // - Each popups may contain child windows, which is why we compare ->RootWindow!
+            //     Window -> Popup1 -> Popup1_Child -> Popup2 -> Popup2_Child
+            bool ref_window_is_descendent_of_popup = false;
+            for (int n = popup_count_to_keep; n < g.OpenPopupStack.Size; n++)
+                if (ImGuiWindow* popup_window = g.OpenPopupStack[n].Window)
                     if (popup_window->RootWindow == ref_window->RootWindow)
-                        popup_or_descendent_is_ref_window = true;
-            if (!popup_or_descendent_is_ref_window)
+                    {
+                        ref_window_is_descendent_of_popup = true;
+                        break;
+                    }
+            if (!ref_window_is_descendent_of_popup)
                 break;
         }
     }
@@ -11671,7 +11743,7 @@ struct ImGuiDockPreviewData
     float           SplitRatio;
     ImRect          DropRectsDraw[ImGuiDir_COUNT + 1];  // May be slightly different from hit-testing drop rects used in DockNodeCalcDropRects()
 
-    ImGuiDockPreviewData() : FutureNode(0) { IsDropAllowed = IsCenterAvailable = IsSidesAvailable = IsSplitDirExplicit = false; SplitNode = NULL; SplitDir = ImGuiDir_None; SplitRatio = 0.f; }
+    ImGuiDockPreviewData() : FutureNode(0) { IsDropAllowed = IsCenterAvailable = IsSidesAvailable = IsSplitDirExplicit = false; SplitNode = NULL; SplitDir = ImGuiDir_None; SplitRatio = 0.f; for (int n = 0; n < IM_ARRAYSIZE(DropRectsDraw); n++) DropRectsDraw[n] = ImRect(+FLT_MAX, +FLT_MAX, -FLT_MAX, -FLT_MAX); }
 };
 
 // Persistent Settings data, stored contiguously in SettingsNodes (sizeof() ~32 bytes)
@@ -11740,7 +11812,7 @@ namespace ImGui
     static void             DockNodeTreeMerge(ImGuiContext* ctx, ImGuiDockNode* parent_node, ImGuiDockNode* merge_lead_child);
     static void             DockNodeTreeUpdatePosSize(ImGuiDockNode* node, ImVec2 pos, ImVec2 size, bool only_write_to_marked_nodes = false);
     static void             DockNodeTreeUpdateSplitter(ImGuiDockNode* node);
-    static ImGuiDockNode*   DockNodeTreeFindNodeByPos(ImGuiDockNode* node, ImVec2 pos);
+    static ImGuiDockNode*   DockNodeTreeFindVisibleNodeByPos(ImGuiDockNode* node, ImVec2 pos);
     static ImGuiDockNode*   DockNodeTreeFindFallbackLeafNode(ImGuiDockNode* node);
 
     // Settings
@@ -11878,6 +11950,16 @@ void ImGui::DockContextUpdateDocking(ImGuiContext* ctx)
     ImGuiDockContext* dc  = &ctx->DockContext;
     if (!(g.IO.ConfigFlags & ImGuiConfigFlags_DockingEnable))
         return;
+
+    // Store hovered dock node. We could in theory use DockNodeTreeFindVisibleNodeByPos() on the root host dock node, but using ->DockNode is a good shortcut.
+    g.HoveredDockNode = NULL;
+    if (ImGuiWindow* hovered_window = g.HoveredWindowUnderMovingWindow)
+    {
+        if (hovered_window->DockNode)
+            g.HoveredDockNode = hovered_window->DockNode;
+        else if (hovered_window->DockNodeAsHost)
+            g.HoveredDockNode = DockNodeTreeFindVisibleNodeByPos(hovered_window->DockNodeAsHost, g.IO.MousePos);
+    }
 
     // Process Docking requests
     for (int n = 0; n < dc->Requests.Size; n++)
@@ -12730,11 +12812,10 @@ static void ImGui::DockNodeStartMouseMovingWindow(ImGuiDockNode* node, ImGuiWind
 {
     ImGuiContext& g = *GImGui;
     IM_ASSERT(node->WantMouseMove == true);
-    ImVec2 backup_active_click_offset = g.ActiveIdClickOffset;
     StartMouseMovingWindow(window);
+    g.ActiveIdClickOffset = g.IO.MouseClickedPos[0] - node->Pos;
     g.MovingWindow = window; // If we are docked into a non moveable root window, StartMouseMovingWindow() won't set g.MovingWindow. Override that decision.
     node->WantMouseMove = false;
-    g.ActiveIdClickOffset = backup_active_click_offset;
 }
 
 // Update CentralNode, OnlyNodeWithWindows, LastFocusedNodeID. Copy window class.
@@ -13251,7 +13332,7 @@ static void ImGui::DockNodeUpdateTabBar(ImGuiDockNode* node, ImGuiWindow* host_w
             window->DockTabItemRect = host_window->DC.LastItemRect;
 
             // Update navigation ID on menu layer
-            if (g.NavWindow && g.NavWindow->RootWindowDockStop == window && (window->DC.NavLayerActiveMask & (1 << 1)) == 0)
+            if (g.NavWindow && g.NavWindow->RootWindowDockStop == window && (window->DC.NavLayerActiveMask & (1 << ImGuiNavLayer_Menu)) == 0)
                 host_window->NavLastIds[1] = window->ID;
         }
     }
@@ -14009,13 +14090,12 @@ ImGuiDockNode* ImGui::DockNodeTreeFindFallbackLeafNode(ImGuiDockNode* node)
     return NULL;
 }
 
-ImGuiDockNode* ImGui::DockNodeTreeFindNodeByPos(ImGuiDockNode* node, ImVec2 pos)
+ImGuiDockNode* ImGui::DockNodeTreeFindVisibleNodeByPos(ImGuiDockNode* node, ImVec2 pos)
 {
     if (!node->IsVisible)
         return NULL;
 
-    ImGuiContext& g = *GImGui;
-    const float dock_spacing = g.Style.ItemInnerSpacing.x;
+    const float dock_spacing = 0.0f;// g.Style.ItemInnerSpacing.x; // FIXME: Relation to DOCKING_SPLITTER_SIZE?
     ImRect r(node->Pos, node->Pos + node->Size);
     r.Expand(dock_spacing * 0.5f);
     bool inside = r.Contains(pos);
@@ -14024,19 +14104,10 @@ ImGuiDockNode* ImGui::DockNodeTreeFindNodeByPos(ImGuiDockNode* node, ImVec2 pos)
 
     if (node->IsLeafNode())
         return node;
-    if (ImGuiDockNode* hovered_node = DockNodeTreeFindNodeByPos(node->ChildNodes[0], pos))
+    if (ImGuiDockNode* hovered_node = DockNodeTreeFindVisibleNodeByPos(node->ChildNodes[0], pos))
         return hovered_node;
-    if (ImGuiDockNode* hovered_node = DockNodeTreeFindNodeByPos(node->ChildNodes[1], pos))
+    if (ImGuiDockNode* hovered_node = DockNodeTreeFindVisibleNodeByPos(node->ChildNodes[1], pos))
         return hovered_node;
-
-    // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
-    // In this case we need to fallback into any leaf mode, possibly the central node.
-    if (node->IsDockSpace() && node->IsRootNode())
-    {
-        if (node->CentralNode && node->IsLeafNode()) // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
-            return node->CentralNode;
-        return DockNodeTreeFindFallbackLeafNode(node);
-    }
 
     return NULL;
 }
@@ -14155,6 +14226,7 @@ void ImGui::DockSpace(ImGuiID id, const ImVec2& size_arg, ImGuiDockNodeFlags fla
     char title[256];
     ImFormatString(title, IM_ARRAYSIZE(title), "%s/DockSpace_%08X", window->Name, id);
 
+    // FIXME-DOCK: What is the reason for not simply calling BeginChild()?
     if (node->Windows.Size > 0 || node->IsSplitNode())
         PushStyleColor(ImGuiCol_ChildBg, IM_COL32(0, 0, 0, 0));
     PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0.0f);
@@ -14185,6 +14257,7 @@ void ImGui::DockSpace(ImGuiID id, const ImVec2& size_arg, ImGuiDockNodeFlags fla
 
     g.WithinEndChild = true;
     End();
+    ItemSize(size);
     g.WithinEndChild = false;
 }
 
@@ -14300,10 +14373,15 @@ void ImGui::DockBuilderSetNodeSize(ImGuiID node_id, ImVec2 size)
 // - If you intend to split a node immediately after creation using DockBuilderSplitNode(), make sure to call DockBuilderSetNodeSize() beforehand!
 //   For various reason, the splitting code currently needs a base size otherwise space may not be allocated as precisely as you would expect.
 // - Use (id == 0) to let the system allocate a node identifier.
+// - Existing node with a same id will be removed.
 ImGuiID ImGui::DockBuilderAddNode(ImGuiID id, ImGuiDockNodeFlags flags)
 {
     ImGuiContext* ctx = GImGui;
     ImGuiDockNode* node = NULL;
+
+    if (id != 0)
+        DockBuilderRemoveNode(id);
+
     if (flags & ImGuiDockNodeFlags_DockSpace)
     {
         DockSpace(id, ImVec2(0, 0), (flags & ~ImGuiDockNodeFlags_DockSpace) | ImGuiDockNodeFlags_KeepAliveOnly);
@@ -14311,10 +14389,7 @@ ImGuiID ImGui::DockBuilderAddNode(ImGuiID id, ImGuiDockNodeFlags flags)
     }
     else
     {
-        if (id != 0)
-            node = DockContextFindNodeByID(ctx, id);
-        if (!node)
-            node = DockContextAddNode(ctx, id);
+        node = DockContextAddNode(ctx, id);
         node->LocalFlags = flags;
     }
     node->LastFrameAlive = ctx->FrameCount;   // Set this otherwise BeginDocked will undock during the same frame.
@@ -14856,14 +14931,19 @@ void ImGui::BeginDockableDragDropTarget(ImGuiWindow* window)
     if (AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_WINDOW, ImGuiDragDropFlags_AcceptBeforeDelivery | ImGuiDragDropFlags_AcceptNoDrawDefaultRect))
     {
         // Select target node
-        ImGuiDockNode* node = NULL;
-        bool allow_null_target_node = false;
-        if (window->DockNodeAsHost)
-            node = DockNodeTreeFindNodeByPos(window->DockNodeAsHost, g.IO.MousePos);
-        else if (window->DockNode) // && window->DockIsActive)
-            node = window->DockNode;
-        else
-            allow_null_target_node = true; // Dock into a regular window
+        // (we should not assume that g.HoveredDockNode is != NULL when window is a host dock node: it depends on padding/spacing handled by DockNodeTreeFindVisibleNodeByPos)
+        ImGuiDockNode* node = g.HoveredDockNode;
+        const bool allow_null_target_node = window->DockNode == NULL && window->DockNodeAsHost == NULL;
+
+        // There is an edge case when docking into a dockspace which only has inactive nodes (because none of the windows are active)
+        // In this case we need to fallback into any leaf mode, possibly the central node.
+        if (window->DockNodeAsHost && node && node->IsDockSpace() && node->IsRootNode())
+        {
+            if (node->CentralNode && node->IsLeafNode()) // FIXME-20181220: We should not have to test for IsLeafNode() here but we have another bug to fix first.
+                node = node->CentralNode;
+            else
+                node = DockNodeTreeFindFallbackLeafNode(node);
+        }
 
         const ImRect explicit_target_rect = (node && node->TabBar && !node->IsHiddenTabBar() && !node->IsNoTabBar()) ? node->TabBar->BarRect : ImRect(window->Pos, window->Pos + ImVec2(window->Size.x, GetFrameHeight()));
         const bool is_explicit_target = g.IO.ConfigDockingWithShift || IsMouseHoveringRect(explicit_target_rect.Min, explicit_target_rect.Max);
@@ -15378,6 +15458,23 @@ void ImGui::ShowMetricsWindow(bool* p_open)
     // - NodeStorage()
     struct Funcs
     {
+        static ImRect GetTableRect(ImGuiTable* table, int rect_type, int n)
+        {
+            if (rect_type == TRT_OuterRect)                 { return table->OuterRect; }
+            else if (rect_type == TRT_WorkRect)             { return table->WorkRect; }
+            else if (rect_type == TRT_HostClipRect)         { return table->HostClipRect; }
+            else if (rect_type == TRT_InnerClipRect)        { return table->InnerClipRect; }
+            else if (rect_type == TRT_BackgroundClipRect)   { return table->BackgroundClipRect; }
+            else if (rect_type == TRT_ColumnsRect)                  { ImGuiTableColumn* c = &table->Columns[n]; return ImRect(c->MinX, table->InnerClipRect.Min.y, c->MaxX, table->InnerClipRect.Min.y + table->LastOuterHeight); }
+            else if (rect_type == TRT_ColumnsClipRect)              { ImGuiTableColumn* c = &table->Columns[n]; return c->ClipRect; }
+            else if (rect_type == TRT_ColumnsContentHeadersUsed)    { ImGuiTableColumn* c = &table->Columns[n]; return ImRect(c->MinX, table->InnerClipRect.Min.y, c->MinX + c->ContentWidthHeadersUsed, table->InnerClipRect.Min.y + table->LastFirstRowHeight); }    // Note: y1/y2 not always accurate
+            else if (rect_type == TRT_ColumnsContentHeadersIdeal)   { ImGuiTableColumn* c = &table->Columns[n]; return ImRect(c->MinX, table->InnerClipRect.Min.y, c->MinX + c->ContentWidthHeadersIdeal, table->InnerClipRect.Min.y + table->LastFirstRowHeight); } // "
+            else if (rect_type == TRT_ColumnsContentRowsFrozen)     { ImGuiTableColumn* c = &table->Columns[n]; return ImRect(c->MinX, table->InnerClipRect.Min.y, c->MinX + c->ContentWidthRowsFrozen, table->InnerClipRect.Min.y + table->LastFirstRowHeight); }     // "
+            else if (rect_type == TRT_ColumnsContentRowsUnfrozen)   { ImGuiTableColumn* c = &table->Columns[n]; return ImRect(c->MinX, table->InnerClipRect.Min.y + table->LastFirstRowHeight, c->MinX + c->ContentWidthRowsUnfrozen, table->InnerClipRect.Max.y); }   // "
+            IM_ASSERT(0);
+            return ImRect();
+        }
+
         static ImRect GetWindowRect(ImGuiWindow* window, int rect_type)
         {
             if (rect_type == WRT_OuterRect)                 { return window->Rect(); }
@@ -15525,7 +15622,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         {
             if (!ImGui::TreeNode(label, "%s (%d)", label, windows.Size))
                 return;
-            for (int i = 0; i < windows.Size; i++)
+            ImGui::Text("(In front-to-back order:)");
+            for (int i = windows.Size - 1; i >= 0; i--) // Iterate front to back
             {
                 ImGui::PushID(windows[i]);
                 Funcs::NodeWindow(windows[i], "Window");
@@ -15541,14 +15639,18 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 ImGui::BulletText("%s: NULL", label);
                 return;
             }
-            bool open = ImGui::TreeNode(label, "%s '%s', %d @ 0x%p", label, window->Name, (window->Active || window->WasActive), window);
-            if (ImGui::IsItemHovered() && window->WasActive)
-                ImGui::GetForegroundDrawList()->AddRect(window->Pos, window->Pos + window->Size, IM_COL32(255, 255, 0, 255));
+
+            ImGuiContext& g = *GImGui;
+            const bool is_active = window->WasActive;
+            ImGuiTreeNodeFlags tree_node_flags = (window == g.NavWindow) ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None;
+            if (!is_active) { PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled)); }
+            const bool open = ImGui::TreeNodeEx(label, tree_node_flags, "%s '%s'%s", label, window->Name, is_active ? "" : " *Inactive*");
+            if (!is_active) { PopStyleColor(); }
+            if (ImGui::IsItemHovered() && is_active)
+                ImGui::GetForegroundDrawList(window)->AddRect(window->Pos, window->Pos + window->Size, IM_COL32(255, 255, 0, 255));
             if (!open)
                 return;
 
-            if (!window->WasActive)
-                ImGui::TextDisabled("Note: window is not currently visible.");
             if (window->MemoryCompacted)
                 ImGui::TextDisabled("Note: some memory buffers have been compacted/freed.");
 
@@ -15671,7 +15773,8 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             char buf[256];
             char* p = buf;
             const char* buf_end = buf + IM_ARRAYSIZE(buf);
-            p += ImFormatString(p, buf_end - p, "TabBar (%d tabs)%s", tab_bar->Tabs.Size, (tab_bar->PrevFrameVisible < ImGui::GetFrameCount() - 2) ? " *Inactive*" : "");
+            const bool is_active = (tab_bar->PrevFrameVisible >= ImGui::GetFrameCount() - 2);
+            p += ImFormatString(p, buf_end - p, "Tab Bar 0x%08X (%d tabs)%s", tab_bar->ID, tab_bar->Tabs.Size, is_active ? "" : " *Inactive*");
             if (tab_bar->Flags & ImGuiTabBarFlags_DockNode)
             {
                 p += ImFormatString(p, buf_end - p, "  { ");
@@ -15679,7 +15782,10 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                     p += ImFormatString(p, buf_end - p, "%s'%s'", tab_n > 0 ? ", " : "", tab_bar->Tabs[tab_n].Window->Name);
                 p += ImFormatString(p, buf_end - p, (tab_bar->Tabs.Size > 3) ? " ... }" : " } ");
             }
-            if (ImGui::TreeNode(tab_bar, "%s", buf))
+            if (!is_active) { PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled)); }
+            bool open = ImGui::TreeNode(tab_bar, "%s", buf);
+            if (!is_active) { PopStyleColor(); }
+            if (open)
             {
                 for (int tab_n = 0; tab_n < tab_bar->Tabs.Size; tab_n++)
                 {
@@ -15704,6 +15810,70 @@ void ImGui::ShowMetricsWindow(bool* p_open)
                 ImGui::BulletText("Key 0x%08X Value { i: %d }", p.key, p.val_i); // Important: we currently don't store a type, real value may not be integer.
             }
             ImGui::TreePop();
+        }
+
+        static void NodeTableSettings(ImGuiTableSettings* settings)
+        {
+            if (!ImGui::TreeNode((void*)(intptr_t)settings->ID, "Settings 0x%08X (%d columns)", settings->ID, settings->ColumnsCount))
+                return;
+            ImGui::BulletText("SaveFlags: 0x%08X", settings->SaveFlags);
+            ImGui::BulletText("ColumnsCount: %d (max %d)", settings->ColumnsCount, settings->ColumnsCountMax);
+            for (int n = 0; n < settings->ColumnsCount; n++)
+            {
+                ImGuiTableColumnSettings* column_settings = &settings->GetColumnSettings()[n];
+                ImGuiSortDirection sort_dir = (column_settings->SortOrder != -1) ? (ImGuiSortDirection)column_settings->SortDirection : ImGuiSortDirection_None;
+                ImGui::BulletText("Column %d Order %d SortOrder %2d %s Visible %d UserID 0x%08X WidthOrWeight %.3f",
+                    n, column_settings->DisplayOrder, column_settings->SortOrder,
+                    (sort_dir == ImGuiSortDirection_Ascending) ? "Asc" : (sort_dir == ImGuiSortDirection_Descending) ? "Des" : "---",
+                    column_settings->IsVisible, column_settings->UserID, column_settings->WidthOrWeight);
+            }
+            ImGui::TreePop();
+        }
+
+        static void NodeTable(ImGuiTable* table)
+        {
+            char buf[256];
+            char* p = buf;
+            const char* buf_end = buf + IM_ARRAYSIZE(buf);
+            const bool is_active = (table->LastFrameActive >= ImGui::GetFrameCount() - 2);
+            ImFormatString(p, buf_end - p, "Table 0x%08X (%d columns, in '%s')%s", table->ID, table->ColumnsCount, table->OuterWindow->Name, is_active ? "" : " *Inactive*");
+            if (!is_active) { PushStyleColor(ImGuiCol_Text, GetStyleColorVec4(ImGuiCol_TextDisabled)); }
+            bool open = ImGui::TreeNode(table, "%s", buf);
+            if (!is_active) { PopStyleColor(); }
+            if (ImGui::IsItemHovered())
+                ImGui::GetForegroundDrawList()->AddRect(table->OuterRect.Min, table->OuterRect.Max, IM_COL32(255, 255, 0, 255));
+            if (open)
+            {
+                ImGui::BulletText("OuterRect: Pos: (%.1f,%.1f) Size: (%.1f,%.1f)", table->OuterRect.Min.x, table->OuterRect.Min.y, table->OuterRect.GetWidth(), table->OuterRect.GetHeight());
+                ImGui::BulletText("InnerWidth: %.1f%s", table->InnerWidth, table->InnerWidth == 0.0f ? " (auto)" : "");
+                ImGui::BulletText("ColumnsWidth: %.1f, AutoFitWidth: %.1f", table->ColumnsTotalWidth, table->ColumnsAutoFitWidth);
+                ImGui::BulletText("HoveredColumnBody: %d, HoveredColumnBorder: %d", table->HoveredColumnBody, table->HoveredColumnBorder);
+                ImGui::BulletText("ResizedColumn: %d, ReorderColumn: %d, HeldHeaderColumn: %d", table->ResizedColumn, table->ReorderColumn, table->HeldHeaderColumn);
+                for (int n = 0; n < table->ColumnsCount; n++)
+                {
+                    const ImGuiTableColumn* column = &table->Columns[n];
+                    const char* name = TableGetColumnName(table, n);
+                    ImGui::BulletText("Column %d order %d name '%s': +%.1f to +%.1f\n"
+                        "Visible: %d, Clipped: %d, DrawChannels: %d,%d\n"
+                        "WidthGiven/Request: %.2f/%.2f, WidthWeight: %.3f\n"
+                        "ContentWidth: RowsFrozen %d, RowsUnfrozen %d, HeadersUsed/Ideal %d/%d\n"
+                        "SortOrder: %d, SortDir: %s\n"
+                        "UserID: 0x%08X, Flags: 0x%04X: %s%s%s%s..",
+                        n, column->DisplayOrder, name ? name : "NULL", column->MinX - table->WorkRect.Min.x, column->MaxX - table->WorkRect.Min.x,
+                        column->IsVisible, column->IsClipped, column->DrawChannelRowsBeforeFreeze, column->DrawChannelRowsAfterFreeze,
+                        column->WidthGiven, column->WidthRequest, column->WidthStretchWeight,
+                        column->ContentWidthRowsFrozen, column->ContentWidthRowsUnfrozen, column->ContentWidthHeadersUsed, column->ContentWidthHeadersIdeal,
+                        column->SortOrder, (column->SortDirection == ImGuiSortDirection_Ascending) ? "Ascending" : (column->SortDirection == ImGuiSortDirection_Descending) ? "Descending" : "None",
+                        column->UserID, column->Flags,
+                        (column->Flags & ImGuiTableColumnFlags_WidthFixed) ? "WidthFixed " : "",
+                        (column->Flags & ImGuiTableColumnFlags_WidthStretch) ? "WidthStretch " : "",
+                        (column->Flags & ImGuiTableColumnFlags_WidthAlwaysAutoResize) ? "WidthAlwaysAutoResize " : "",
+                        (column->Flags & ImGuiTableColumnFlags_NoResize) ? "NoResize " : "");
+                }
+                if (ImGuiTableSettings* settings = TableGetBoundSettings(table))
+                    NodeTableSettings(settings);
+                ImGui::TreePop();
+            }
         }
     };
 
@@ -15732,6 +15902,49 @@ void ImGui::ShowMetricsWindow(bool* p_open)
             }
             ImGui::Unindent();
         }
+
+        ImGui::Checkbox("Show tables rectangles", &show_tables_rects);
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12);
+        show_tables_rects |= ImGui::Combo("##show_table_rects_type", &show_tables_rect_type, trt_rects_names, TRT_Count, TRT_Count);
+        if (show_tables_rects && g.NavWindow)
+        {
+            for (int table_n = 0; table_n < g.Tables.GetSize(); table_n++)
+            {
+                ImGuiTable* table = g.Tables.GetByIndex(table_n);
+                if (table->LastFrameActive < g.FrameCount - 1 || (table->OuterWindow != g.NavWindow && table->InnerWindow != g.NavWindow))
+                    continue;
+
+                ImGui::BulletText("Table 0x%08X (%d columns, in '%s')", table->ID, table->ColumnsCount, table->OuterWindow->Name);
+                if (ImGui::IsItemHovered())
+                    ImGui::GetForegroundDrawList()->AddRect(table->OuterRect.Min - ImVec2(1, 1), table->OuterRect.Max + ImVec2(1, 1), IM_COL32(255, 255, 0, 255), 0.0f, ~0, 2.0f);
+                ImGui::Indent();
+                for (int rect_n = 0; rect_n < TRT_Count; rect_n++)
+                {
+                    if (rect_n >= TRT_ColumnsRect)
+                    {
+                        if (rect_n != TRT_ColumnsRect && rect_n != TRT_ColumnsClipRect)
+                            continue;
+                        for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
+                        {
+                            ImRect r = Funcs::GetTableRect(table, rect_n, column_n);
+                            ImGui::Text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) Col %d %s", r.Min.x, r.Min.y, r.Max.x, r.Max.y, r.GetWidth(), r.GetHeight(), column_n, trt_rects_names[rect_n]);
+                            if (ImGui::IsItemHovered())
+                                ImGui::GetForegroundDrawList()->AddRect(r.Min - ImVec2(1, 1), r.Max + ImVec2(1, 1), IM_COL32(255, 255, 0, 255), 0.0f, ~0, 2.0f);
+                        }
+                    }
+                    else
+                    {
+                        ImRect r = Funcs::GetTableRect(table, rect_n, -1);
+                        ImGui::Text("(%6.1f,%6.1f) (%6.1f,%6.1f) Size (%6.1f,%6.1f) %s", r.Min.x, r.Min.y, r.Max.x, r.Max.y, r.GetWidth(), r.GetHeight(), trt_rects_names[rect_n]);
+                        if (ImGui::IsItemHovered())
+                            ImGui::GetForegroundDrawList()->AddRect(r.Min - ImVec2(1, 1), r.Max + ImVec2(1, 1), IM_COL32(255, 255, 0, 255), 0.0f, ~0, 2.0f);
+                    }
+                }
+                ImGui::Unindent();
+            }
+        }
+
         ImGui::Checkbox("Show mesh when hovering ImDrawCmd", &show_drawcmd_mesh);
         ImGui::Checkbox("Show bounding boxes when hovering ImDrawCmd", &show_drawcmd_aabb);
         ImGui::TreePop();
@@ -15785,9 +15998,6 @@ void ImGui::ShowMetricsWindow(bool* p_open)
     }
 
     // Details for Tables
-    IM_UNUSED(trt_rects_names);
-    IM_UNUSED(show_tables_rects);
-    IM_UNUSED(show_tables_rect_type);
 #ifdef IMGUI_HAS_TABLE
     if (ImGui::TreeNode("Tables", "Tables (%d)", g.Tables.GetSize()))
     {
@@ -15808,6 +16018,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         if (ImGui::SmallButton("Clear nodes")) { DockContextClearNodes(&g, 0, true); }
         ImGui::SameLine();
         if (ImGui::SmallButton("Rebuild all")) { dc->WantFullRebuild = true; }
+        ImGui::Text("HoveredDockNode: 0x%08X", g.HoveredDockNode ? g.HoveredDockNode->ID : 0);
         for (int n = 0; n < dc->Nodes.Data.Size; n++)
             if (ImGuiDockNode* node = (ImGuiDockNode*)dc->Nodes.Data[n].val_p)
                 if (!root_nodes_only || node->IsRootNode())
@@ -15883,8 +16094,7 @@ void ImGui::ShowMetricsWindow(bool* p_open)
 
         if (ImGui::TreeNode("SettingsIniData", "Settings unpacked data (.ini): %d bytes", g.SettingsIniData.size()))
         {
-            char* buf = (char*)(void*)(g.SettingsIniData.Buf.Data ? g.SettingsIniData.Buf.Data : "");
-            ImGui::InputTextMultiline("##Ini", buf, g.SettingsIniData.Buf.Size, ImVec2(-FLT_MIN, 0.0f), ImGuiInputTextFlags_ReadOnly);
+            ImGui::InputTextMultiline("##Ini", (char*)(void*)g.SettingsIniData.c_str(), g.SettingsIniData.Buf.Size, ImVec2(-FLT_MIN, 0.0f), ImGuiInputTextFlags_ReadOnly);
             ImGui::TreePop();
         }
         ImGui::TreePop();
@@ -15894,22 +16104,36 @@ void ImGui::ShowMetricsWindow(bool* p_open)
     if (ImGui::TreeNode("Internal state"))
     {
         const char* input_source_names[] = { "None", "Mouse", "Nav", "NavKeyboard", "NavGamepad" }; IM_ASSERT(IM_ARRAYSIZE(input_source_names) == ImGuiInputSource_COUNT);
+
+        ImGui::Text("WINDOWING");
+        ImGui::Indent();
         ImGui::Text("HoveredWindow: '%s'", g.HoveredWindow ? g.HoveredWindow->Name : "NULL");
         ImGui::Text("HoveredRootWindow: '%s'", g.HoveredRootWindow ? g.HoveredRootWindow->Name : "NULL");
         ImGui::Text("HoveredWindowUnderMovingWindow: '%s'", g.HoveredWindowUnderMovingWindow ? g.HoveredWindowUnderMovingWindow->Name : "NULL");
-        ImGui::Text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: %d", g.HoveredId, g.HoveredIdPreviousFrame, g.HoveredIdTimer, g.HoveredIdAllowOverlap); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+        ImGui::Text("MovingWindow: '%s'", g.MovingWindow ? g.MovingWindow->Name : "NULL");
+        ImGui::Text("MouseViewport: 0x%08X (UserHovered 0x%08X, LastHovered 0x%08X)", g.MouseViewport->ID, g.IO.MouseHoveredViewport, g.MouseLastHoveredViewport ? g.MouseLastHoveredViewport->ID : 0);
+        ImGui::Unindent();
+
+        ImGui::Text("ITEMS");
+        ImGui::Indent();
         ImGui::Text("ActiveId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: %d, Source: %s", g.ActiveId, g.ActiveIdPreviousFrame, g.ActiveIdTimer, g.ActiveIdAllowOverlap, input_source_names[g.ActiveIdSource]);
         ImGui::Text("ActiveIdWindow: '%s'", g.ActiveIdWindow ? g.ActiveIdWindow->Name : "NULL");
-        ImGui::Text("MovingWindow: '%s'", g.MovingWindow ? g.MovingWindow->Name : "NULL");
+        ImGui::Text("HoveredId: 0x%08X/0x%08X (%.2f sec), AllowOverlap: %d", g.HoveredId, g.HoveredIdPreviousFrame, g.HoveredIdTimer, g.HoveredIdAllowOverlap); // Data is "in-flight" so depending on when the Metrics window is called we may see current frame information or not
+        ImGui::Text("DragDrop: %d, SourceId = 0x%08X, Payload \"%s\" (%d bytes)", g.DragDropActive, g.DragDropPayload.SourceId, g.DragDropPayload.DataType, g.DragDropPayload.DataSize);
+        ImGui::Unindent();
+
+        ImGui::Text("NAV,FOCUS");
+        ImGui::Indent();
         ImGui::Text("NavWindow: '%s'", g.NavWindow ? g.NavWindow->Name : "NULL");
         ImGui::Text("NavId: 0x%08X, NavLayer: %d", g.NavId, g.NavLayer);
         ImGui::Text("NavInputSource: %s", input_source_names[g.NavInputSource]);
         ImGui::Text("NavActive: %d, NavVisible: %d", g.IO.NavActive, g.IO.NavVisible);
         ImGui::Text("NavActivateId: 0x%08X, NavInputId: 0x%08X", g.NavActivateId, g.NavInputId);
         ImGui::Text("NavDisableHighlight: %d, NavDisableMouseHover: %d", g.NavDisableHighlight, g.NavDisableMouseHover);
+        ImGui::Text("NavFocusScopeId = 0x%08X", g.NavFocusScopeId);
         ImGui::Text("NavWindowingTarget: '%s'", g.NavWindowingTarget ? g.NavWindowingTarget->Name : "NULL");
-        ImGui::Text("DragDrop: %d, SourceId = 0x%08X, Payload \"%s\" (%d bytes)", g.DragDropActive, g.DragDropPayload.SourceId, g.DragDropPayload.DataType, g.DragDropPayload.DataSize);
-        ImGui::Text("MouseViewport: 0x%08X (UserHovered 0x%08X, LastHovered 0x%08X)", g.MouseViewport->ID, g.IO.MouseHoveredViewport, g.MouseLastHoveredViewport ? g.MouseLastHoveredViewport->ID : 0);
+        ImGui::Unindent();
+
         ImGui::TreePop();
     }
 
@@ -15945,35 +16169,45 @@ void ImGui::ShowMetricsWindow(bool* p_open)
         for (int table_n = 0; table_n < g.Tables.GetSize(); table_n++)
         {
             ImGuiTable* table = g.Tables.GetByIndex(table_n);
+            if (table->LastFrameActive < g.FrameCount - 1)
+                continue;
+            ImDrawList* draw_list = GetForegroundDrawList(table->OuterWindow);
+            if (show_tables_rect_type >= TRT_ColumnsRect)
+            {
+                for (int column_n = 0; column_n < table->ColumnsCount; column_n++)
+                {
+                    ImRect r = Funcs::GetTableRect(table, show_tables_rect_type, column_n);
+                    ImU32 col = (table->HoveredColumnBody == column_n) ? IM_COL32(255, 255, 128, 255) : IM_COL32(255, 0, 128, 255);
+                    float thickness = (table->HoveredColumnBody == column_n) ? 3.0f : 1.0f;
+                    draw_list->AddRect(r.Min, r.Max, col, 0.0f, ~0, thickness);
+                }
+            }
+            else
+            {
+                ImRect r = Funcs::GetTableRect(table, show_tables_rect_type, -1);
+                draw_list->AddRect(r.Min, r.Max, IM_COL32(255, 0, 128, 255));
+            }
         }
     }
 #endif // #ifdef IMGUI_HAS_TABLE
 
 #ifdef IMGUI_HAS_DOCK
     // Overlay: Display Docking info
-    if (show_docking_nodes && g.IO.KeyCtrl)
+    if (show_docking_nodes && g.IO.KeyCtrl && g.HoveredDockNode)
     {
-        ImGuiDockContext* dc = &g.DockContext;
-        for (int n = 0; n < dc->Nodes.Data.Size; n++)
-            if (ImGuiDockNode* node = (ImGuiDockNode*)dc->Nodes.Data[n].val_p)
-            {
-                ImGuiDockNode* root_node = DockNodeGetRootNode(node);
-                if (ImGuiDockNode* hovered_node = DockNodeTreeFindNodeByPos(root_node, g.IO.MousePos))
-                    if (hovered_node != node)
-                        continue;
-                char buf[64] = "";
-                char* p = buf;
-                ImDrawList* overlay_draw_list = node->HostWindow ? GetForegroundDrawList(node->HostWindow) : GetForegroundDrawList((ImGuiViewportP*)GetMainViewport());
-                p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "DockId: %X%s\n", node->ID, node->IsCentralNode() ? " *CentralNode*" : "");
-                p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "WindowClass: %08X\n", node->WindowClass.ClassId);
-                p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "Size: (%.0f, %.0f)\n", node->Size.x, node->Size.y);
-                p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "SizeRef: (%.0f, %.0f)\n", node->SizeRef.x, node->SizeRef.y);
-                int depth = DockNodeGetDepth(node);
-                overlay_draw_list->AddRect(node->Pos + ImVec2(3, 3) * (float)depth, node->Pos + node->Size - ImVec2(3, 3) * (float)depth, IM_COL32(200, 100, 100, 255));
-                ImVec2 pos = node->Pos + ImVec2(3, 3) * (float)depth;
-                overlay_draw_list->AddRectFilled(pos - ImVec2(1, 1), pos + CalcTextSize(buf) + ImVec2(1, 1), IM_COL32(200, 100, 100, 255));
-                overlay_draw_list->AddText(NULL, 0.0f, pos, IM_COL32(255, 255, 255, 255), buf);
-            }
+        char buf[64] = "";
+        char* p = buf;
+        ImGuiDockNode* node = g.HoveredDockNode;
+        ImDrawList* overlay_draw_list = node->HostWindow ? GetForegroundDrawList(node->HostWindow) : GetForegroundDrawList((ImGuiViewportP*)GetMainViewport());
+        p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "DockId: %X%s\n", node->ID, node->IsCentralNode() ? " *CentralNode*" : "");
+        p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "WindowClass: %08X\n", node->WindowClass.ClassId);
+        p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "Size: (%.0f, %.0f)\n", node->Size.x, node->Size.y);
+        p += ImFormatString(p, buf + IM_ARRAYSIZE(buf) - p, "SizeRef: (%.0f, %.0f)\n", node->SizeRef.x, node->SizeRef.y);
+        int depth = DockNodeGetDepth(node);
+        overlay_draw_list->AddRect(node->Pos + ImVec2(3, 3) * (float)depth, node->Pos + node->Size - ImVec2(3, 3) * (float)depth, IM_COL32(200, 100, 100, 255));
+        ImVec2 pos = node->Pos + ImVec2(3, 3) * (float)depth;
+        overlay_draw_list->AddRectFilled(pos - ImVec2(1, 1), pos + CalcTextSize(buf) + ImVec2(1, 1), IM_COL32(200, 100, 100, 255));
+        overlay_draw_list->AddText(NULL, 0.0f, pos, IM_COL32(255, 255, 255, 255), buf);
     }
 #endif // #ifdef IMGUI_HAS_DOCK
 

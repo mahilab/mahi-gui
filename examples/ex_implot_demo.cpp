@@ -6,9 +6,11 @@
 using namespace mahi::gui;
 using namespace mahi::util;
 
-class PlotDemo : public Application {
+class ImPlotDemo : public Application {
 public:
-    PlotDemo() : Application() { }
+    ImPlotDemo() : Application() { 
+        ImGui::StyleColorsMahiDark3();
+    }
     void update() {
         static bool p_open = true;
         ImPlot::ShowDemoWindow(&p_open);
@@ -19,7 +21,7 @@ public:
 
 int main(int argc, char const *argv[])
 {
-    PlotDemo demo;
+    ImPlotDemo demo;
     demo.run();
     return 0;
 }
