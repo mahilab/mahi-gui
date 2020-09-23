@@ -13,8 +13,6 @@
 // all copies or substantial portions of the Software.
 //
 // Author(s): Evan Pezent (epezent@rice.edu)
-//
-// Adapted from: SFML - Simple and Fast Multimedia Library (license at bottom)
 
 #pragma once
 
