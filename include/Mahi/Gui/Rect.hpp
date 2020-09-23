@@ -38,18 +38,29 @@ struct Rect {
         left(position.x), top(position.y), width(size.x), height(size.y) {}
 
     /// Returns the Rect position (left,top)
-    inline Vec2 position() const { return Vec2(left, top); }
+    inline Vec2 pos() const { return Vec2(left, top); }
 
-    /// Returns the REct size (width,height)
+    /// Returns the Rect size (width,height)
     inline Vec2 size() const { return Vec2(width, height); }
 
+    /// Returns the Rect top left
+    inline Vec2 tl() const { return Vec2(left, top); }
+
+    /// Returns the Rect top right
+    inline Vec2 tr() const { return Vec2(left + width, top); }
+
+    /// Returns the Rect bottom left
+    inline Vec2 bl() const { return Vec2(left, top + height); }
+
+    /// Returns the Rect bottom right
+    inline Vec2 br() const { return Vec2(left + width, top + height); }
+
+    /// Returns the Rect center
+    inline Vec2 center() { return Vec2(left + width * 0.5f, top + height * 0.5f); }
+
     /// Returns true if the Rect contains the point p
-    bool contains(const Vec2& p) const {
-        float min_x = std::min(left, left + width);
-        float max_x = std::max(left, left + width);
-        float min_y = std::min(top, top + height);
-        float max_y = std::max(top, top + height);
-        return (p.x >= min_x) && (p.x < max_x) && (p.y >= min_y) && (p.y < max_y);
+    inline bool contains(const Vec2& p) const {
+        return (p.x >= left) && (p.x < left + width) && (p.y >= top) && (p.y < top + height);
     }
 
     float left;
@@ -69,24 +80,3 @@ inline bool operator!=(const Rect& left, const Rect& right) { return !(left == r
 
 }  // namespace gui
 }  // namespace mahi
-
-// SFML - Simple and Fast Multimedia Library
-// Copyright (C) 2007-2019 Laurent Gomila (laurent@sfml-dev.org)
-//
-// This software is provided 'as-is', without any express or implied warranty.
-// In no event will the authors be held liable for any damages arising from the use of this
-// software.
-//
-// Permission is granted to anyone to use this software for any purpose,
-// including commercial applications, and to alter it and redistribute it freely,
-// subject to the following restrictions:
-//
-// 1. The origin of this software must not be misrepresented;
-//    you must not claim that you wrote the original software.
-//    If you use this software in a product, an acknowledgment
-//    in the product documentation would be appreciated but is not required.
-//
-// 2. Altered source versions must be plainly marked as such,
-//    and must not be misrepresented as being the original software.
-//
-// 3. This notice may not be removed or altered from any source distribution.

@@ -741,8 +741,8 @@ class Board
             ImGui::EndTooltip();
         }
 
-        Vec2 tl = shape.bounds().position();
-        Vec2 br = tl + shape.bounds().size();
+        Vec2 tl = shape.bounds().tl();
+        Vec2 br = shape.bounds().br();
         nvgBeginPath(vg);
         nvgShapeWithHoles(vg, shape);
         auto paint = nvgLinearGradient(vg, tl.x, tl.y, br.x, br.y, {0.5f,0.5f,0.5f,0.25f}, {0.5f,0.5f,0.5f,0.5f});
@@ -859,8 +859,8 @@ class Piece : public Transformable
             ImGui::EndTooltip();
         }
 
-        Vec2 tl = shape.bounds().position();
-        Vec2 br = tl + shape.bounds().size();
+        Vec2 tl = shape.bounds().tl();
+        Vec2 br = shape.bounds().br();
         nvgBeginPath(vg);
         nvgShape(vg, shape);
         auto paint = nvgLinearGradient(vg, tl.x, tl.y, br.x, br.y, with_alpha(color,0.25f), with_alpha(color,0.5f));   
