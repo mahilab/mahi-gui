@@ -39,7 +39,7 @@ void BeginDisabled(bool disabled = true, float alpha = 0.25f);
 /// Ends a disabled section.
 void EndDisabled();
 /// A button that acts like a toggle, dimming itself when disabled.
-void ToggleButton(const char* label, bool* toggled, const ImVec2& size = ImVec2(0,0));
+bool ToggleButton(const char* label, bool* toggled, const ImVec2& size = ImVec2(0,0));
 /// A regular button with a color.
 bool ButtonColored(const char* label, const ImVec4& color, const ImVec2& size = ImVec2(0,0));
 /// A series of mutually exclusive RadioButtons. Useful for mode selection.

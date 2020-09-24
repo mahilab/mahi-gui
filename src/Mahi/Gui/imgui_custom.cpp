@@ -55,14 +55,18 @@ void EndDisabled() {
     }
 }
 
-void ToggleButton(const char *label, bool *toggled, const ImVec2 &size) {
+bool ToggleButton(const char *label, bool *toggled, const ImVec2 &size) {
+    bool pressed = false;
     bool dim = !*toggled;
     if (dim)
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.25f);
-    if (ImGui::Button(label, size))
+    if (ImGui::Button(label, size)) {
         *toggled = !(*toggled);
+        pressed = true;
+    }
     if (dim)
         ImGui::PopStyleVar();
+    return pressed;
 }
 
 bool ButtonColored(const char *label, const ImVec4 &color, const ImVec2 &size) {
