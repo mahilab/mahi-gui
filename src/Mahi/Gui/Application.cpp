@@ -36,7 +36,7 @@ namespace gui {
 
 namespace {
 // GLFW
-static void glfw_context_version();
+static void glfw_context_version(bool gl_forward_compat);
 static void glfw_setup_window_callbacks(GLFWwindow *window, void *userPointer);
 static void glfw_error_callback(int error, const char *description);
 static void glfw_pos_callback(GLFWwindow *window, int xpos, int ypos);
@@ -75,7 +75,7 @@ Application::Application(const Config &conf) :
         throw std::runtime_error(err_msg);
     }
     // setup GLFW context version
-    glfw_context_version();
+    glfw_context_version(conf.gl_forward_compat);
     // GLFW window hints
     glfwWindowHint(GLFW_RESIZABLE, conf.resizable);
     glfwWindowHint(GLFW_VISIBLE, conf.visible);
@@ -146,17 +146,17 @@ Application::Application(const Config &conf) :
 }
 
 Application::Application() :
-    Application(Config(
-        {"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, Grays::Black})) {}
+    Application(Config({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true,
+                        true, Grays::Black})) {}
 
 Application::Application(const std::string &title, int monitor) :
     Application(Config({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true,
-                        Grays::Black})) {}
+                        true, Grays::Black})) {}
 
 Application::Application(int width, int height, const std::string &title, bool resizable,
                          int monitor) :
     Application(Config({title, width, height, monitor, false, resizable, true, true, false, true, 4,
-                        true, true, Grays::Black})) {}
+                        true, true, true, Grays::Black})) {}
 
 Application::~Application() {
     ImGui_ImplOpenGL3_Shutdown();
@@ -423,7 +423,7 @@ namespace {
 // GLFW
 ///////////////////////////////////////////////////////////////////////////////
 
-static void glfw_context_version() {
+static void glfw_context_version(bool gl_forward_compat) {
     // Decide GL+GLSL versions
 #if __APPLE__
     // GL 3.2 + GLSL 150
@@ -436,7 +436,9 @@ static void glfw_context_version() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+    if (gl_forward_compat) {
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+    }
 #endif
 }
 
