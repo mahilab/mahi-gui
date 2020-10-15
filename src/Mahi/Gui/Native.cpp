@@ -1,9 +1,4 @@
 #include <Mahi/Gui/Native.hpp>
-#include <cstring>
-#include <ctime>
-#include <iomanip>
-#include <cassert>
-#include <sstream>
 #include <iostream>
 #include <algorithm>
 
@@ -13,15 +8,6 @@
 #include <tchar.h>
 #include <windows.h>
 #else
-#include <errno.h>
-#include <pthread.h>
-#include <sched.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <time.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/sysctl.h>
 #endif
 
 // TODO: We need a more robust way to detect where fs may be...
