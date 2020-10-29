@@ -53,7 +53,7 @@ public:
 
     /// GUI code
     void update() override {
-        ImGui::BeginFixed("##Likert", ImGui::GetMainViewport()->Pos, {width, height}, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
+        ImGui::BeginFixed("##Likert", {0,0}, {width, height}, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
         if (loaded) {
             // Subject Info
             ImGui::SetNextItemWidth(100);

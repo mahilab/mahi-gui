@@ -25,6 +25,12 @@
 using std::memcpy;
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#include <winuser.h>
+#include <ShellScalingAPI.h>
+#endif
+
 using namespace mahi::util;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,6 +53,25 @@ static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths
 // IMGUI
 static ImGuiContext* configureImGui(GLFWwindow *window);
 }  // namespace
+
+///////////////////////////////////////////////////////////////////////////////
+// PLATFORM
+///////////////////////////////////////////////////////////////////////////////
+
+#ifdef _WIN32
+    float enable_dpi_aware() {
+        SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
+        const POINT ptZero = { 0, 0 };
+        auto monitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
+        UINT dpiX, dpiY;
+        auto result  = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+        return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
+    }
+#else
+    float enable_dpi_aware() {
+        return 1.0f;
+    }
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // APPLICATION
