@@ -78,7 +78,7 @@ inline Vec2 intersection(const Vec2& a1, const Vec2& a2, const Vec2& b1, const V
 inline bool inside_line(const Vec2& l1, const Vec2& l2,
                        const Vec2& p) {
     float crossproduct = cross(l2 - l1, p - l1);
-    if (abs(crossproduct) > 0.1)
+    if (std::abs(crossproduct) > 0.1)
         return false;
     float dotproduct = dot(l2 - l1, p - l1);
     if (dotproduct < 0)
