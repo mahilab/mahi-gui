@@ -89,7 +89,7 @@ Application::Application(const Config &conf) :
     m_dt(Time::Zero),
     m_time(Time::Zero),
     m_time_scale(1),
-    m_dpi_scale( conf.dpi_aware ? enable_dpi_aware() : 1.0f)
+    m_dpi_scale( 1.0f /* conf.dpi_aware ? enable_dpi_aware() : 1.0f */ )
 {
     const char* err_msg;
     // setup GLFW error callback
@@ -545,7 +545,7 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale) {
     font_cfg.OversampleV          = 1;
     font_cfg.FontDataOwnedByAtlas = false;
     strcpy(font_cfg.Name, "Roboto Mono Bold");
-    io.Fonts->AddFontFromMemoryTTF(RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len, 15.0f * dpi_scale, &font_cfg);
+    io.Fonts->AddFontFromMemoryTTF(RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len, IM_ROUND(15.0f * dpi_scale), &font_cfg);
 
     ImFontConfig icons_config;
     icons_config.MergeMode            = true;
@@ -558,18 +558,20 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale) {
 
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, 14.0f * dpi_scale, &icons_config,
+    io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, IM_ROUND(14.0f * dpi_scale), &icons_config,
                                    fa_ranges);
 
     // merge in icons from font awesome 5 brands
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
-    io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, 14.0f * dpi_scale, &icons_config,
+    io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, IM_ROUND(14.0f * dpi_scale), &icons_config,
                                    fab_ranges);
 
     io.FontGlobalScale = 1.0f / dpi_scale;
-    io.DisplayFramebufferScale = ImVec2(dpi_scale, dpi_scale);  
+    io.DisplayFramebufferScale = ImVec2(5, 5);  
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
+
+    // imStyle->ScaleAllSizes(dpi_scale);
 
     // Main
     imStyle->WindowPadding    = ImVec2(8, 8);
