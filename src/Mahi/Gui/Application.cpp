@@ -130,9 +130,10 @@ Application::Application(const Config &conf) :
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
         glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
         // glfwWindowHint(GLFW_AUTO_ICONIFY, false);
-        m_window = glfwCreateWindow(mode->width, mode->height, conf.title.c_str(), monitor, NULL);
-    } else {
-        m_window = glfwCreateWindow(conf.width, conf.height, conf.title.c_str(), NULL, NULL);
+        m_window = glfwCreateWindow((int)(mode->width * m_dpi_scale), (int)(mode->height *m_dpi_scale), conf.title.c_str(), monitor, NULL);
+    } 
+    else {
+        m_window = glfwCreateWindow((int)(conf.width * m_dpi_scale), (int)(conf.height *m_dpi_scale), conf.title.c_str(), NULL, NULL);
     }
     if (m_window == NULL) {
         glfwGetError(&err_msg);

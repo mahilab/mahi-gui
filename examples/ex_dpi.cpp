@@ -23,9 +23,16 @@ using namespace mahi::util;
 
 class DpiDemo : public Application {
 public:
-    using Application::Application;
+    DpiDemo(Config conf) : Application(conf) {
+        ImGui::DisableViewports();
+    }
     virtual void update() override { 
-        fmt::print("DPI Aware: {}\n DPI Scale: {}\n", get_config().dpi_aware, get_dpi_scale());
+        ImGui::SetNextWindowPos(ImVec2(5,5), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(630,470), ImGuiCond_Always);
+        ImGui::Begin("Window", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Text("DPI Scale: %.2f", get_dpi_scale());
+        ImGui::Button("Press Me");
+        ImGui::End();
     }   
 };
 
