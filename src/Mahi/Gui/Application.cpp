@@ -51,7 +51,7 @@ static void glfw_close_callback(GLFWwindow *window);
 static void glfw_key_callback(GLFWwindow *, int key, int scancode, int action, int mods);
 static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths);
 // IMGUI
-static ImGuiContext* configureImGui(GLFWwindow *window);
+static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale);
 }  // namespace
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -88,8 +88,8 @@ Application::Application(const Config &conf) :
     m_frame_time(Time::Zero),
     m_dt(Time::Zero),
     m_time(Time::Zero),
-    m_time_scale(1)
-
+    m_time_scale(1),
+    m_dpi_scale( conf.dpi_aware ? enable_dpi_aware() : 1.0f)
 {
     const char* err_msg;
     // setup GLFW error callback
@@ -161,7 +161,7 @@ Application::Application(const Config &conf) :
     if (m_vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
     // configure ImGui
-    m_imgui_context = configureImGui(m_window);
+    m_imgui_context = configureImGui(m_window, m_dpi_scale);
     if (!m_imgui_context)
         throw std::runtime_error("Failed to create ImGui context!");
     m_implot_context = ImPlot::CreateContext();
@@ -171,17 +171,13 @@ Application::Application(const Config &conf) :
 }
 
 Application::Application() :
-    Application(Config({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true,
-                        true, Grays::Black})) {}
+    Application(Config({"", 100, 100, 0, false, true, false, true, false, false, 4, true, true, true, true, Grays::Black})) {}
 
 Application::Application(const std::string &title, int monitor) :
-    Application(Config({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true,
-                        true, Grays::Black})) {}
+    Application(Config({title, 0, 0, monitor, true, false, true, true, false, false, 4, true, true, true, true, Grays::Black})) {}
 
-Application::Application(int width, int height, const std::string &title, bool resizable,
-                         int monitor) :
-    Application(Config({title, width, height, monitor, false, resizable, true, true, false, true, 4,
-                        true, true, true, Grays::Black})) {}
+Application::Application(int width, int height, const std::string &title, bool resizable, int monitor) :
+    Application(Config({title, width, height, monitor, false, resizable, true, true, false, true, 4, true, true, true, true, Grays::Black})) {}
 
 Application::~Application() {
     ImGui_ImplOpenGL3_Shutdown();
@@ -330,7 +326,7 @@ Vec2 Application::get_window_pos() const {
 }
 
 void Application::set_window_size(int width, int height) {
-    glfwSetWindowSize(m_window, width, height);
+    glfwSetWindowSize(m_window, width * m_dpi_scale, height * m_dpi_scale);
 }
 
 Vec2 Application::get_window_size() const {
@@ -393,6 +389,10 @@ float Application::get_pixel_ratio() const {
     return get_framebuffer_size().x / get_window_size().x;
 }
 
+float Application::get_dpi_scale() const {
+    return m_dpi_scale;
+}
+
 void Application::set_vsync(bool enabled) {
     m_conf.vsync = enabled;
     if (m_conf.vsync)
@@ -410,6 +410,10 @@ Vec2 Application::get_mouse_pos() const {
     double x, y;
     glfwGetCursorPos(m_window, &x, &y);
     return {(float)x, (float)y};
+}
+
+const Application::Config& Application::get_config() const {
+    return m_conf;
 }
 
 #ifdef MAHI_COROUTINES
@@ -515,7 +519,7 @@ static void glfw_drop_callback(GLFWwindow *window, int count, const char **paths
 ///////////////////////////////////////////////////////////////////////////////
 // IMGUI
 ///////////////////////////////////////////////////////////////////////////////
-static ImGuiContext* configureImGui(GLFWwindow *window) {
+static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     auto context = ImGui::CreateContext();
@@ -540,7 +544,7 @@ static ImGuiContext* configureImGui(GLFWwindow *window) {
     font_cfg.OversampleV          = 1;
     font_cfg.FontDataOwnedByAtlas = false;
     strcpy(font_cfg.Name, "Roboto Mono Bold");
-    io.Fonts->AddFontFromMemoryTTF(RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len, 15.0f, &font_cfg);
+    io.Fonts->AddFontFromMemoryTTF(RobotoMono_Bold_ttf, RobotoMono_Bold_ttf_len, 15.0f * dpi_scale, &font_cfg);
 
     ImFontConfig icons_config;
     icons_config.MergeMode            = true;
@@ -553,13 +557,16 @@ static ImGuiContext* configureImGui(GLFWwindow *window) {
 
     // merge in icons from font awesome 5
     static const ImWchar fa_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
-    io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, 14.0f, &icons_config,
+    io.Fonts->AddFontFromMemoryTTF(fa_solid_900_ttf, fa_solid_900_ttf_len, 14.0f * dpi_scale, &icons_config,
                                    fa_ranges);
 
     // merge in icons from font awesome 5 brands
     static const ImWchar fab_ranges[] = {ICON_MIN_FAB, ICON_MAX_FAB, 0};
-    io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, 14, &icons_config,
+    io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, 14.0f * dpi_scale, &icons_config,
                                    fab_ranges);
+
+    io.FontGlobalScale = 1.0f / dpi_scale;
+    io.DisplayFramebufferScale = ImVec2(dpi_scale, dpi_scale);  
 
     ImGuiStyle *imStyle = &ImGui::GetStyle();
 
