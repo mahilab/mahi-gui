@@ -13,10 +13,7 @@
 #include "examples/imgui_impl_glfw.h"
 #include "examples/imgui_impl_opengl3.h"
 #include "implot.h"
-#include <stdio.h>
-#include <iostream>
 #include <stdexcept>
-#include <thread>
 
 #ifdef __linux__
 #include <string.h>
