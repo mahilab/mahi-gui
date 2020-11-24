@@ -27,10 +27,11 @@ public:
         ImGui::DisableViewports();
     }
     virtual void update() override { 
-        ImGui::SetNextWindowPos(ImVec2(5,5), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(630,470), ImGuiCond_Always);
-        ImGui::Begin("Window", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-        ImGui::Text("DPI Scale: %.2f", get_dpi_scale());
+        float dpi = get_dpi_scale();
+        ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Appearing);
+        ImGui::SetNextWindowSize(ImVec2(640,480), ImGuiCond_Appearing);
+        ImGui::Begin("Window", NULL, ImGuiWindowFlags_NoTitleBar);
+        ImGui::Text("DPI Scale: %.2f", dpi);
         ImGui::Button("Press Me");
         ImGui::End();
     }   

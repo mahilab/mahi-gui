@@ -65,6 +65,7 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale);
         auto monitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
         UINT dpiX, dpiY;
         auto result  = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+        return 1.25f;
         return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
     }
 #else
@@ -89,7 +90,7 @@ Application::Application(const Config &conf) :
     m_dt(Time::Zero),
     m_time(Time::Zero),
     m_time_scale(1),
-    m_dpi_scale( 1.0f /* conf.dpi_aware ? enable_dpi_aware() : 1.0f */ )
+    m_dpi_scale( conf.dpi_aware ? enable_dpi_aware() : 1.0f )
 {
     const char* err_msg;
     // setup GLFW error callback
@@ -566,41 +567,40 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale) {
     io.Fonts->AddFontFromMemoryTTF(fa_brands_400_ttf, fa_brands_400_ttf_len, IM_ROUND(14.0f * dpi_scale), &icons_config,
                                    fab_ranges);
 
-    io.FontGlobalScale = 1.0f / dpi_scale;
-    io.DisplayFramebufferScale = ImVec2(5, 5);  
-
-    ImGuiStyle *imStyle = &ImGui::GetStyle();
-
-    // imStyle->ScaleAllSizes(dpi_scale);
-
-    // Main
-    imStyle->WindowPadding    = ImVec2(8, 8);
-    imStyle->FramePadding     = ImVec2(3, 2);
-    imStyle->ItemSpacing      = ImVec2(4, 4);
-    imStyle->ItemInnerSpacing = ImVec2(4, 4);
-    imStyle->IndentSpacing    = 20.0f;
-    imStyle->ScrollbarSize    = 15.0f;
-    imStyle->GrabMinSize      = 5.0f;
-    // Rounding
-    imStyle->WindowRounding    = 2.0f;
-    imStyle->ChildRounding     = 2.0f;
-    imStyle->FrameRounding     = 2.0f;
-    imStyle->PopupRounding     = 2.0f;
-    imStyle->ScrollbarRounding = 10.0f;
-    imStyle->GrabRounding      = 2.0f;
-    imStyle->TabRounding       = 2.0f;
-    // Alignment
-    imStyle->WindowMenuButtonPosition = ImGuiDir_Right;
-    // Setup Dear ImGui style
     ImGui::StyleColorsMahiDark4();
-
+    ImGuiStyle &style = ImGui::GetStyle();
+    // Main
+    style.WindowPadding    = ImVec2(8, 8);
+    style.FramePadding     = ImVec2(3, 2);
+    style.ItemSpacing      = ImVec2(4, 4);
+    style.ItemInnerSpacing = ImVec2(4, 4);
+    style.IndentSpacing    = 20.0f;
+    style.ScrollbarSize    = 15.0f;
+    style.GrabMinSize      = 5.0f;
+    // Rounding
+    style.WindowRounding    = 2.0f;
+    style.ChildRounding     = 2.0f;
+    style.FrameRounding     = 2.0f;
+    style.PopupRounding     = 2.0f;
+    style.ScrollbarRounding = 10.0f;
+    style.GrabRounding      = 2.0f;
+    style.TabRounding       = 2.0f;
+    // Alignment
+    style.WindowMenuButtonPosition = ImGuiDir_Right;
+    // Setup Dear ImGui style
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look
     // identical to regular ones.
-    ImGuiStyle &style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         style.WindowRounding              = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
+
+
+    // DPI scaling method 1 (this worked for my previous project, but not this...):
+    io.FontGlobalScale = 1.0f / dpi_scale;
+    io.DisplayFramebufferScale = ImVec2(dpi_scale,dpi_scale);
+    // DPI scaling method 2:
+    // style.ScaleAllSizes(dpi_scale);
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
 
