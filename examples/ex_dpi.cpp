@@ -21,6 +21,8 @@
 using namespace mahi::gui;
 using namespace mahi::util;
 
+// THIS EXAMPLE CURRENTLY DOES NOT WORK, DPI IS A WIP!!!
+
 class DpiDemo : public Application {
 public:
     DpiDemo(Config conf) : Application(conf) {
@@ -39,7 +41,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-    
+    // THIS EXAMPLE CURRENTLY DOES NOT WORK, DPI IS A WIP!!!
     Options options("dpi.exe", "DPI Demo");
     options.add_options()("d,dpi","Enables DPI Awareness");
     auto result = options.parse(argc, argv);
