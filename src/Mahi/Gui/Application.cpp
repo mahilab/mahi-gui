@@ -65,7 +65,6 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale);
         auto monitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
         UINT dpiX, dpiY;
         auto result  = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
-        return 1.25f;
         return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
     }
 #else
