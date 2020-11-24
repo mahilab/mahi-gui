@@ -405,8 +405,8 @@ void ImGui_ImplGlfw_NewFrame()
     glfwGetWindowSize(g_Window, &w, &h);
     glfwGetFramebufferSize(g_Window, &display_w, &display_h);
     io.DisplaySize = ImVec2((float)w, (float)h);
-    // if (w > 0 && h > 0)
-    //     io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
+    if (w > 0 && h > 0)
+        io.DisplayFramebufferScale = ImVec2((float)display_w / w, (float)display_h / h);
     if (g_WantUpdateMonitors)
         ImGui_ImplGlfw_UpdateMonitors();
 
