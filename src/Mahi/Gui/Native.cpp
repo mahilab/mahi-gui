@@ -21,7 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/sysctl.h>
+
 #endif
 
 // TODO: We need a more robust way to detect where fs may be...
