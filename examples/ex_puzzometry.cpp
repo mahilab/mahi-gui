@@ -16,7 +16,6 @@
 
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
-#include <Mahi/Util/Range.hpp>
 #include <deque>
 #include <set>
 #include <fstream>
@@ -232,9 +231,9 @@ inline void fliplr(Matrix& mat) {
 inline void rot90(Matrix& mat) {
     auto temp = mat;
     mat.resize(size(temp,1));
-    for (auto j : range(size(temp,1))) {
+    for (size_t j = 0; j < size(temp,1); ++j) {
         mat[j].resize(size(temp,0));
-        for (auto i : range(size(temp,0)))
+        for (size_t i = 0; i < size(temp,0); ++i)
             mat[j][i] = temp[i][j];
     }
     fliplr(mat);
@@ -332,8 +331,8 @@ struct ExactCover {
 
     void buildSlots() {
         slots = zeros(size(board, 0), size(board, 1));
-        for (auto r : range(size(slots,0))) {
-            for (auto c : range(size(slots,1))) {
+        for (size_t r = 0; r < size(slots,0); ++r) {
+            for (size_t c = 0; c < size(slots,1); ++c) {
                 if (board[r][c] != 0)
                     slots[r][c] = (Num)numSlots++;
             }
@@ -345,13 +344,13 @@ struct ExactCover {
         sparse.reserve(2500);
         dense.reserve(2500);
         info.reserve(2500);
-        for (auto piece : range(numPieces)) {
+        for (size_t piece = 0; piece < numPieces; ++piece) {
             vector<size_t> uniquePerms;
             vector<Matrix>      uniqueMats;
             auto numUnique = uniquePermutations(pieces[piece], uniquePerms, uniqueMats);
-            for (auto perm : range(numUnique)) {
-                for (auto r : range(boardRows)) {
-                    for (auto c : range(boardCols)) {
+            for (size_t perm = 0; perm < numUnique; ++perm) {
+                for (size_t r = 0; r < boardRows; ++r) {
+                    for (size_t c = 0; c < boardCols; ++c) {
                         row.assign(numPieces + numSlots, 0);
                         row[piece] = 1;
                         if (place(uniqueMats[perm], r, c, row)) {
@@ -392,7 +391,7 @@ struct ExactCover {
         file1.open("exact_cover_sparse.txt");
         file2.open("exact_cover_dense.txt");
         file3.open("exact_cover_info.txt");
-        for (auto r : range(numRows)) {
+        for (size_t r = 0; r < numRows; ++r) {
             file1 << sparse[r] << std::endl;
             file2 << dense[r]  << std::endl;
             file3 << fmt::format("{},{},{},{}",info[r].piece, info[r].perm, info[r].r, info[r].c) << std::endl;
@@ -676,8 +675,8 @@ Shape makeShape(const Matrix& mat) {
         oct.rotate(360.0f / 16.0f);
         // create que of shapes to merge
         std::deque<Shape> shapes;
-        for (auto & r : range(size(mat,0))) {
-            for (auto & c : range(size(mat,1))) {
+        for (size_t r = 0; r < size(mat,0); ++r) {
+            for (size_t c = 0; c < size(mat,1); ++c) {
                 if (mat[r][c] == 4)
                     shapes.push_back(sqr);
                 else if (mat[r][c] == 8)
@@ -1060,7 +1059,7 @@ public:
         for (auto& p : pieces)
             start_coroutine(p.transition({0, 0}, 0, 0.1f));
         co_yield yield_time_scaled(200_ms);
-        for (auto i : range(solver.operations.size())) {
+        for (size_t i = 0; i < solver.operations.size(); ++i) {
             percent = (float)i / (float)solver.operations.size();
             auto op    = solver.operations[i];
             auto info  = problem.info[op.first];
