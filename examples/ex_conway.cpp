@@ -1,6 +1,5 @@
 #include <Mahi/Gui.hpp>
 #include <Mahi/Util.hpp>
-#include <Mahi/Util/Range.hpp>
 
 using namespace mahi::gui;
 using namespace mahi::util;
@@ -85,8 +84,8 @@ public:
     }
 
     void load() {
-        for (auto r : range(R)) {
-            for (auto c : range(C)) {
+        for (int r = 0; r < R; ++r) {
+            for (int c = 0; c < C; ++c) {
                 auto cell = &cells[r * C + c];
                 cell->pos = Vec2(c * cell_size, r * cell_size);
                 if (r != 0) {
@@ -137,7 +136,7 @@ public:
     }
 
     void spawn() {
-        for (auto i : range(1000)) {
+        for (int i = 0; i < 1000; ++i) {
             gliderBR(random_range(0,R-1),random_range(0,C-1));
             gliderBL(random_range(0,R-1),random_range(0,C-1));
         }
