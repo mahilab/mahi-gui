@@ -261,6 +261,7 @@ int main(int argc, char const* argv[]) {\
     conf.transparent = true;
     conf.decorated = false;
     conf.msaa = 4;
+    conf.gl_forward_compat = false;
     GearsDemo demo(conf);
     demo.run();
     return 0;

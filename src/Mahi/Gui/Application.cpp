@@ -10,13 +10,10 @@
 #include "nanovg_gl.h"
 #include "nanovg_gl_utils.h"
 #include "imgui_internal.h"
-#include "examples/imgui_impl_glfw.h"
-#include "examples/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
 #include "implot.h"
-#include <stdio.h>
-#include <iostream>
 #include <stdexcept>
-#include <thread>
 
 #ifdef __linux__
 #include <string.h>
@@ -467,7 +464,7 @@ static void glfw_context_version(bool gl_forward_compat) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
     if (gl_forward_compat) {
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);           // 3.0+ only
     }
 #endif
 }

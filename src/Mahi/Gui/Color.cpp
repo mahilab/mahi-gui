@@ -1,6 +1,5 @@
 #include <Mahi/Gui/Color.hpp>
 #include <Mahi/Util/Random.hpp>
-#include <cmath>
 #include <cstdio>
 #include <iostream>
 #include <imgui.h>

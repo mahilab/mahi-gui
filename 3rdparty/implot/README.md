@@ -22,6 +22,7 @@ ImPlot is an immediate mode, GPU accelerated plotting library for [Dear ImGui](h
     - vertical/horizontal bars graphs
     - vertical/horizontal error bars
     - stem plots
+    - stair plots
     - pie charts
     - heatmap charts
     - images
@@ -48,13 +49,22 @@ ImPlot is an immediate mode, GPU accelerated plotting library for [Dear ImGui](h
 The API is used just like any other ImGui `BeginX`/`EndX` pair. First, start a new plot with `ImPlot::BeginPlot()`. Next, plot as many items as you want with the provided `PlotX` functions (e.g. `PlotLine()`, `PlotBars()`, `PlotErrorBars()`, etc). Finally, wrap things up with a call to `ImPlot::EndPlot()`. That's it!
 
 ```cpp
+int   bar_data[11] = ...;
+float x_data[1000] = ...;
+float y_data[1000] = ...;
+
+ImGui::Begin("My Window");
 if (ImPlot::BeginPlot("My Plot")) {
+    ImPlot::PlotBars("My Bar Plot", bar_data, 11);
     ImPlot::PlotLine("My Line Plot", x_data, y_data, 1000);
-    ImPlot::PlotBars("My Bar Plot", values, 10);
     ...
     ImPlot::EndPlot();
 }
+ImGui::End();
 ```
+
+![Usage](https://raw.githubusercontent.com/wiki/epezent/implot/screenshots3/example.PNG)
+
 
 Of course, there's much more you can do with ImPlot. Consult `implot_demo.cpp` for a comprehensive example of ImPlot's features.
 
@@ -133,7 +143,7 @@ A: Not exactly, but it does give you the ability to query plot sub-ranges, with 
 
 A: Not currently. Use your OS's screen capturing mechanisms if you need to capture a plot. ImPlot is not suitable for rendering publication quality plots; it is only intended to be used as a visualization tool. Post-process your data with MATLAB or matplotlib for these purposes.
 
-**Q: What date types can I plot?**
+**Q: What data types can I plot?**
 
 A: ImPlot plotting functions accept most scalar types: 
 `float`, `double`, `int8`, `uint8`, `int16`, `uint16`, `int32`, `uint32`, `int64`, `uint64`.

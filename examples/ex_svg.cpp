@@ -83,7 +83,7 @@ public:
         ImGui::SameLine();
         ImGui::Text("FPS: %.3f",  ImGui::GetIO().Framerate);
         ImGui::End();
-        if (!ImGui::IsAnyWindowFocused() && !ImGui::IsWindowHovered()) {
+        if (!ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && !ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow)) {
             if (ImGui::IsMouseDown(0))
                 transform.move(ImGui::GetIO().MouseDelta);
             if (ImGui::IsMouseDown(1))
