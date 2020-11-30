@@ -56,18 +56,35 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale);
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-    float enable_dpi_aware() {
-        SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-        const POINT ptZero = { 0, 0 };
-        auto monitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
-        UINT dpiX, dpiY;
-        auto result  = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
-        return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
+float enable_dpi_aware() {
+    auto shcore = LoadLibraryA("Shcore.dll");
+    auto user32 = LoadLibraryA("User32.dll");
+    if (shcore && user32) {
+        auto set_process_dpi_awareness = reinterpret_cast<decltype(SetProcessDpiAwareness) *>(
+            GetProcAddress(shcore, "SetProcessDpiAwareness"));
+        auto get_dpi_for_monitor = reinterpret_cast<decltype(GetDpiForMonitor) *>(
+            GetProcAddress(shcore, "GetDpiForMonitor"));
+        auto monitor_from_point = reinterpret_cast<decltype(MonitorFromPoint) *>(
+            GetProcAddress(user32, "MonitorFromPoint"));
+
+        if (set_process_dpi_awareness && get_dpi_for_monitor && monitor_from_point) {
+            set_process_dpi_awareness(PROCESS_PER_MONITOR_DPI_AWARE);
+            const POINT ptZero  = {0, 0};
+            auto        monitor = monitor_from_point(ptZero, MONITOR_DEFAULTTOPRIMARY);
+            UINT        dpiX, dpiY;
+            auto        result = get_dpi_for_monitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+            return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
+        }
     }
+    if (shcore)
+        FreeLibrary(shcore);
+    if (user32)
+        FreeLibrary(user32);
+
+    return 1.0f;
+}
 #else
-    float enable_dpi_aware() {
-        return 1.0f;
-    }
+float enable_dpi_aware() { return 1.0f; }
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
