@@ -56,17 +56,17 @@ static ImGuiContext* configureImGui(GLFWwindow *window, float dpi_scale);
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifdef _WIN32
-    float enable_dpi_aware() {
+    void enable_dpi_aware() {
         SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
-        const POINT ptZero = { 0, 0 };
-        auto monitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
-        UINT dpiX, dpiY;
-        auto result  = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
-        return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
+        // const POINT ptZero = { 0, 0 };
+        // auto monitor = MonitorFromPoint(ptZero, MONITOR_DEFAULTTOPRIMARY);
+        // UINT dpiX, dpiY;
+        // auto result  = GetDpiForMonitor(monitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+        // return (float)dpiX / (float)USER_DEFAULT_SCREEN_DPI;
     }
 #else
-    float enable_dpi_aware() {
-        return 1.0f;
+    void enable_dpi_aware() {
+        // return 1.0f;
     }
 #endif
 
@@ -85,9 +85,13 @@ Application::Application(const Config &conf) :
     m_frame_time(Time::Zero),
     m_dt(Time::Zero),
     m_time(Time::Zero),
-    m_time_scale(1),
-    m_dpi_scale( conf.dpi_aware ? enable_dpi_aware() : 1.0f )
+    m_time_scale(1)
 {
+    // enable DPI awareness 
+    if (m_conf.dpi_aware)
+        enable_dpi_aware();
+    float xscale, yscale;
+
     const char* err_msg;
     // setup GLFW error callback
     glfwSetErrorCallback(glfw_error_callback);
@@ -126,11 +130,13 @@ Application::Application(const Config &conf) :
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
         glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+        glfwGetMonitorContentScale(monitor,&xscale,&yscale);
         // glfwWindowHint(GLFW_AUTO_ICONIFY, false);
-        m_window = glfwCreateWindow((int)(mode->width * m_dpi_scale), (int)(mode->height *m_dpi_scale), conf.title.c_str(), monitor, NULL);
+        m_window = glfwCreateWindow((int)(mode->width), (int)(mode->height), conf.title.c_str(), monitor, NULL);
     } 
     else {
-        m_window = glfwCreateWindow((int)(conf.width * m_dpi_scale), (int)(conf.height *m_dpi_scale), conf.title.c_str(), NULL, NULL);
+        glfwGetMonitorContentScale(glfwGetPrimaryMonitor(),&xscale,&yscale);
+        m_window = glfwCreateWindow((int)(conf.width * xscale), (int)(conf.height *yscale), conf.title.c_str(), NULL, NULL);
     }
     if (m_window == NULL) {
         glfwGetError(&err_msg);
@@ -159,7 +165,7 @@ Application::Application(const Config &conf) :
     if (m_vg == NULL)
         throw std::runtime_error("Failed to create NanoVG context!");
     // configure ImGui
-    m_imgui_context = configureImGui(m_window, m_dpi_scale);
+    m_imgui_context = configureImGui(m_window, xscale);
     if (!m_imgui_context)
         throw std::runtime_error("Failed to create ImGui context!");
     m_implot_context = ImPlot::CreateContext();
@@ -324,7 +330,8 @@ Vec2 Application::get_window_pos() const {
 }
 
 void Application::set_window_size(int width, int height) {
-    glfwSetWindowSize(m_window, width * m_dpi_scale, height * m_dpi_scale);
+    float dpi_scale = get_dpi_scale();
+    glfwSetWindowSize(m_window, width * dpi_scale, height * dpi_scale);
 }
 
 Vec2 Application::get_window_size() const {
@@ -387,8 +394,11 @@ float Application::get_pixel_ratio() const {
     return get_framebuffer_size().x / get_window_size().x;
 }
 
-float Application::get_dpi_scale() const {
-    return m_dpi_scale;
+float Application::get_dpi_scale() const {    
+    auto monitor = glfwGetPrimaryMonitor();
+    float xscale = 1, yscale = 1;
+    glfwGetMonitorContentScale(monitor, &xscale, &yscale);
+    return xscale;
 }
 
 void Application::set_vsync(bool enabled) {

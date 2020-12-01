@@ -119,7 +119,7 @@ public:
     Vec2 get_framebuffer_size() const;
     /// Get pixel ratio (FB width / window width) for high DPI screens
     float get_pixel_ratio() const;
-    /// Get the DPI scaling factor if enabled (only relevant on Windows)
+    /// Get the DPI scaling factor if enabled
     float get_dpi_scale() const;
     /// Enable/disable VSync
     void set_vsync(bool enabled);
@@ -197,7 +197,6 @@ private:
     util::Time     m_dt;             ///< delta time (scaled)
     util::Time     m_time;           ///< Application time (scaled)
     float          m_time_scale;     ///< time scale (default = 1, no scale)
-    float          m_dpi_scale;      ///< DPI scale (relevant on Windows only)
     Profile        m_profile;        ///< most recent Profile
 #ifdef MAHI_COROUTINES
     std::vector<util::Enumerator> m_coroutines;  /// Vector of running coroutines

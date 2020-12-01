@@ -24,6 +24,7 @@ mahi_gui_example(gears)
 mahi_gui_example(raw_glfw)
 mahi_gui_example(shapes)
 mahi_gui_example(transparent)
+mahi_gui_example(sequence)
 
 if (MAHI_GUI_NATIVE_DIAGS)
     mahi_gui_example(files)
