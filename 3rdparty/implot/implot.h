@@ -84,16 +84,17 @@ enum ImPlotFlags_ {
 // Options for plot axes (X and Y).
 enum ImPlotAxisFlags_ {
     ImPlotAxisFlags_None          = 0,      // default
-    ImPlotAxisFlags_NoGridLines   = 1 << 0, // no grid lines will be displayed
-    ImPlotAxisFlags_NoTickMarks   = 1 << 1, // no tick marks will be displayed
-    ImPlotAxisFlags_NoTickLabels  = 1 << 2, // no text labels will be displayed
-    ImPlotAxisFlags_LogScale      = 1 << 3, // a logartithmic (base 10) axis scale will be used (mutually exclusive with ImPlotAxisFlags_Time)
-    ImPlotAxisFlags_Time          = 1 << 4, // axis will display date/time formatted labels (mutually exclusive with ImPlotAxisFlags_LogScale)
-    ImPlotAxisFlags_Invert        = 1 << 5, // the axis will be inverted
-    ImPlotAxisFlags_LockMin       = 1 << 6, // the axis minimum value will be locked when panning/zooming
-    ImPlotAxisFlags_LockMax       = 1 << 7, // the axis maximum value will be locked when panning/zooming
+    ImPlotAxisFlags_NoLabel       = 1 << 0, // the axis label will not be displayed (axis labels also hidden if string is NULL)
+    ImPlotAxisFlags_NoGridLines   = 1 << 1, // the axis grid lines will not be displayed
+    ImPlotAxisFlags_NoTickMarks   = 1 << 2, // the axis tick marks will not be displayed
+    ImPlotAxisFlags_NoTickLabels  = 1 << 3, // the axis tick labels will not be displayed
+    ImPlotAxisFlags_LogScale      = 1 << 4, // a logartithmic (base 10) axis scale will be used (mutually exclusive with ImPlotAxisFlags_Time)
+    ImPlotAxisFlags_Time          = 1 << 5, // axis will display date/time formatted labels (mutually exclusive with ImPlotAxisFlags_LogScale)
+    ImPlotAxisFlags_Invert        = 1 << 6, // the axis will be inverted
+    ImPlotAxisFlags_LockMin       = 1 << 7, // the axis minimum value will be locked when panning/zooming
+    ImPlotAxisFlags_LockMax       = 1 << 8, // the axis maximum value will be locked when panning/zooming
     ImPlotAxisFlags_Lock          = ImPlotAxisFlags_LockMin | ImPlotAxisFlags_LockMax,
-    ImPlotAxisFlags_NoDecorations = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels
+    ImPlotAxisFlags_NoDecorations = ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels
 };
 
 // Plot styling colors.
@@ -155,6 +156,7 @@ enum ImPlotStyleVar_ {
     ImPlotStyleVar_LegendSpacing,      // ImVec2, spacing between legend entries
     ImPlotStyleVar_MousePosPadding,    // ImVec2, padding between plot edge and interior info text
     ImPlotStyleVar_AnnotationPadding,  // ImVec2, text padding around annotation labels
+    ImPlotStyleVar_FitPadding,         // ImVec2, additional fit padding as a percentage of the fit extents (e.g. ImVec2(0.1f,0.1f) adds 10% to the fit extents of X and Y)
     ImPlotStyleVar_PlotDefaultSize,    // ImVec2, default size used when ImVec2(0,0) is passed to BeginPlot
     ImPlotStyleVar_PlotMinSize,        // ImVec2, minimum size plot frame can be when shrunk
     ImPlotStyleVar_COUNT
@@ -276,6 +278,7 @@ struct ImPlotStyle {
     ImVec2  LegendSpacing;           // = 0,0     spacing between legend entries
     ImVec2  MousePosPadding;         // = 10,10   padding between plot edge and interior mouse location text
     ImVec2  AnnotationPadding;       // = 2,2     text padding around annotation labels
+    ImVec2  FitPadding;              // = 0,0     additional fit padding as a percentage of the fit extents (e.g. ImVec2(0.1f,0.1f) adds 10% to the fit extents of X and Y)
     ImVec2  PlotDefaultSize;         // = 400,300 default size used when ImVec2(0,0) is passed to BeginPlot
     ImVec2  PlotMinSize;             // = 300,225 minimum size plot frame can be when shrunk
     // colors
@@ -341,7 +344,9 @@ IMPLOT_API bool BeginPlot(const char* title_id,
                           ImPlotAxisFlags x_flags  = ImPlotAxisFlags_None,
                           ImPlotAxisFlags y_flags  = ImPlotAxisFlags_None,
                           ImPlotAxisFlags y2_flags = ImPlotAxisFlags_NoGridLines,
-                          ImPlotAxisFlags y3_flags = ImPlotAxisFlags_NoGridLines);
+                          ImPlotAxisFlags y3_flags = ImPlotAxisFlags_NoGridLines,
+                          const char* y2_label     = NULL,
+                          const char* y3_label     = NULL);
 
 // Only call EndPlot() if BeginPlot() returns true! Typically called at the end
 // of an if statement conditioned on BeginPlot().
@@ -383,7 +388,7 @@ IMPLOT_API void EndPlot();
 //    MyData my_data;
 //    ImPlot::PlotScatterG("scatter", MyDataGetter, &my_data, my_data.Size());
 //
-// NB: All types are converted to double before plotting. You may loose information
+// NB: All types are converted to double before plotting. You may lose information
 // if you try plotting extremely large 64-bit integral types. Proceed with caution!
 
 // Plots a standard 2D line plot.
@@ -401,7 +406,7 @@ template <typename T> IMPLOT_API void PlotStairs(const char* label_id, const T* 
 template <typename T> IMPLOT_API void PlotStairs(const char* label_id, const T* xs, const T* ys, int count, int offset=0, int stride=sizeof(T));
                       IMPLOT_API void PlotStairsG(const char* label_id, ImPlotPoint (*getter)(void* data, int idx), void* data, int count, int offset=0);
 
-// Plots a shaded (filled) region between two lines, or a line and a horizontal reference.
+// Plots a shaded (filled) region between two lines, or a line and a horizontal reference. Set y_ref to +/-INFINITY for infinite fill extents.
 template <typename T> IMPLOT_API void PlotShaded(const char* label_id, const T* values, int count, double y_ref=0, double xscale=1, double x0=0, int offset=0, int stride=sizeof(T));
 template <typename T> IMPLOT_API void PlotShaded(const char* label_id, const T* xs, const T* ys, int count, double y_ref=0, int offset=0, int stride=sizeof(T));
 template <typename T> IMPLOT_API void PlotShaded(const char* label_id, const T* xs, const T* ys1, const T* ys2, int count, int offset=0, int stride=sizeof(T));
@@ -684,7 +689,7 @@ IMPLOT_API void SetImGuiContext(ImGuiContext* ctx);
 // Demo (add implot_demo.cpp to your sources!)
 //-----------------------------------------------------------------------------
 
-// Shows the ImPlot demo. Pass the current ImGui context if ImPlot is a DLL.
+// Shows the ImPlot demo.
 IMPLOT_API void ShowDemoWindow(bool* p_open = NULL);
 
 }  // namespace ImPlot
