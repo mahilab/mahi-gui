@@ -31,6 +31,9 @@ Below is a change-log of API breaking changes only. If you are using one of the 
 When you are not sure about a old symbol or function name, try using the Search/Find function of your IDE to look for comments or references in all implot files.
 You can read releases logs https://github.com/epezent/implot/releases for more details.
 
+- 2021/01/XX (0.9) - BeginLegendDragDropSource was changed to BeginDragDropSourceItem with a number of other drag and drop improvements.
+- 2021/01/18 (0.9) - The default behavior for opening context menus was change from double right-click to single right-click. ImPlotInputMap and related functions were moved
+                     to implot_internal.h due to its immaturity.
 - 2020/10/16 (0.8) - ImPlotStyleVar_InfoPadding was changed to ImPlotStyleVar_MousePosPadding
 - 2020/09/10 (0.8) - The single array versions of PlotLine, PlotScatter, PlotStems, and PlotShaded were given additional arguments for x-scale and x0.
 - 2020/09/07 (0.8) - Plotting functions which accept a custom getter function pointer have been post-fixed with a G (e.g. PlotLineG)
@@ -280,17 +283,21 @@ static const ImPlotStyleVarInfo* GetPlotStyleVarInfo(ImPlotStyleVar idx) {
 //-----------------------------------------------------------------------------
 
 void AddTextVertical(ImDrawList *DrawList, ImVec2 pos, ImU32 col, const char *text_begin, const char* text_end) {
+    // the code below is based loosely on ImFont::RenderText
     if (!text_end)
         text_end = text_begin + strlen(text_begin);
     ImGuiContext& g = *GImGui;
     ImFont* font = g.Font;
-    pos.x = IM_FLOOR(pos.x); // + font->ConfigData->GlyphOffset.y);
-    pos.y = IM_FLOOR(pos.y); // + font->ConfigData->GlyphOffset.x);
-    const char* s = text_begin;
-    const int vtx_count = (int)(text_end - s) * 4;
-    const int idx_count = (int)(text_end - s) * 6;
-    DrawList->PrimReserve(idx_count, vtx_count);
+    // Align to be pixel perfect
+    pos.x = IM_FLOOR(pos.x);
+    pos.y = IM_FLOOR(pos.y);
     const float scale = g.FontSize / font->FontSize;
+    const char* s = text_begin;
+    int chars_exp = (int)(text_end - s);
+    int chars_rnd = 0;
+    const int vtx_count_max = chars_exp * 4;
+    const int idx_count_max = chars_exp * 6;
+    DrawList->PrimReserve(idx_count_max, vtx_count_max);
     while (s < text_end) {
         unsigned int c = (unsigned int)*s;
         if (c < 0x80) {
@@ -302,15 +309,20 @@ void AddTextVertical(ImDrawList *DrawList, ImVec2 pos, ImU32 col, const char *te
                 break;
         }
         const ImFontGlyph * glyph = font->FindGlyph((ImWchar)c);
-        if (glyph == NULL)
+        if (glyph == NULL) {
             continue;
+        }
         DrawList->PrimQuadUV(pos + ImVec2(glyph->Y0, -glyph->X0) * scale, pos + ImVec2(glyph->Y0, -glyph->X1) * scale,
                              pos + ImVec2(glyph->Y1, -glyph->X1) * scale, pos + ImVec2(glyph->Y1, -glyph->X0) * scale,
                              ImVec2(glyph->U0, glyph->V0), ImVec2(glyph->U1, glyph->V0),
                              ImVec2(glyph->U1, glyph->V1), ImVec2(glyph->U0, glyph->V1),
                              col);
         pos.y -= glyph->AdvanceX * scale;
+        chars_rnd++;
     }
+    // Give back unused vertices
+    int chars_skp = chars_exp-chars_rnd;
+    DrawList->PrimUnreserve(chars_skp*6, chars_skp*4);
 }
 
 double NiceNum(double x, bool round) {
@@ -429,19 +441,28 @@ void BustPlotCache() {
 }
 
 void FitPoint(const ImPlotPoint& p) {
+    FitPointX(p.x);
+    FitPointY(p.y);
+}
+
+void FitPointX(double x) {
+    ImPlotContext& gp = *GImPlot;
+    ImPlotRange& ex_x = gp.ExtentsX;
+    const bool log_x  = ImHasFlag(gp.CurrentPlot->XAxis.Flags, ImPlotAxisFlags_LogScale);
+    if (!ImNanOrInf(x) && !(log_x && x <= 0)) {
+        ex_x.Min = x < ex_x.Min ? x : ex_x.Min;
+        ex_x.Max = x > ex_x.Max ? x : ex_x.Max;
+    }
+}
+
+void FitPointY(double y) {
     ImPlotContext& gp = *GImPlot;
     const ImPlotYAxis y_axis  = gp.CurrentPlot->CurrentYAxis;
-    ImPlotRange& ex_x = gp.ExtentsX;
     ImPlotRange& ex_y = gp.ExtentsY[y_axis];
-    const bool log_x  = ImHasFlag(gp.CurrentPlot->XAxis.Flags, ImPlotAxisFlags_LogScale);
     const bool log_y  = ImHasFlag(gp.CurrentPlot->YAxis[y_axis].Flags, ImPlotAxisFlags_LogScale);
-    if (!ImNanOrInf(p.x) && !(log_x && p.x <= 0)) {
-        ex_x.Min = p.x < ex_x.Min ? p.x : ex_x.Min;
-        ex_x.Max = p.x > ex_x.Max ? p.x : ex_x.Max;
-    }
-    if (!ImNanOrInf(p.y) && !(log_y && p.y <= 0)) {
-        ex_y.Min = p.y < ex_y.Min ? p.y : ex_y.Min;
-        ex_y.Max = p.y > ex_y.Max ? p.y : ex_y.Max;
+    if (!ImNanOrInf(y) && !(log_y && y <= 0)) {
+        ex_y.Min = y < ex_y.Min ? y : ex_y.Min;
+        ex_y.Max = y > ex_y.Max ? y : ex_y.Max;
     }
 }
 
@@ -1699,16 +1720,20 @@ bool BeginPlot(const char* title, const char* x_label, const char* y1_label, con
                 if (!plot.YAxis[i].IsLockedMax() && y_can_change)
                     plot.YAxis[i].SetMax(ImMax(p1.y, p2.y));
             }
+            if (x_can_change || y_can_change || (ImHasFlag(IO.KeyMods,gp.InputMap.HorizontalMod) && ImHasFlag(IO.KeyMods,gp.InputMap.VerticalMod)))
+                plot.ContextLocked = gp.InputMap.BoxSelectButton == gp.InputMap.ContextMenuButton;
         }
         plot.Selecting = false;
     }
     // bad selection
     if (plot.Selecting && (ImHasFlag(plot.Flags, ImPlotFlags_NoBoxSelect) || plot.IsLocked()) && ImLengthSqr(plot.SelectStart - IO.MousePos) > 4) {
         ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
+        plot.ContextLocked = gp.InputMap.BoxSelectButton == gp.InputMap.ContextMenuButton;
     }
     // cancel selection
     if (plot.Selecting && (IO.MouseClicked[gp.InputMap.BoxSelectCancelButton] || IO.MouseDown[gp.InputMap.BoxSelectCancelButton])) {
         plot.Selecting = false;
+        plot.ContextLocked = gp.InputMap.BoxSelectButton == gp.InputMap.ContextMenuButton;
     }
     // begin selection or query
     if (plot.FrameHovered && plot.PlotHovered && IO.MouseClicked[gp.InputMap.BoxSelectButton] && ImHasFlag(IO.KeyMods, gp.InputMap.BoxSelectMod)) {
@@ -1729,8 +1754,10 @@ bool BeginPlot(const char* title, const char* x_label, const char* y1_label, con
     // end query
     if (plot.Querying && (IO.MouseReleased[gp.InputMap.QueryButton] || IO.MouseReleased[gp.InputMap.BoxSelectButton])) {
         plot.Querying = false;
-        if (plot.QueryRect.GetWidth() > 2 && plot.QueryRect.GetHeight() > 2)
+        if (plot.QueryRect.GetWidth() > 2 && plot.QueryRect.GetHeight() > 2) {
             plot.Queried = true;
+            plot.ContextLocked = gp.InputMap.BoxSelectButton == gp.InputMap.ContextMenuButton;
+        }
         else
             plot.Queried = false;
     }
@@ -2239,21 +2266,7 @@ void EndPlot() {
         DrawList.AddRectFilled(rect.Min, rect.Max, an.ColorBg);
         DrawList.AddText(pos + gp.Style.AnnotationPadding, an.ColorFg, txt);
     }
-    PopPlotClipRect();
 
-    // render y-axis drag/drop hover
-    if ((plot.YAxis[1].Present || plot.YAxis[2].Present) && ImGui::IsDragDropPayloadBeingAccepted()) {
-        for (int i = 0; i < IMPLOT_Y_AXES; ++i) {
-            if (plot.YAxis[i].ExtHovered) {
-                float x_loc = gp.YAxisReference[i];
-                ImVec2 p1(x_loc - 5, plot.PlotRect.Min.y - 5);
-                ImVec2 p2(x_loc + 5, plot.PlotRect.Max.y + 5);
-                DrawList.AddRect(p1, p2, ImGui::GetColorU32(ImGuiCol_DragDropTarget), 0.0f,  ImDrawCornerFlags_All, 2.0f);
-            }
-        }
-    }
-
-    PushPlotClipRect();
     // render selection/query
     if (plot.Selecting) {
         const ImRect select_bb(ImMin(IO.MousePos, plot.SelectStart), ImMax(IO.MousePos, plot.SelectStart));
@@ -2387,9 +2400,9 @@ void EndPlot() {
                                                   legend_size,
                                                   plot.LegendLocation,
                                                   plot.LegendOutside ? gp.Style.PlotPadding : gp.Style.LegendPadding);
-        const ImRect legend_bb(legend_pos, legend_pos + legend_size);
+        plot.LegendRect = ImRect(legend_pos, legend_pos + legend_size);
         // test hover
-        plot.LegendHovered = plot.FrameHovered && legend_bb.Contains(IO.MousePos);
+        plot.LegendHovered = plot.FrameHovered && plot.LegendRect.Contains(IO.MousePos);
 
         if (plot.LegendOutside)
             ImGui::PushClipRect(plot.FrameRect.Min, plot.FrameRect.Max, true);
@@ -2397,10 +2410,13 @@ void EndPlot() {
             PushPlotClipRect();
         ImU32  col_bg      = GetStyleColorU32(ImPlotCol_LegendBg);
         ImU32  col_bd      = GetStyleColorU32(ImPlotCol_LegendBorder);
-        DrawList.AddRectFilled(legend_bb.Min, legend_bb.Max, col_bg);
-        DrawList.AddRect(legend_bb.Min, legend_bb.Max, col_bd);
-        ShowLegendEntries(plot, legend_bb, plot.LegendHovered, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, plot.LegendOrientation, DrawList);
+        DrawList.AddRectFilled(plot.LegendRect.Min, plot.LegendRect.Max, col_bg);
+        DrawList.AddRect(plot.LegendRect.Min, plot.LegendRect.Max, col_bd);
+        ShowLegendEntries(plot, plot.LegendRect, plot.LegendHovered, gp.Style.LegendInnerPadding, gp.Style.LegendSpacing, plot.LegendOrientation, DrawList);
         ImGui::PopClipRect();
+    }
+    else {
+        plot.LegendRect = ImRect();
     }
     if (plot.LegendFlipSideNextFrame)  {
         plot.LegendOutside  = !plot.LegendOutside;
@@ -2457,14 +2473,16 @@ void EndPlot() {
 
     // CONTEXT MENUS -----------------------------------------------------------
 
-    if (!ImHasFlag(plot.Flags, ImPlotFlags_NoMenus) && plot.FrameHovered && plot.PlotHovered && IO.MouseDoubleClicked[gp.InputMap.ContextMenuButton] && !plot.LegendHovered)
+    // main ctx menu
+    if (!ImHasFlag(plot.Flags, ImPlotFlags_NoMenus) && plot.FrameHovered && plot.PlotHovered && IO.MouseReleased[gp.InputMap.ContextMenuButton] && !plot.LegendHovered && !plot.ContextLocked)
         ImGui::OpenPopup("##PlotContext");
     if (ImGui::BeginPopup("##PlotContext")) {
         ShowPlotContextMenu(plot);
         ImGui::EndPopup();
     }
 
-    if (!ImHasFlag(plot.Flags, ImPlotFlags_NoMenus) && plot.FrameHovered && plot.XAxis.ExtHovered && IO.MouseDoubleClicked[gp.InputMap.ContextMenuButton] && !plot.LegendHovered)
+    // x-axis ctx menu
+    if (!ImHasFlag(plot.Flags, ImPlotFlags_NoMenus) && plot.FrameHovered && plot.XAxis.ExtHovered && IO.MouseReleased[gp.InputMap.ContextMenuButton] && !plot.LegendHovered && !plot.ContextLocked)
         ImGui::OpenPopup("##XContext");
     if (ImGui::BeginPopup("##XContext")) {
         ImGui::Text("X-Axis"); ImGui::Separator();
@@ -2472,9 +2490,10 @@ void EndPlot() {
         ImGui::EndPopup();
     }
 
+    // y-axes ctx menus
     for (int i = 0; i < IMPLOT_Y_AXES; ++i) {
         ImGui::PushID(i);
-        if (!ImHasFlag(plot.Flags, ImPlotFlags_NoMenus) && plot.FrameHovered && plot.YAxis[i].ExtHovered && IO.MouseDoubleClicked[gp.InputMap.ContextMenuButton] && !plot.LegendHovered)
+        if (!ImHasFlag(plot.Flags, ImPlotFlags_NoMenus) && plot.FrameHovered && plot.YAxis[i].ExtHovered && IO.MouseReleased[gp.InputMap.ContextMenuButton] && !plot.LegendHovered && !plot.ContextLocked)
             ImGui::OpenPopup("##YContext");
         if (ImGui::BeginPopup("##YContext")) {
             if (i == 0) {
@@ -2497,6 +2516,11 @@ void EndPlot() {
         PushLinkedAxis(plot.YAxis[i]);
 
     // CLEANUP ----------------------------------------------------------------
+
+    // resset context locked flag
+    if (plot.ContextLocked && IO.MouseReleased[gp.InputMap.BoxSelectButton])
+        plot.ContextLocked = false;
+
 
     // reset the plot items for the next frame
     for (int i = 0; i < gp.CurrentPlot->Items.GetSize(); ++i) {
@@ -2880,6 +2904,150 @@ bool DragPoint(const char* id, double* x, double* y, bool show_label, const ImVe
     return dragging;
 }
 
+//-----------------------------------------------------------------------------
+
+#define IMPLOT_ID_PLT 10030910
+#define IMPLOT_ID_LEG 10030911
+#define IMPLOT_ID_XAX 10030912
+#define IMPLOT_ID_YAX 10030913
+
+bool BeginDragDropTargetEx(int id, const ImRect& rect) {
+    ImGuiContext& G  = *GImGui;
+    const ImGuiID ID = G.CurrentWindow->GetID(id);
+    if (ImGui::ItemAdd(rect, ID, &rect) &&
+        ImGui::BeginDragDropTarget())
+        return true;
+    return false;
+}
+
+bool BeginDragDropTarget() {
+    return BeginDragDropTargetEx(IMPLOT_ID_PLT, GImPlot->CurrentPlot->PlotRect);
+}
+
+bool BeginDragDropTargetX() {
+    return BeginDragDropTargetEx(IMPLOT_ID_XAX, GImPlot->CurrentPlot->XAxis.HoverRect);
+}
+
+bool BeginDragDropTargetY(ImPlotYAxis axis) {
+    return BeginDragDropTargetEx(IMPLOT_ID_YAX + axis, GImPlot->CurrentPlot->YAxis[axis].HoverRect);
+}
+
+bool BeginDragDropTargetLegend() {
+    return !ImHasFlag(GImPlot->CurrentPlot->Flags,ImPlotFlags_NoLegend) &&
+            BeginDragDropTargetEx(IMPLOT_ID_LEG, GImPlot->CurrentPlot->LegendRect);
+}
+
+void EndDragDropTarget() {
+	ImGui::EndDragDropTarget();
+}
+
+bool BeginDragDropSourceEx(ImGuiID source_id, bool is_hovered, ImGuiDragDropFlags flags, ImGuiKeyModFlags key_mods) {
+    ImGuiContext& g = *GImGui;
+    ImGuiWindow* window = g.CurrentWindow;
+    ImGuiMouseButton mouse_button = ImGuiMouseButton_Left;
+
+    if (g.IO.MouseDown[mouse_button] == false) {
+        if (g.ActiveId == source_id)
+            ImGui::ClearActiveID();
+        return false;
+    }
+
+    if (is_hovered && g.IO.MouseClicked[mouse_button] && g.IO.KeyMods == key_mods) {
+        ImGui::SetActiveID(source_id, window);
+        ImGui::FocusWindow(window);
+    }
+
+    if (g.ActiveId != source_id) {
+        return false;
+    }
+
+    g.ActiveIdAllowOverlap = is_hovered;
+    g.ActiveIdUsingNavDirMask = ~(ImU32)0;
+    g.ActiveIdUsingNavInputMask = ~(ImU32)0;
+    g.ActiveIdUsingKeyInputMask = ~(ImU64)0;
+
+    if (ImGui::IsMouseDragging(mouse_button)) {
+
+        if (!g.DragDropActive) {
+            ImGui::ClearDragDrop();
+            ImGuiPayload& payload = g.DragDropPayload;
+            payload.SourceId = source_id;
+            payload.SourceParentId = 0;
+            g.DragDropActive = true;
+            g.DragDropSourceFlags = 0;
+            g.DragDropMouseButton = mouse_button;
+        }
+        g.DragDropSourceFrameCount = g.FrameCount;
+        g.DragDropWithinSource = true;
+
+        if (!(flags & ImGuiDragDropFlags_SourceNoPreviewTooltip)) {
+            ImGui::BeginTooltip();
+            if (g.DragDropAcceptIdPrev && (g.DragDropAcceptFlags & ImGuiDragDropFlags_AcceptNoPreviewTooltip)) {
+                ImGuiWindow* tooltip_window = g.CurrentWindow;
+                tooltip_window->SkipItems = true;
+                tooltip_window->HiddenFramesCanSkipItems = 1;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+bool BeginDragDropSource(ImGuiKeyModFlags key_mods, ImGuiDragDropFlags flags) {
+    if (ImGui::GetIO().KeyMods == key_mods) {
+        GImPlot->CurrentPlot->XAxis.Dragging = false;
+        for (int i = 0; i < IMPLOT_Y_AXES; ++i)
+            GImPlot->CurrentPlot->YAxis[i].Dragging = false;
+    }
+    const ImGuiID ID = GImGui->CurrentWindow->GetID(IMPLOT_ID_PLT);
+    ImRect rect = GImPlot->CurrentPlot->PlotRect;
+    return  ImGui::ItemAdd(rect, ID, &rect) && BeginDragDropSourceEx(ID, GImPlot->CurrentPlot->PlotHovered, flags, key_mods);
+}
+
+bool BeginDragDropSourceX(ImGuiKeyModFlags key_mods, ImGuiDragDropFlags flags) {
+    if (ImGui::GetIO().KeyMods == key_mods)
+        GImPlot->CurrentPlot->XAxis.Dragging = false;
+    const ImGuiID ID = GImGui->CurrentWindow->GetID(IMPLOT_ID_XAX);
+    ImRect rect = GImPlot->CurrentPlot->XAxis.HoverRect;
+    return  ImGui::ItemAdd(rect, ID, &rect) && BeginDragDropSourceEx(ID, GImPlot->CurrentPlot->XAxis.ExtHovered, flags, key_mods);
+}
+
+bool BeginDragDropSourceY(ImPlotYAxis axis, ImGuiKeyModFlags key_mods, ImGuiDragDropFlags flags) {
+    if (ImGui::GetIO().KeyMods == key_mods)
+        GImPlot->CurrentPlot->YAxis[axis].Dragging = false;
+    const ImGuiID ID = GImGui->CurrentWindow->GetID(IMPLOT_ID_YAX + axis);
+    ImRect rect = GImPlot->CurrentPlot->YAxis[axis].HoverRect;
+    return  ImGui::ItemAdd(rect, ID, &rect) && BeginDragDropSourceEx(ID, GImPlot->CurrentPlot->YAxis[axis].ExtHovered, flags, key_mods);
+}
+
+bool BeginDragDropSourceItem(const char* label_id, ImGuiDragDropFlags flags) {
+    ImPlotContext& gp = *GImPlot;
+    IM_ASSERT_USER_ERROR(gp.CurrentPlot != NULL, "BeginDragDropSourceItem() needs to be called between BeginPlot() and EndPlot()!");
+    ImGuiID source_id = ImGui::GetID(label_id);
+    ImPlotItem* item = gp.CurrentPlot->Items.GetByKey(source_id);
+    bool is_hovered = item && item->LegendHovered;
+    return BeginDragDropSourceEx(source_id, is_hovered, flags, ImGuiKeyModFlags_None);
+}
+
+void EndDragDropSource() {
+    ImGui::EndDragDropSource();
+}
+
+void ItemIcon(const ImVec4& col) {
+    ItemIcon(ImGui::ColorConvertFloat4ToU32(col));
+}
+
+void ItemIcon(ImU32 col) {
+    const float txt_size = ImGui::GetTextLineHeight();
+    ImVec2 size(txt_size-4,txt_size);
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    ImVec2 pos = window->DC.CursorPos;
+    ImGui::GetWindowDrawList()->AddRectFilled(pos + ImVec2(0,2), pos + size - ImVec2(0,2), col);
+    ImGui::Dummy(size);
+}
+
+//-----------------------------------------------------------------------------
+
 void SetLegendLocation(ImPlotLocation location, ImPlotOrientation orientation, bool outside) {
     ImPlotContext& gp = *GImPlot;
     IM_ASSERT_USER_ERROR(gp.CurrentPlot != NULL, "SetLegendLocation() needs to be called between BeginPlot() and EndPlot()!");
@@ -2903,74 +3071,9 @@ bool IsLegendEntryHovered(const char* label_id) {
     return item && item->LegendHovered;
 }
 
-bool BeginLegendDragDropSource(const char* label_id, ImGuiDragDropFlags flags) {
-    ImPlotContext& gp = *GImPlot;
-    IM_ASSERT_USER_ERROR(gp.CurrentPlot != NULL, "BeginLegendDragDropSource() needs to be called between BeginPlot() and EndPlot()!");
-    ImGuiID source_id = ImGui::GetID(label_id);
-    ImPlotItem* item = gp.CurrentPlot->Items.GetByKey(source_id);
-    bool is_hovered = item && item->LegendHovered;
 
-    ImGuiContext& g = *GImGui;
-    ImGuiWindow* window = g.CurrentWindow;
 
-    ImGuiMouseButton mouse_button = ImGuiMouseButton_Left;
 
-    if (g.IO.MouseDown[mouse_button] == false) {
-        if (g.ActiveId == source_id)
-            ImGui::ClearActiveID();
-        return false;
-    }
-
-    if (is_hovered && g.IO.MouseClicked[mouse_button]) {
-        ImGui::SetActiveID(source_id, window);
-        ImGui::FocusWindow(window);
-    }
-
-    if (g.ActiveId != source_id)
-        return false;
-
-    // Allow the underlying widget to display/return hovered during the mouse
-    // release frame, else we would get a flicker.
-    g.ActiveIdAllowOverlap = is_hovered;
-
-    // Disable navigation and key inputs while dragging
-    g.ActiveIdUsingNavDirMask = ~(ImU32)0;
-    g.ActiveIdUsingNavInputMask = ~(ImU32)0;
-    g.ActiveIdUsingKeyInputMask = ~(ImU64)0;
-
-    if (ImGui::IsMouseDragging(mouse_button)) {
-        if (!g.DragDropActive) {
-            ImGui::ClearDragDrop();
-            ImGuiPayload& payload = g.DragDropPayload;
-            payload.SourceId = source_id;
-            payload.SourceParentId = 0;
-            g.DragDropActive = true;
-            g.DragDropSourceFlags = 0;
-            g.DragDropMouseButton = mouse_button;
-        }
-        g.DragDropSourceFrameCount = g.FrameCount;
-        g.DragDropWithinSource = true;
-
-        if (!(flags & ImGuiDragDropFlags_SourceNoPreviewTooltip)) {
-            // Target can request the Source to not display its tooltip (we use a
-            // dedicated flag to make this request explicit) We unfortunately can't
-            // just modify the source flags and skip the call to BeginTooltip, as
-            // caller may be emitting contents.
-            ImGui::BeginTooltip();
-            if (g.DragDropAcceptIdPrev && (g.DragDropAcceptFlags & ImGuiDragDropFlags_AcceptNoPreviewTooltip)) {
-                ImGuiWindow* tooltip_window = g.CurrentWindow;
-                tooltip_window->SkipItems = true;
-                tooltip_window->HiddenFramesCanSkipItems = 1;
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-void EndLegendDragDropSource() {
-    ImGui::EndDragDropSource();
-}
 
 bool BeginLegendPopup(const char* label_id, ImGuiMouseButton mouse_button) {
     ImPlotContext& gp = *GImPlot;
@@ -3710,27 +3813,27 @@ void ShowStyleEditor(ImPlotStyle* ref) {
 }
 
 void ShowUserGuide() {
-        ImGui::BulletText("Left click and drag within the plot area to pan X and Y axes.");
+        ImGui::BulletText("Left-click drag within the plot area to pan X and Y axes.");
     ImGui::Indent();
-        ImGui::BulletText("Left click and drag on an axis to pan an individual axis.");
+        ImGui::BulletText("Left-click drag on axis labels to pan an individual axis.");
     ImGui::Unindent();
     ImGui::BulletText("Scroll in the plot area to zoom both X any Y axes.");
     ImGui::Indent();
-        ImGui::BulletText("Scroll on an axis to zoom an individual axis.");
+        ImGui::BulletText("Scroll on axis labels to zoom an individual axis.");
     ImGui::Unindent();
-    ImGui::BulletText("Right click and drag to box select data.");
+    ImGui::BulletText("Right-click drag to box select data.");
     ImGui::Indent();
         ImGui::BulletText("Hold Alt to expand box selection horizontally.");
         ImGui::BulletText("Hold Shift to expand box selection vertically.");
-        ImGui::BulletText("Left click while box selecting to cancel the selection.");
+        ImGui::BulletText("Left-click while box selecting to cancel the selection.");
     ImGui::Unindent();
-    ImGui::BulletText("Double left click to fit all visible data.");
+    ImGui::BulletText("Double left-click to fit all visible data.");
     ImGui::Indent();
-        ImGui::BulletText("Double left click on an axis to fit the individual axis.");
+        ImGui::BulletText("Double left-click axis labels to fit the individual axis.");
     ImGui::Unindent();
-    ImGui::BulletText("Double right click to open the full plot context menu.");
+    ImGui::BulletText("Right-click open the full plot context menu.");
     ImGui::Indent();
-        ImGui::BulletText("Double right click on an axis to open the axis context menu.");
+        ImGui::BulletText("Right-click axis labels to open an individual axis context menu.");
     ImGui::Unindent();
     ImGui::BulletText("Click legend label icons to show/hide plot items.");
 }
@@ -3834,12 +3937,14 @@ bool ShowDatePicker(const char* id, int* level, ImPlotTime* t, const ImPlotTime*
 
     ImGui::PushID(id);
     ImGui::BeginGroup();
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
 
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4 col_txt    = style.Colors[ImGuiCol_Text];
     ImVec4 col_dis    = style.Colors[ImGuiCol_TextDisabled];
+    ImVec4 col_btn    = style.Colors[ImGuiCol_Button];
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0,0,0,0));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0,0));
+
     const float ht    = ImGui::GetFrameHeight();
     ImVec2 cell_size(ht*1.25f,ht);
     char buff[32];
@@ -3925,7 +4030,7 @@ bool ShowDatePicker(const char* id, int* level, ImPlotTime* t, const ImPlotTime*
                 if (off_mo)
                     ImGui::PushStyleColor(ImGuiCol_Text, col_dis);
                 if (t1_or_t2) {
-                    ImGui::PushStyleColor(ImGuiCol_Button, col_dis);
+                    ImGui::PushStyleColor(ImGuiCol_Button, col_btn);
                     ImGui::PushStyleColor(ImGuiCol_Text, col_txt);
                 }
                 ImGui::PushID(i*7+j);
@@ -3975,7 +4080,7 @@ bool ShowDatePicker(const char* id, int* level, ImPlotTime* t, const ImPlotTime*
                 const bool t1_or_t2 = (t1 != NULL && t1_yr == this_yr && t1_mo == mo) ||
                                       (t2 != NULL && t2_yr == this_yr && t2_mo == mo);
                 if (t1_or_t2)
-                    ImGui::PushStyleColor(ImGuiCol_Button, col_dis);
+                    ImGui::PushStyleColor(ImGuiCol_Button, col_btn);
                 if (ImGui::Button(MONTH_ABRVS[mo],cell_size) && !clk) {
                     *t = MakeTime(this_yr, mo);
                     *level = 0;
@@ -4013,7 +4118,7 @@ bool ShowDatePicker(const char* id, int* level, ImPlotTime* t, const ImPlotTime*
             for (int j = 0; j < 4; ++j) {
                 const bool t1_or_t2 = (t1 != NULL && t1_yr == yr) || (t2 != NULL && t2_yr == yr);
                 if (t1_or_t2)
-                    ImGui::PushStyleColor(ImGuiCol_Button, col_dis);
+                    ImGui::PushStyleColor(ImGuiCol_Button, col_btn);
                 snprintf(buff,32,"%d",yr);
                 if (yr<1970||yr>3000) {
                     ImGui::Dummy(cell_size);

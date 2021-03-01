@@ -67,24 +67,24 @@ enum ImPlotFlags_ {
     ImPlotFlags_None          = 0,       // default
     ImPlotFlags_NoTitle       = 1 << 0,  // the plot title will not be displayed (titles are also hidden if preceeded by double hashes, e.g. "##MyPlot")
     ImPlotFlags_NoLegend      = 1 << 1,  // the legend will not be displayed
-    ImPlotFlags_NoMenus       = 1 << 2,  // the user will not be able to open context menus with double-right click
-    ImPlotFlags_NoBoxSelect   = 1 << 3,  // the user will not be able to box-select with right-mouse
+    ImPlotFlags_NoMenus       = 1 << 2,  // the user will not be able to open context menus with right-click
+    ImPlotFlags_NoBoxSelect   = 1 << 3,  // the user will not be able to box-select with right-click drag
     ImPlotFlags_NoMousePos    = 1 << 4,  // the mouse position, in plot coordinates, will not be displayed inside of the plot
     ImPlotFlags_NoHighlight   = 1 << 5,  // plot items will not be highlighted when their legend entry is hovered
     ImPlotFlags_NoChild       = 1 << 6,  // a child window region will not be used to capture mouse scroll (can boost performance for single ImGui window applications)
-    ImPlotFlags_Equal         = 1 << 7,  // primary x and y axes will be constrained to have the same units/pixel (does not apply to auxiliary y axes)
+    ImPlotFlags_Equal         = 1 << 7,  // primary x and y axes will be constrained to have the same units/pixel (does not apply to auxiliary y-axes)
     ImPlotFlags_YAxis2        = 1 << 8,  // enable a 2nd y-axis on the right side
     ImPlotFlags_YAxis3        = 1 << 9,  // enable a 3rd y-axis on the right side
-    ImPlotFlags_Query         = 1 << 10, // the user will be able to draw query rects with middle-mouse
+    ImPlotFlags_Query         = 1 << 10, // the user will be able to draw query rects with middle-mouse or CTRL + right-click drag
     ImPlotFlags_Crosshairs    = 1 << 11, // the default mouse cursor will be replaced with a crosshair when hovered
-    ImPlotFlags_AntiAliased   = 1 << 12, // plot lines will be software anti-aliased (not recommended for density plots, prefer MSAA)
+    ImPlotFlags_AntiAliased   = 1 << 12, // plot lines will be software anti-aliased (not recommended for high density plots, prefer MSAA)
     ImPlotFlags_CanvasOnly    = ImPlotFlags_NoTitle | ImPlotFlags_NoLegend | ImPlotFlags_NoMenus | ImPlotFlags_NoBoxSelect | ImPlotFlags_NoMousePos
 };
 
 // Options for plot axes (X and Y).
 enum ImPlotAxisFlags_ {
     ImPlotAxisFlags_None          = 0,      // default
-    ImPlotAxisFlags_NoLabel       = 1 << 0, // the axis label will not be displayed (axis labels also hidden if string is NULL)
+    ImPlotAxisFlags_NoLabel       = 1 << 0, // the axis label will not be displayed (axis labels also hidden if the supplied string name is NULL)
     ImPlotAxisFlags_NoGridLines   = 1 << 1, // the axis grid lines will not be displayed
     ImPlotAxisFlags_NoTickMarks   = 1 << 2, // the axis tick marks will not be displayed
     ImPlotAxisFlags_NoTickLabels  = 1 << 3, // the axis tick labels will not be displayed
@@ -291,23 +291,6 @@ struct ImPlotStyle {
     IMPLOT_API ImPlotStyle();
 };
 
-// Input mapping structure, default values listed in the comments.
-struct ImPlotInputMap {
-    ImGuiMouseButton PanButton;             // LMB      enables panning when held
-    ImGuiKeyModFlags PanMod;                // none     optional modifier that must be held for panning
-    ImGuiMouseButton FitButton;             // LMB      fits visible data when double clicked
-    ImGuiMouseButton ContextMenuButton;     // RMB      opens plot context menu (if enabled) when double clicked
-    ImGuiMouseButton BoxSelectButton;       // RMB      begins box selection when pressed and confirms selection when released
-    ImGuiKeyModFlags BoxSelectMod;          // none     optional modifier that must be held for box selection
-    ImGuiMouseButton BoxSelectCancelButton; // LMB      cancels active box selection when pressed
-    ImGuiMouseButton QueryButton;           // MMB      begins query selection when pressed and end query selection when released
-    ImGuiKeyModFlags QueryMod;              // none     optional modifier that must be held for query selection
-    ImGuiKeyModFlags QueryToggleMod;        // Ctrl     when held, active box selections turn into queries
-    ImGuiKeyModFlags HorizontalMod;         // Alt      expands active box selection/query horizontally to plot edge when held
-    ImGuiKeyModFlags VerticalMod;           // Shift    expands active box selection/query vertically to plot edge when held
-    IMPLOT_API ImPlotInputMap();
-};
-
 //-----------------------------------------------------------------------------
 // ImPlot End-User API
 //-----------------------------------------------------------------------------
@@ -434,6 +417,10 @@ template <typename T> IMPLOT_API void PlotErrorBarsH(const char* label_id, const
 template <typename T> IMPLOT_API void PlotStems(const char* label_id, const T* values, int count, double y_ref=0, double xscale=1, double x0=0, int offset=0, int stride=sizeof(T));
 template <typename T> IMPLOT_API void PlotStems(const char* label_id, const T* xs, const T* ys, int count, double y_ref=0, int offset=0, int stride=sizeof(T));
 
+/// Plots infinite vertical or horizontal lines (e.g. for references or asymptotes).
+template <typename T> IMPLOT_API void PlotVLines(const char* label_id, const T* xs, int count, int offset=0, int stride=sizeof(T));
+template <typename T> IMPLOT_API void PlotHLines(const char* label_id, const T* ys, int count, int offset=0, int stride=sizeof(T));
+
 // Plots a pie chart. If the sum of values > 1 or normalize is true, each value will be normalized. Center and radius are in plot units. #label_fmt can be set to NULL for no labels.
 template <typename T> IMPLOT_API void PlotPieChart(const char* const label_ids[], const T* values, int count, double x, double y, double radius, bool normalize=false, const char* label_fmt="%.1f", double angle0=90);
 
@@ -457,7 +444,7 @@ IMPLOT_API void PlotDummy(const char* label_id);
 // Plot Utils
 //-----------------------------------------------------------------------------
 
-// The following functions MUST be called before BeginPlot!
+// The following functions MUST be called BEFORE BeginPlot!
 
 // Set the axes range limits of the next plot. Call right before BeginPlot(). If ImGuiCond_Always is used, the axes limits will be locked.
 IMPLOT_API void SetNextPlotLimits(double xmin, double xmax, double ymin, double ymax, ImGuiCond cond = ImGuiCond_Once);
@@ -478,7 +465,7 @@ IMPLOT_API void SetNextPlotTicksX(double x_min, double x_max, int n_ticks, const
 IMPLOT_API void SetNextPlotTicksY(const double* values, int n_ticks, const char* const labels[] = NULL, bool show_default = false, ImPlotYAxis y_axis = 0);
 IMPLOT_API void SetNextPlotTicksY(double y_min, double y_max, int n_ticks, const char* const labels[] = NULL, bool show_default = false, ImPlotYAxis y_axis = 0);
 
-// The following functions MUST be called between Begin/EndPlot!
+// The following functions MUST be called BETWEEN Begin/EndPlot!
 
 // Select which Y axis will be used for subsequent plot elements. The default is ImPlotYAxis_1, or the first (left) Y axis. Enable 2nd and 3rd axes with ImPlotFlags_YAxisX.
 IMPLOT_API void SetPlotYAxis(ImPlotYAxis y_axis);
@@ -515,7 +502,7 @@ IMPLOT_API ImPlotLimits GetPlotQuery(ImPlotYAxis y_axis = IMPLOT_AUTO);
 // Plot Tools
 //-----------------------------------------------------------------------------
 
-// The following functions MUST be called between Begin/EndPlot!
+// The following functions MUST be called BETWEEN Begin/EndPlot!
 
 // Shows an annotation callout at a chosen point.
 IMPLOT_API void Annotate(double x, double y, const ImVec2& pix_offset, const char* fmt, ...)                                       IM_FMTARGS(4);
@@ -540,7 +527,7 @@ IMPLOT_API bool DragPoint(const char* id, double* x, double* y, bool show_label 
 // Legend Utils and Tools
 //-----------------------------------------------------------------------------
 
-// The following functions MUST be called between Begin/EndPlot!
+// The following functions MUST be called BETWEEN Begin/EndPlot!
 
 // Set the location of the current plot's legend.
 IMPLOT_API void SetLegendLocation(ImPlotLocation location, ImPlotOrientation orientation = ImPlotOrientation_Vertical, bool outside = false);
@@ -548,14 +535,42 @@ IMPLOT_API void SetLegendLocation(ImPlotLocation location, ImPlotOrientation ori
 IMPLOT_API void SetMousePosLocation(ImPlotLocation location);
 // Returns true if a plot item legend entry is hovered.
 IMPLOT_API bool IsLegendEntryHovered(const char* label_id);
-// Begin a drag and drop source from a legend entry. The only supported flag is SourceNoPreviewTooltip
-IMPLOT_API bool BeginLegendDragDropSource(const char* label_id, ImGuiDragDropFlags flags = 0);
-// End legend drag and drop source.
-IMPLOT_API void EndLegendDragDropSource();
+
 // Begin a popup for a legend entry.
 IMPLOT_API bool BeginLegendPopup(const char* label_id, ImGuiMouseButton mouse_button = 1);
 // End a popup for a legend entry.
 IMPLOT_API void EndLegendPopup();
+
+//-----------------------------------------------------------------------------
+// Drag and Drop Utils
+//-----------------------------------------------------------------------------
+
+// The following functions MUST be called BETWEEN Begin/EndPlot!
+
+// Turns the current plot's plotting area into a drag and drop target. Don't forget to call EndDragDropTarget!
+IMPLOT_API bool BeginDragDropTarget();
+// Turns the current plot's X-axis into a drag and drop target. Don't forget to call EndDragDropTarget!
+IMPLOT_API bool BeginDragDropTargetX();
+// Turns the current plot's Y-Axis into a drag and drop target. Don't forget to call EndDragDropTarget!
+IMPLOT_API bool BeginDragDropTargetY(ImPlotYAxis axis = ImPlotYAxis_1);
+// Turns the current plot's legend into a drag and drop target. Don't forget to call EndDragDropTarget!
+IMPLOT_API bool BeginDragDropTargetLegend();
+// Ends a drag and drop target (currently just an alias for ImGui::EndDragDropTarget).
+IMPLOT_API void EndDragDropTarget();
+
+// NB: By default, plot and axes drag and drop sources require holding the Ctrl modifier to initiate the drag.
+// You can change the modifier if desired. If ImGuiKeyModFlags_None is provided, the axes will be locked from panning.
+
+// Turns the current plot's plotting area into a drag and drop source. Don't forget to call EndDragDropSource!
+IMPLOT_API bool BeginDragDropSource(ImGuiKeyModFlags key_mods = ImGuiKeyModFlags_Ctrl, ImGuiDragDropFlags flags = 0);
+// Turns the current plot's X-axis into a drag and drop source. Don't forget to call EndDragDropSource!
+IMPLOT_API bool BeginDragDropSourceX(ImGuiKeyModFlags key_mods = ImGuiKeyModFlags_Ctrl, ImGuiDragDropFlags flags = 0);
+// Turns the current plot's Y-axis into a drag and drop source. Don't forget to call EndDragDropSource!
+IMPLOT_API bool BeginDragDropSourceY(ImPlotYAxis axis = ImPlotYAxis_1, ImGuiKeyModFlags key_mods = ImGuiKeyModFlags_Ctrl, ImGuiDragDropFlags flags = 0);
+// Turns an item in the current plot's legend into drag and drop source. Don't forget to call EndDragDropSource!
+IMPLOT_API bool BeginDragDropSourceItem(const char* label_id, ImGuiDragDropFlags flags = 0);
+// Ends a drag and drop source (currently just an alias for ImGui::EndDragDropSource).
+IMPLOT_API void EndDragDropSource();
 
 //-----------------------------------------------------------------------------
 // Plot and Item Styling
@@ -618,12 +633,12 @@ IMPLOT_API const char* GetMarkerName(ImPlotMarker idx);
 // Colormaps
 //-----------------------------------------------------------------------------
 
-// Item styling is based on Colormaps when the relevant ImPlotCol is set to
+// Item styling is based on Colormaps when the relevant ImPlotCol_ is set to
 // IMPLOT_AUTO_COL (default). Several built in colormaps are available and can be
 // toggled in the demo. You can push/pop or set your own colormaps as well.
 
-// The Colormap data will be ignored and a custom color will be used if you have either:
-//     1) Modified an item style color in your ImPlotStyle to anything but IMPLOT_AUTO_COL.
+// The Colormap data will be ignored and a custom color will be used if you have done one of the following:
+//     1) Modified an item style color in your ImPlotStyle to anything other than IMPLOT_AUTO_COL.
 //     2) Pushed an item style color using PushStyleColor().
 //     3) Set the next item style with a SetNextXStyle function.
 
@@ -634,9 +649,9 @@ IMPLOT_API void PushColormap(const ImVec4* colormap, int size);
 // Undo temporary colormap modification.
 IMPLOT_API void PopColormap(int count = 1);
 
-// Permanently sets a custom colormap. The colors will be copied to internal memory. Prefer PushColormap instead of calling this each frame.
+// Permanently sets a custom colormap. The colors will be copied to internal memory. Typically used on startup. Prefer PushColormap instead of calling this each frame.
 IMPLOT_API void SetColormap(const ImVec4* colormap, int size);
-// Permanently switch to one of the built-in colormaps. If samples is greater than 1, the map will be linearly resampled. Don't call this each frame.
+// Permanently switch to one of the built-in colormaps. If samples is greater than 1, the map will be linearly resampled. Typically used on startup. Don't call this each frame.
 IMPLOT_API void SetColormap(ImPlotColormap colormap, int samples = 0);
 
 // Returns the size of the current colormap.
@@ -648,7 +663,7 @@ IMPLOT_API ImVec4 LerpColormap(float t);
 // Returns the next unused colormap color and advances the colormap. Can be used to skip colors if desired.
 IMPLOT_API ImVec4 NextColormapColor();
 
-// Renders a vertical color scale using the current color map. Call this outside of Begin/EndPlot.
+// Renders a vertical color scale using the current color map. Call this before or after Begin/EndPlot.
 IMPLOT_API void ShowColormapScale(double scale_min, double scale_max, float height);
 
 // Returns a null terminated string name for a built-in colormap.
@@ -658,8 +673,9 @@ IMPLOT_API const char* GetColormapName(ImPlotColormap colormap);
 // Miscellaneous
 //-----------------------------------------------------------------------------
 
-// Allows changing how keyboard/mouse interaction works.
-IMPLOT_API ImPlotInputMap& GetInputMap();
+// Render a icon similar to those that appear in legends (nifty for data lists).
+IMPLOT_API void ItemIcon(const ImVec4& col);
+IMPLOT_API void ItemIcon(ImU32 col);
 
 // Get the plot draw list for rendering to the current plot area.
 IMPLOT_API ImDrawList* GetPlotDrawList();
