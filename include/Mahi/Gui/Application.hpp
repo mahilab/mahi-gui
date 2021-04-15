@@ -71,6 +71,8 @@ public:
 
     /// Runs the application. Usually called from main.
     void run();
+    /// Renders just the imgui portion. Mainly to use as a callback while resizing windows.
+    void render_imgui();
     /// Quits the application. Usually called internally be derived classes.
     void quit();
 

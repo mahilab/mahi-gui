@@ -205,6 +205,102 @@ Application::~Application() {
     glfwTerminate();
 }
 
+void Application::render_imgui() {
+    // ImGui::SetCurrentContext(m_imgui_context);
+    ImGuiIO &   io = ImGui::GetIO();
+    util::Clock clock;
+    util::Clock dt_clk;
+
+    Profile     prof;
+    util::Clock prof_clk;
+    glfwPollEvents();
+    prof.t_poll = prof_clk.restart();
+
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // main update
+    prof_clk.restart();
+    m_dt = dt_clk.restart() * m_time_scale;
+    m_time += m_dt;
+    update();
+    prof.t_update = prof_clk.restart();
+
+#ifdef MAHI_COROUTINES
+    // resume coroutines
+    if (!m_coroutines.empty()) {
+        std::vector<util::Enumerator> temp;
+        temp.swap(m_coroutines);
+        for (auto &coro : temp) {
+            if (coro.step())
+                m_coroutines.push_back(std::move(coro));
+        }
+    }
+    prof.t_coroutines = prof_clk.restart();
+#endif
+
+    // Clear frame, setup rendering
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(m_window, &fbWidth, &fbHeight);
+    glViewport(0, 0, fbWidth, fbHeight);
+    if (!m_conf.transparent)
+        glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b,
+                        m_conf.background.a);
+    else {
+        if (m_conf.background.a != 1)  // user wants a transparent fill
+            glClearColor(m_conf.background.r, m_conf.background.g, m_conf.background.b,
+                            m_conf.background.a);
+    }
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /// Render OpenGL
+
+    prof_clk.restart();
+    draw();
+    prof.t_gl = prof_clk.restart();
+
+    // Render NanoVG
+
+    int winWidth, winHeight;
+    glfwGetWindowSize(m_window, &winWidth, &winHeight);
+    float pxRatio = static_cast<float>(fbWidth) / static_cast<float>(winWidth);
+    nvgBeginFrame(m_vg, static_cast<float>(winWidth), static_cast<float>(winHeight), pxRatio);
+    draw(m_vg);
+    nvgEndFrame(m_vg);
+    prof.t_nvg = prof_clk.restart();
+
+    // Render ImGui
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        GLFWwindow *backup_current_context = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup_current_context);
+    }
+    prof.t_imgui = prof_clk.restart();
+
+    // VSync or Idle
+
+    if (!m_conf.vsync && m_frame_time != util::Time::Inf) {
+        util::sleep(m_frame_time - clock.get_elapsed_time());
+        clock.restart();
+    }
+    prof.t_idle = prof_clk.restart();
+
+    // Swap OpenGL Buffers
+
+    glfwSwapBuffers(m_window);
+    prof.t_buffers = prof_clk.restart();
+
+    // Set Profile
+
+    m_profile = prof;
+}
+
 void Application::run() {
     ImGui::SetCurrentContext(m_imgui_context);
     ImGuiIO &   io = ImGui::GetIO();
