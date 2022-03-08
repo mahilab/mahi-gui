@@ -2,6 +2,7 @@ target_sources(gui
     PRIVATE
     Application.cpp
     Color.cpp
+    Plotter.cpp
     Shape.cpp
     Transform.cpp
     Transformable.cpp

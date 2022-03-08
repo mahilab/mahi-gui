@@ -9,6 +9,7 @@
 #if MAHI_NATIVE_DIAGS
 #include <Mahi/Gui/Native.hpp>
 #endif
+#include <Mahi/Gui/Plotter.hpp>
 #include <Mahi/Gui/Rect.hpp>
 #include <Mahi/Gui/Sequence.hpp>
 #include <Mahi/Gui/Shape.hpp>
