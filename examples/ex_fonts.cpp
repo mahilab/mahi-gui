@@ -90,7 +90,8 @@ public:
     }
 
     /// main update code
-    void update() override {
+    void update() override 
+    {
         ImGui::BeginFixed("##TextWindow", ImVec2{0,0}, ImVec2{1000, 800}, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
         if (loaded_) 
         {
@@ -133,18 +134,22 @@ public:
             // stop use of font
             ImGui::PopFont();
         }
-        else {
+        else 
+        {
             ImGui::Text("Text window failed to load! :(");
         }
         ImGui::End();
     }
 
-    /// Load in text window config file
-    bool load() {
+    /// load in text window config file
+    bool load() 
+    {
         // checks for config file
-        if (fs::exists("font_config.json")) {
+        if (fs::exists("font_config.json")) 
+        {
             // load in config settings
-            try {
+            try 
+            {
                 // open and load in config file
                 std::ifstream file("font_config.json");
                 json j;
@@ -224,7 +229,8 @@ public:
 int main(int argc, char const *argv[])
 {
     // if there doesn't exist a "font_config.json" file, make a default one
-    if (!fs::exists("font_config.json")) {
+    if (!fs::exists("font_config.json")) 
+    {
         json j;
         j["title"]      =   "Font Example";
         j["width"]      =   1000;
