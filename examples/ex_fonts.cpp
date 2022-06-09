@@ -226,6 +226,10 @@ public:
     }
 };
 
+
+//-----------------------------------------------------------------------------
+// main method
+//-----------------------------------------------------------------------------
 int main(int argc, char const *argv[])
 {
     // if there doesn't exist a "font_config.json" file, make a default one
@@ -240,6 +244,7 @@ int main(int argc, char const *argv[])
         if (file.is_open())
             file << std::setw(4) << j;
     }
+    
     // run the GUI
     TextWindow textWindow;
     textWindow.run();
