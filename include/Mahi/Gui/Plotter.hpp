@@ -2,6 +2,7 @@
 #include <Mahi/Util.hpp>
 #include <thread>
 #include <mutex>
+#include "imgui.h"
 
 namespace mahi {
 namespace gui {
